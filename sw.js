@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v29';
+const CACHE_VERSION = 'v30';
 const STATIC_CACHE = `umatools-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `umatools-runtime-${CACHE_VERSION}`;
 
@@ -11,6 +11,7 @@ const STATIC_ASSETS = [
   '/optimizer.html',
   '/calculator.html',
   '/stamina.html',
+  '/rank-breakdown.html',
   '/umadle.html',
   '/404.html',
   '/robots.txt',
@@ -27,6 +28,7 @@ const STATIC_ASSETS = [
   '/css/rating.css',
   '/css/calculator.css',
   '/css/stamina.css',
+  '/css/rank-breakdown.css',
   '/css/tutorial.css',
   '/js/nav.js',
   '/js/rating-shared.js',
@@ -36,6 +38,7 @@ const STATIC_ASSETS = [
   '/js/optimizer.js',
   '/js/calculator.js',
   '/js/stamina.js',
+  '/js/rank-breakdown.js',
   '/js/umadle.js',
   '/js/search.js',
   '/js/recommend.js',

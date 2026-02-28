@@ -16,12 +16,6 @@
           path: '/calculator',
           file: '/calculator.html',
         },
-        {
-          label: 'Stamina Check',
-          i18nKey: 'nav.staminaCheck',
-          path: '/stamina',
-          file: '/stamina.html',
-        },
       ],
     },
     {
@@ -36,6 +30,12 @@
           file: '/hints.html',
         },
         { label: 'Deck Builder', i18nKey: 'nav.deckBuilder', path: '/deck', file: '/deck.html' },
+        {
+          label: 'Stamina Check',
+          i18nKey: 'nav.staminaCheck',
+          path: '/stamina',
+          file: '/stamina.html',
+        },
       ],
     },
     {
@@ -47,6 +47,12 @@
           i18nKey: 'nav.skillLibrary',
           path: '/skills',
           file: '/skills.html',
+        },
+        {
+          label: 'Rank Breakdown',
+          i18nKey: 'nav.rankBreakdown',
+          path: '/rank-breakdown',
+          file: '/rank-breakdown.html',
         },
       ],
     },

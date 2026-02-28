@@ -38,6 +38,10 @@ Build training decks with 1 main character + up to 6 support cards. Filter by ty
 
 Browse the complete skill database with detailed metadata — cost, rating score, efficiency (score per SP), type, and category. Sort, search, and filter by skill type. Click any skill for a popup with full description, activation conditions, support card sources, and character availability.
 
+### [Rank Breakdown](https://daftuyda.moe/rank-breakdown)
+
+Reference table for all rating badge tiers from G through LS24, including threshold ranges and icon sprites used by the calculator/optimizer.
+
 ### [Stamina Check](https://daftuyda.moe/stamina)
 
 Verify whether your uma has enough stamina for the race. Set distance, surface, condition, style, and mood, then enter stats and recovery skills to compare needed vs. actual stamina.
@@ -79,9 +83,9 @@ The site is organized into four groups:
 
 | Group      | Pages                                  |
 | ---------- | -------------------------------------- |
-| **Rating** | Optimizer, Calculator, Stamina Check   |
-| **Tools**  | Event OCR, Support Hints, Deck Builder |
-| **Data**   | Skill Library                          |
+| **Rating** | Optimizer, Calculator                                |
+| **Tools**  | Event OCR, Support Hints, Deck Builder, Stamina Check |
+| **Data**   | Skill Library, Rank Breakdown                        |
 | **Fun**    | Randomizer, Umadle                     |
 
 ---
