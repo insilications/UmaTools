@@ -212,10 +212,20 @@ async function downloadThumbs(items, destDir, noFetch) {
   ensureDir(destDir);
   if (noFetch) return { downloaded: 0, skipped: items.length, failed: 0 };
 
+  // Build index of existing files by card-ID prefix so we can detect slug renames.
+  // e.g. "102602-mihono-bourbon.png" → prefix "102602"
+  const existingByPrefix = new Map();
+  for (const f of fs.readdirSync(destDir)) {
+    if (!f.endsWith('.png')) continue;
+    const dash = f.indexOf('-');
+    if (dash > 0) existingByPrefix.set(f.slice(0, dash), f);
+  }
+
   const CONCURRENCY = 8;
   let downloaded = 0,
     skipped = 0,
-    failed = 0;
+    failed = 0,
+    renamed = 0;
   let idx = 0;
 
   async function worker() {
@@ -223,6 +233,22 @@ async function downloadThumbs(items, destDir, noFetch) {
       const i = idx++;
       const { slug, remoteUrl } = items[i];
       const dest = path.join(destDir, `${slug}.png`);
+      if (fs.existsSync(dest)) {
+        skipped++;
+        continue;
+      }
+      // If slug changed but card-ID prefix matches an existing file, rename it
+      const dash = slug.indexOf('-');
+      const prefix = dash > 0 ? slug.slice(0, dash) : '';
+      const oldFile = prefix ? existingByPrefix.get(prefix) : null;
+      if (oldFile && oldFile !== `${slug}.png`) {
+        const oldPath = path.join(destDir, oldFile);
+        fs.renameSync(oldPath, dest);
+        existingByPrefix.set(prefix, `${slug}.png`);
+        renamed++;
+        skipped++;
+        continue;
+      }
       try {
         const did = await downloadImage(remoteUrl, dest);
         if (did) downloaded++;
@@ -235,6 +261,7 @@ async function downloadThumbs(items, destDir, noFetch) {
   }
 
   await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
+  if (renamed) console.log(`  [thumb] Renamed ${renamed} file(s) for updated slugs`);
   return { downloaded, skipped, failed };
 }
 

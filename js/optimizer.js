@@ -55,6 +55,18 @@
   const buildsListModalClose = document.getElementById('builds-list-modal-close');
   const buildsListModalCloseBtn = document.getElementById('builds-list-modal-close-btn');
 
+  const skillBrowserBackdrop = document.getElementById('skill-browser-backdrop');
+  const skillBrowserClose = document.getElementById('skill-browser-close');
+  const skillBrowserCancel = document.getElementById('skill-browser-cancel');
+  const skillBrowserAdd = document.getElementById('skill-browser-add');
+  const skillBrowserSearch = document.getElementById('skill-browser-search');
+  const skillBrowserGrid = document.getElementById('skill-browser-grid');
+  const skillBrowserCount = document.getElementById('skill-browser-count');
+  const skillBrowserSelectedCount = document.getElementById('skill-browser-selected-count');
+  const skillBrowserColorChips = document.getElementById('skill-browser-color-chips');
+  const skillBrowserTypeChips = document.getElementById('skill-browser-type-chips');
+  const browseSkillsBtn = document.getElementById('browse-skills-btn');
+
   const ratingInputs = {
     speed: document.getElementById('stat-speed'),
     stamina: document.getElementById('stat-stamina'),
@@ -212,6 +224,7 @@
   const skillMetaById = new Map(); // skillId -> { cost, versions, parents }
   const externalAliasLookup = new Map(); // normalized name -> Set(other known aliases)
   let officialEnglishNameSet = new Set();
+  let officialEnglishNameMap = new Map(); // normalized name -> official EN name
   let skillsCsvCache = '';
   let loadedSkillLibraryLanguage = '';
   let lastCSVLoadStats = {
@@ -442,14 +455,28 @@
             });
           });
         };
+        const nextOfficialNameMap = new Map();
         list.forEach((entry) => {
           const officialName = (entry?.name_en || '').trim();
           const geneOfficialName = (entry?.gene_version?.name_en || '').trim();
           if (officialName) nextOfficialEnglishNames.add(normalizeOfficialSkillName(officialName));
           if (geneOfficialName)
             nextOfficialEnglishNames.add(normalizeOfficialSkillName(geneOfficialName));
+          // Map all known names for this skill to its official EN name
           const names = collectNames(entry);
           const geneNames = collectNames(entry?.gene_version);
+          if (officialName) {
+            names.forEach((n) => {
+              const k = normalize(n);
+              if (k) nextOfficialNameMap.set(k, officialName);
+            });
+          }
+          if (geneOfficialName) {
+            geneNames.forEach((n) => {
+              const k = normalize(n);
+              if (k) nextOfficialNameMap.set(k, geneOfficialName);
+            });
+          }
           registerAliasNames(names);
           registerAliasNames(geneNames);
           const indexNames = names.length ? names : [];
@@ -485,6 +512,7 @@
           }
         });
         officialEnglishNameSet = nextOfficialEnglishNames;
+        officialEnglishNameMap = nextOfficialNameMap;
         if (window.TeamTrialsOptimizer?.buildEnglishSkillIndex) {
           const teamIndex = window.TeamTrialsOptimizer.buildEnglishSkillIndex(list);
           teamTrialsSkillMetaById.clear();
@@ -1763,7 +1791,10 @@
     const skill =
       typeof skillOrName === 'string' ? findSkillByName(skillOrName) : skillOrName || null;
     if (!skill) return typeof skillOrName === 'string' ? skillOrName : '';
-    if (getSkillLanguage() !== 'jp') return skill.name;
+    if (getSkillLanguage() !== 'jp') {
+      const official = officialEnglishNameMap.get(normalize(skill.name));
+      return official || skill.name;
+    }
     return getPreferredSkillInputName(skill, skill.name);
   }
 
@@ -4405,6 +4436,437 @@
       return false;
     }
   }
+
+  // ── Skill Browser Modal ──
+  (function initSkillBrowser() {
+    if (!skillBrowserBackdrop) return;
+
+    const CATEGORY_ORDER = ['gold', 'yellow', 'blue', 'green', 'red', 'purple', 'evo', 'ius'];
+    const CATEGORY_LABELS = {
+      gold: 'Gold', yellow: 'Yellow', blue: 'Blue', green: 'Green',
+      red: 'Red', purple: 'Purple', evo: 'Evo', ius: 'IUS',
+    };
+    const TYPE_GROUPS = {
+      surface: { label: 'Surface', types: ['turf', 'dirt'] },
+      distance: { label: 'Distance', types: ['sprint', 'mile', 'medium', 'long'] },
+      strategy: { label: 'Strategy', types: ['front', 'pace', 'late', 'end'] },
+    };
+
+    let activeColorFilters = new Set();
+    let activeTypeFilters = new Set();
+    let searchQuery = '';
+    let selectedSkills = new Map(); // name -> { hint, lowerHint }
+    let allCards = [];
+    let browserMode = 'append';
+    let targetRow = null;
+
+    function openBrowser(mode = 'append', row = null) {
+      browserMode = mode;
+      targetRow = row;
+      selectedSkills.clear();
+      activeColorFilters.clear();
+      activeTypeFilters.clear();
+      searchQuery = '';
+      if (skillBrowserSearch) skillBrowserSearch.value = '';
+      buildFilterChips();
+      buildGrid();
+      applyFilters();
+      updateSelectedCount();
+      skillBrowserBackdrop.classList.add('open');
+      document.body.style.overflow = 'hidden';
+      if (skillBrowserSearch) skillBrowserSearch.focus();
+    }
+
+    function closeBrowser() {
+      skillBrowserBackdrop.classList.remove('open');
+      document.body.style.overflow = '';
+      targetRow = null;
+    }
+
+    function buildFilterChips() {
+      if (skillBrowserColorChips) {
+        skillBrowserColorChips.innerHTML = '';
+        CATEGORY_ORDER.forEach((cat) => {
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = 'filter-chip';
+          chip.dataset.category = cat;
+          chip.innerHTML = `<span class="chip-dot dot-${cat}"></span>${CATEGORY_LABELS[cat] || cat}`;
+          chip.addEventListener('click', () => {
+            if (activeColorFilters.has(cat)) {
+              activeColorFilters.delete(cat);
+              chip.classList.remove('active');
+            } else {
+              activeColorFilters.add(cat);
+              chip.classList.add('active');
+            }
+            applyFilters();
+          });
+          skillBrowserColorChips.appendChild(chip);
+        });
+      }
+
+      if (skillBrowserTypeChips) {
+        skillBrowserTypeChips.innerHTML = '';
+        Object.entries(TYPE_GROUPS).forEach(([groupKey, group]) => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'filter-chip-group';
+
+          const parentChip = document.createElement('button');
+          parentChip.type = 'button';
+          parentChip.className = 'filter-chip';
+          parentChip.innerHTML = `${group.label} <span class="filter-chip-arrow">&#9660;</span>`;
+          parentChip.addEventListener('click', () => {
+            wrapper.classList.toggle('expanded');
+          });
+          wrapper.appendChild(parentChip);
+
+          const subContainer = document.createElement('div');
+          subContainer.className = 'filter-chip-sub';
+          group.types.forEach((typ) => {
+            const sub = document.createElement('button');
+            sub.type = 'button';
+            sub.className = 'filter-chip';
+            sub.dataset.type = typ;
+            sub.textContent = typ.charAt(0).toUpperCase() + typ.slice(1);
+            sub.addEventListener('click', () => {
+              if (activeTypeFilters.has(typ)) {
+                activeTypeFilters.delete(typ);
+                sub.classList.remove('active');
+              } else {
+                activeTypeFilters.add(typ);
+                sub.classList.add('active');
+              }
+              applyFilters();
+            });
+            subContainer.appendChild(sub);
+          });
+          wrapper.appendChild(subContainer);
+          skillBrowserTypeChips.appendChild(wrapper);
+        });
+
+        const generalChip = document.createElement('button');
+        generalChip.type = 'button';
+        generalChip.className = 'filter-chip';
+        generalChip.dataset.type = 'general';
+        generalChip.textContent = 'General';
+        generalChip.addEventListener('click', () => {
+          if (activeTypeFilters.has('general')) {
+            activeTypeFilters.delete('general');
+            generalChip.classList.remove('active');
+          } else {
+            activeTypeFilters.add('general');
+            generalChip.classList.add('active');
+          }
+          applyFilters();
+        });
+        skillBrowserTypeChips.appendChild(generalChip);
+      }
+    }
+
+    function buildGrid() {
+      if (!skillBrowserGrid) return;
+      skillBrowserGrid.innerHTML = '';
+      allCards = [];
+
+      const skills = [];
+      // Also check raw category keys in case canonicalization differs
+      const catKeys = new Set(Object.keys(skillsByCategory));
+      CATEGORY_ORDER.forEach((cat) => {
+        const list = skillsByCategory[cat]
+          || (cat === 'gold' ? skillsByCategory['golden'] : null)
+          || (cat === 'purple' ? skillsByCategory['violet'] : null)
+          || [];
+        const sorted = [...list].sort((a, b) => a.name.localeCompare(b.name));
+        sorted.forEach((s) => {
+          // Skip evo skills and ◎ upgrades (same filtering as the datalist)
+          if (s.isEvo) return;
+          if (s.circleUpgradeOf) return; // ◎ with paired ○
+          skills.push({ ...s, category: canonicalCategory(s.category || cat) });
+        });
+      });
+      // Catch any categories not in CATEGORY_ORDER
+      catKeys.forEach((key) => {
+        const canon = canonicalCategory(key);
+        if (CATEGORY_ORDER.includes(canon) || CATEGORY_ORDER.includes(key)) return;
+        const list = skillsByCategory[key] || [];
+        list.forEach((s) => {
+          if (s.isEvo) return;
+          if (s.circleUpgradeOf) return;
+          skills.push({ ...s, category: canon || key });
+        });
+      });
+
+      const frag = document.createDocumentFragment();
+      skills.forEach((skill) => {
+        const cat = canonicalCategory(skill.category);
+        const isGold = isGoldCategory(cat);
+        const isPairedSingle = !!skill.circleUpgrade;
+        const displayName = isPairedSingle && skill.circleBaseName
+          ? skill.circleBaseName
+          : formatSkillDisplayName(skill);
+        const addName = isPairedSingle && skill.circleBaseName ? skill.circleBaseName : skill.name;
+
+        // Resolve lower skill for gold skills
+        let lowerSkill = null;
+        if (isGold) {
+          const lowerId = skill.lowerSkillId ||
+            (Array.isArray(skill.parentIds) && skill.parentIds.length ? skill.parentIds[0] : '');
+          if (lowerId) lowerSkill = skillIdIndex.get(String(lowerId)) || null;
+        }
+
+        const goldCost = typeof skill.baseCost === 'number' ? skill.baseCost : NaN;
+        const lowerCost = lowerSkill && typeof lowerSkill.baseCost === 'number' ? lowerSkill.baseCost : NaN;
+        const typeText = skill.checkType
+          ? skill.checkType.charAt(0).toUpperCase() + skill.checkType.slice(1)
+          : '';
+
+        // Cost text
+        let costText;
+        if (isGold && !isNaN(goldCost) && !isNaN(lowerCost)) {
+          costText = `${goldCost + lowerCost} pt`;
+        } else if (!isNaN(goldCost)) {
+          costText = `${goldCost} pt`;
+        } else {
+          costText = '? pt';
+        }
+
+        // Lower skill HTML
+        let lowerHtml = '';
+        let lowerCat = '';
+        if (isGold && lowerSkill) {
+          lowerCat = canonicalCategory(lowerSkill.category);
+          const lowerName = formatSkillDisplayName(lowerSkill);
+          lowerHtml = `<div class="card-lower lower-${lowerCat}" data-skill-name="${attrEsc(lowerSkill.name)}">${attrEsc(lowerName)}</div>`;
+        }
+
+        const card = document.createElement('div');
+        const tintCat = isGold && lowerCat ? lowerCat : cat;
+        card.className = `skill-card cat-${cat}${isGold ? ' is-gold' : ''} tint-${tintCat}`;
+        card.innerHTML =
+          `<div class="card-check"></div>` +
+          `<div class="card-name" data-skill-name="${attrEsc(skill.name)}" title="${attrEsc(skill.name)}">${attrEsc(displayName)}</div>` +
+          lowerHtml +
+          `<div class="card-meta"><span class="card-cost-value">${costText}</span>${typeText ? `<span>${typeText}</span>` : ''}</div>` +
+          `<div class="card-hints">` +
+            `<button type="button" class="card-hint-btn" title="${attrEsc(t('optimizer.hintDiscount'))}">` +
+              (isGold ? `<span class="hint-dot dot-gold"></span>` : '') + `Lv0</button>` +
+            (isGold && lowerSkill ? `<button type="button" class="card-hint-btn card-hint-lower" title="${attrEsc(t('optimizer.hintDiscount'))}"><span class="hint-dot dot-${lowerCat}"></span>Lv0</button>` : '') +
+          `</div>`;
+
+        // State for this card
+        let hintLevel = 0;
+        let lowerHintLevel = 0;
+        const costEl = card.querySelector('.card-cost-value');
+        const hintBtn = card.querySelector('.card-hint-btn');
+        const lowerHintBtn = card.querySelector('.card-hint-lower');
+
+        function updateCostDisplay() {
+          const discGold = !isNaN(goldCost) ? calculateDiscountedCost(goldCost, hintLevel) : NaN;
+          const discLower = !isNaN(lowerCost) ? calculateDiscountedCost(lowerCost, lowerHintLevel) : NaN;
+          if (isGold && !isNaN(discGold) && !isNaN(discLower)) {
+            costEl.textContent = `${discGold + discLower} pt`;
+          } else if (!isNaN(discGold)) {
+            costEl.textContent = `${discGold} pt`;
+          }
+        }
+
+        // Update hint button text without clobbering the color dot
+        function setHintText(btn, level) {
+          const textNode = Array.from(btn.childNodes).find((n) => n.nodeType === 3);
+          if (textNode) textNode.textContent = `Lv${level}`;
+          else btn.appendChild(document.createTextNode(`Lv${level}`));
+        }
+
+        hintBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          hintLevel = (hintLevel + 1) % 6;
+          setHintText(hintBtn, hintLevel);
+          hintBtn.classList.toggle('active', hintLevel > 0);
+          updateCostDisplay();
+          if (selectedSkills.has(addName)) selectedSkills.get(addName).hint = hintLevel;
+        });
+
+        if (lowerHintBtn) {
+          lowerHintBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            lowerHintLevel = (lowerHintLevel + 1) % 6;
+            setHintText(lowerHintBtn, lowerHintLevel);
+            lowerHintBtn.classList.toggle('active', lowerHintLevel > 0);
+            updateCostDisplay();
+            if (selectedSkills.has(addName)) selectedSkills.get(addName).lowerHint = lowerHintLevel;
+          });
+        }
+
+        // Card click toggles selection (not on name/lower/hint)
+        card.addEventListener('click', (e) => {
+          if (e.target.closest('.card-name, .card-lower, .card-hint-btn')) return;
+          if (selectedSkills.has(addName)) {
+            selectedSkills.delete(addName);
+            card.classList.remove('selected');
+          } else {
+            selectedSkills.set(addName, { hint: hintLevel, lowerHint: lowerHintLevel });
+            card.classList.add('selected');
+          }
+          updateSelectedCount();
+        });
+
+        frag.appendChild(card);
+        // Split multi-valued checkType (e.g. "Sprint/Mile") into individual types
+        const rawType = (skill.checkType || '').toLowerCase();
+        const checkTypes = rawType ? rawType.split('/').map((t) => t.trim()) : [];
+        allCards.push({
+          el: card,
+          name: addName,
+          category: cat,
+          checkTypes,
+          aliases: (skill.aliasNames || []).map((a) => a.toLowerCase()),
+        });
+      });
+      skillBrowserGrid.appendChild(frag);
+      if (!skills.length) {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'grid-column:1/-1;text-align:center;padding:2rem;color:var(--muted)';
+        empty.textContent = 'No skills loaded yet. Try closing and reopening.';
+        skillBrowserGrid.appendChild(empty);
+      }
+    }
+
+    function applyFilters() {
+      const query = searchQuery.toLowerCase();
+      let shown = 0;
+
+      allCards.forEach(({ el, name, category, checkTypes, aliases }) => {
+        let visible = true;
+
+        if (activeColorFilters.size > 0 && !activeColorFilters.has(category)) {
+          visible = false;
+        }
+
+        if (visible && activeTypeFilters.size > 0) {
+          const isGeneral = checkTypes.length === 0;
+          if (isGeneral) {
+            visible = activeTypeFilters.has('general');
+          } else {
+            visible = checkTypes.some((ct) => activeTypeFilters.has(ct));
+          }
+        }
+
+        if (visible && query) {
+          const nameMatch = name.toLowerCase().includes(query);
+          const aliasMatch = aliases.some((a) => a.includes(query));
+          if (!nameMatch && !aliasMatch) visible = false;
+        }
+
+        el.style.display = visible ? '' : 'none';
+        if (visible) shown++;
+      });
+
+      if (skillBrowserCount) {
+        skillBrowserCount.textContent = t('optimizer.showingCount', {
+          count: shown,
+          total: allCards.length,
+        });
+      }
+    }
+
+    function updateSelectedCount() {
+      const count = selectedSkills.size;
+      if (skillBrowserSelectedCount) skillBrowserSelectedCount.textContent = count;
+      if (skillBrowserAdd) skillBrowserAdd.disabled = count === 0;
+    }
+
+    function addSelectedSkills() {
+      if (selectedSkills.size === 0) return;
+
+      const entries = Array.from(selectedSkills.entries());
+      let usedTarget = false;
+
+      entries.forEach(([name, opts]) => {
+        let row;
+        if (!usedTarget && browserMode === 'fill' && targetRow) {
+          row = targetRow;
+          usedTarget = true;
+        } else {
+          const topRows = Array.from(rowsEl.querySelectorAll('.optimizer-row')).filter(isTopLevelRow);
+          const lastRow = topRows[topRows.length - 1];
+          if (lastRow && !isRowFilled(lastRow)) {
+            row = lastRow;
+          } else {
+            row = makeRow();
+            rowsEl.appendChild(row);
+          }
+        }
+
+        const nameInput = row.querySelector('.skill-name');
+        if (nameInput) nameInput.value = name;
+
+        // Apply hint level from browser
+        const hintSelect = row.querySelector('.hint-level');
+        if (hintSelect && opts.hint > 0) {
+          hintSelect.value = String(opts.hint);
+        }
+
+        if (typeof row.syncSkillCategory === 'function') {
+          row.syncSkillCategory({
+            triggerOptimize: false,
+            allowLinking: true,
+            updateCost: true,
+          });
+        }
+
+        // Apply lower hint level to linked row (gold skills)
+        if (opts.lowerHint > 0) {
+          const linked = row.nextElementSibling;
+          if (linked && linked.classList.contains('linked-lower-row')) {
+            const linkedHint = linked.querySelector('.hint-level');
+            if (linkedHint) {
+              linkedHint.value = String(opts.lowerHint);
+              if (typeof linked.syncSkillCategory === 'function') {
+                linked.syncSkillCategory({
+                  triggerOptimize: false,
+                  allowLinking: false,
+                  updateCost: true,
+                });
+              }
+            }
+          }
+        }
+      });
+
+      ensureOneEmptyRow();
+      saveState();
+      autoOptimizeDebounced();
+      closeBrowser();
+    }
+
+    if (skillBrowserSearch) {
+      skillBrowserSearch.addEventListener('input', () => {
+        searchQuery = skillBrowserSearch.value;
+        applyFilters();
+      });
+    }
+
+    if (skillBrowserClose) skillBrowserClose.addEventListener('click', closeBrowser);
+    if (skillBrowserCancel) skillBrowserCancel.addEventListener('click', closeBrowser);
+    if (skillBrowserAdd) skillBrowserAdd.addEventListener('click', addSelectedSkills);
+
+    skillBrowserBackdrop.addEventListener('click', (e) => {
+      if (e.target === skillBrowserBackdrop) closeBrowser();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && skillBrowserBackdrop.classList.contains('open')) {
+        closeBrowser();
+      }
+    });
+
+    if (browseSkillsBtn) {
+      browseSkillsBtn.addEventListener('click', () => openBrowser('append'));
+    }
+
+    window._openSkillBrowser = openBrowser;
+  })();
 
   // events
   if (addRowBtn)

@@ -595,6 +595,9 @@
     if (!target) return;
 
     // Don't interfere with other interactive elements
+    // Allow .card-name and .card-lower inside .skill-card to trigger popup
+    if (e.target.closest('.skill-card') && !e.target.closest('.card-name, .card-lower'))
+      return;
     if (e.target.closest('input, button, th[data-sort], .ocr-skill-checkbox, .ocr-edit-icon'))
       return;
 

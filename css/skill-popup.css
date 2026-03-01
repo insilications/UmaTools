@@ -29,13 +29,13 @@
   position: fixed;
   inset: 0;
   background: transparent;
-  z-index: 90;
+  z-index: 110;
 }
 
 /* Popup container */
 .skill-popup {
   position: absolute;
-  z-index: 91;
+  z-index: 111;
   background: var(--surface-1, #fff);
   color: var(--text-1, #0f172a);
   border: 1px solid var(--border, #cbd5e1);

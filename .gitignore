@@ -30,3 +30,4 @@ BROWSER_COMPATIBILITY_CHECKLIST.md
 /api/__pycache__
 /tests
 /badges
+/docs

@@ -1014,19 +1014,11 @@
         data-scroll-section
         data-scroll-label="Skills"
       >
-        <div class="toolbar" role="group" aria-label="Skill rows" style="justify-content: flex-end">
+        <div class="toolbar" role="group" aria-label="Skill rows">
           <span class="muted" data-i18n="optimizer.rowTip"
             >Tip: just enter the skill name and cost - its type auto-detects</span
           >
-          <div class="spacer"></div>
-          <label class="preprocessing-toggle" title="Enhance images before OCR for better accuracy">
-            <input type="checkbox" id="preprocess-toggle" />
-            <span data-i18n="optimizer.imageEnhancement">Image Enhancement</span>
-          </label>
-          <label class="preprocessing-toggle" title="Show OCR scan region and debug info">
-            <input type="checkbox" id="ocr-debug-toggle" />
-            <span data-i18n="optimizer.debugMode">Debug Mode</span>
-          </label>
+          <div style="flex:1"></div>
           <input
             type="file"
             id="screenshot-upload-input"
@@ -1078,7 +1070,10 @@
             Share Build
           </button>
         </div>
-        <div class="toolbar" style="justify-content: flex-end">
+        <div class="toolbar" style="justify-content: flex-end; gap: 8px">
+          <button id="browse-skills-btn" class="btn btn-secondary" type="button" data-i18n="optimizer.browseSkills">
+            Browse Skills
+          </button>
           <button id="clear-all" class="btn" type="button" data-i18n="optimizer.clearAllSkills">
             Clear All Skills
           </button>
@@ -1149,6 +1144,46 @@
         </div>
       </section>
     </main>
+
+    <!-- Skill Browser Modal -->
+    <div id="skill-browser-backdrop">
+      <div id="skill-browser-modal">
+        <div class="modal-header">
+          <h3 data-i18n="optimizer.browseSkills">Browse Skills</h3>
+          <button id="skill-browser-close" class="modal-close" type="button">&times;</button>
+        </div>
+        <div class="modal-body" style="padding-bottom: 0">
+          <input
+            type="text"
+            id="skill-browser-search"
+            class="field-control"
+            placeholder="Search skills..."
+            data-i18n-placeholder="optimizer.searchSkills"
+            autocomplete="off"
+            autocorrect="off"
+            spellcheck="false"
+          />
+          <div class="skill-browser-filters">
+            <div class="filter-group">
+              <span class="filter-group-label" data-i18n="optimizer.color">Color</span>
+              <div class="filter-chips" id="skill-browser-color-chips"></div>
+            </div>
+            <div class="filter-group">
+              <span class="filter-group-label" data-i18n="optimizer.type">Type</span>
+              <div class="filter-chips" id="skill-browser-type-chips"></div>
+            </div>
+          </div>
+          <div class="skill-browser-count" id="skill-browser-count"></div>
+          <div class="skill-browser-grid" id="skill-browser-grid"></div>
+        </div>
+        <div class="modal-footer">
+          <button id="skill-browser-cancel" class="btn btn-secondary" type="button" data-i18n="optimizer.cancel">Cancel</button>
+          <button id="skill-browser-add" class="btn" type="button" disabled>
+            <span data-i18n="optimizer.addSelected">Add Selected</span> (<span id="skill-browser-selected-count">0</span>)
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Save Build Modal -->
     <div id="save-build-modal" class="modal" style="display: none">
