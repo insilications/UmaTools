@@ -1,10 +1,9 @@
-const CACHE_VERSION = 'v33';
+const CACHE_VERSION = 'v34';
 const STATIC_CACHE = `umatools-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `umatools-runtime-${CACHE_VERSION}`;
 
 const STATIC_ASSETS = [
   '/',
-  '/index.html',
   '/events.html',
   '/hints.html',
   '/random.html',
@@ -19,7 +18,6 @@ const STATIC_ASSETS = [
   '/site.webmanifest',
   '/css/base.css',
   '/css/theme-d.build.css',
-  '/css/landing.css',
   '/css/events.css',
   '/css/hints.css',
   '/css/random.css',
@@ -47,6 +45,9 @@ const STATIC_ASSETS = [
   '/js/skill-popup.js',
   '/js/scroll-nav.js',
   '/js/i18n.js',
+  '/js/ocr.js',
+  '/js/skill-scorer.js',
+  '/js/team-trials-optimizer.js',
   '/js/changelog.js',
   '/js/theme-toggle.js',
   '/css/deck.css',
@@ -70,7 +71,7 @@ self.addEventListener('install', (event) => {
     caches
       .open(STATIC_CACHE)
       .then((cache) => cache.addAll(STATIC_ASSETS))
-      .catch(() => {})
+      .catch((err) => console.error('[SW] Precache failed:', err))
   );
   self.skipWaiting();
 });
@@ -113,7 +114,7 @@ function staleWhileRevalidate(request) {
 }
 
 function networkFirst(request) {
-  return fetch(request)
+  return fetch(request, { cache: 'no-cache' })
     .then((response) => {
       if (response && response.status === 200) {
         const copy = response.clone();

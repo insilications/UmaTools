@@ -815,7 +815,8 @@
       }
     }
 
-    console.log(`[segment] ${valleys.length} raw valleys (height=${height})`);
+    if (typeof OCRPreprocess !== 'undefined' && OCRPreprocess._debug)
+      console.log(`[segment] ${valleys.length} raw valleys (height=${height})`);
 
     if (valleys.length === 0) {
       const avg = score.reduce((a, b) => a + b, 0) / height;
@@ -838,9 +839,10 @@
       cl.reduce((best, v) => (v.depth > best.depth ? v : best))
     );
 
-    console.log(
-      `[segment] ${candidates.length} valley clusters, depths: [${candidates.map((c) => c.depth.toFixed(3)).join(', ')}]`
-    );
+    if (typeof OCRPreprocess !== 'undefined' && OCRPreprocess._debug)
+      console.log(
+        `[segment] ${candidates.length} valley clusters, depths: [${candidates.map((c) => c.depth.toFixed(3)).join(', ')}]`
+      );
 
     // ── Select significant separators ──
     // Keep all valleys whose depth is at least 15% of the deepest.
@@ -853,9 +855,10 @@
       .slice(0, MAX_SEPS)
       .sort((a, b) => a.y - b.y);
 
-    console.log(
-      `[segment] ${separators.length} separators (cutoff=${cutoff.toFixed(3)}): y=[${separators.map((s) => s.y).join(', ')}]`
-    );
+    if (typeof OCRPreprocess !== 'undefined' && OCRPreprocess._debug)
+      console.log(
+        `[segment] ${separators.length} separators (cutoff=${cutoff.toFixed(3)}): y=[${separators.map((s) => s.y).join(', ')}]`
+      );
 
     if (separators.length === 0) {
       return [{ y: 0, h: height }];

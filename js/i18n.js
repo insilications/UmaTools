@@ -426,6 +426,9 @@
       'deck.distance': 'Distance',
       'deck.surface': 'Surface',
       'deck.strategy': 'Strategy',
+      'deck.nothingToSave': 'Nothing to save.',
+      'deck.loadedDeck': 'Loaded "{name}"',
+      'deck.loadedTemplate': 'Loaded {distance} template',
 
       // ── Random ──
       'random.title': 'Randomizer',
@@ -1044,6 +1047,9 @@
       'deck.distance': '距離',
       'deck.surface': 'バ場',
       'deck.strategy': '脚質',
+      'deck.nothingToSave': '保存するものがありません。',
+      'deck.loadedDeck': '「{name}」を読み込みました',
+      'deck.loadedTemplate': '{distance}テンプレートを読み込みました',
 
       // ── Random ──
       'random.title': 'ランダマイザー',

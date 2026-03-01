@@ -976,7 +976,7 @@
 
   function saveCurrentDeck() {
     if (!selectedChar && selectedSupports.length === 0) {
-      showStatus('Nothing to save.');
+      showStatus(t('deck.nothingToSave'));
       setTimeout(() => showStatus(''), 2000);
       return;
     }
@@ -1019,7 +1019,7 @@
 
     saveDeck();
     render();
-    showStatus(`Loaded "${deck.name}"`);
+    showStatus(t('deck.loadedDeck', { name: deck.name }));
     setTimeout(() => showStatus(''), 2000);
   }
 
@@ -1293,7 +1293,7 @@
     supportLbStops = selectedSupports.map(() => 4);
     saveDeck();
     render();
-    showStatus(`Loaded ${tmpl.distance} template`);
+    showStatus(t('deck.loadedTemplate', { distance: tmpl.distance }));
     setTimeout(() => showStatus(''), 2000);
   }
 

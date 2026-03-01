@@ -18,7 +18,7 @@
   const CONFIDENCE_THRESHOLDS = {
     HIGH: 0.85,
     MEDIUM: 0.7,
-    LOW: 0.7, // below this triggers suggestions
+    LOW: 0.5, // below this triggers suggestions
   };
 
   const MAX_SUGGESTIONS = 3;

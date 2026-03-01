@@ -1888,56 +1888,6 @@
     libStatus.textContent = t('optimizer.usingFallback', { reason: reason });
   }
 
-  async function loadSkillsLib() {
-    const candidates = [
-      '../../libs/skills_lib.json',
-      '../libs/skills_lib.json',
-      './libs/skills_lib.json',
-      '/libs/skills_lib.json',
-    ];
-    let lib = null;
-    let lastErr = null;
-    for (const url of candidates) {
-      try {
-        const res = await fetch(url, { cache: 'force-cache' });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        lib = await res.json();
-        libStatus.textContent = `Loaded skills from ${url}`;
-        break;
-      } catch (e) {
-        lastErr = e;
-      }
-    }
-    if (!lib) {
-      console.error('Failed to load skills_lib.json from all candidates', lastErr);
-      applyFallbackSkills('not found / blocked');
-      return;
-    }
-    skillsByCategory = {};
-    categories = [];
-    for (const [color, list] of Object.entries(lib)) {
-      if (!Array.isArray(list)) continue;
-      categories.push(color);
-      skillsByCategory[color] = list.map((item) => ({
-        name: item.name,
-        score: item.score,
-        baseCost: item.baseCost || item.base || item.cost,
-        checkType: item['check-type'] || '',
-      }));
-    }
-    categories.sort((a, b) => {
-      const ia = preferredOrder.indexOf(a),
-        ib = preferredOrder.indexOf(b);
-      if (ia !== -1 || ib !== -1) return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
-      return a.localeCompare(b);
-    });
-    rebuildSkillCaches();
-    const totalSkills = Object.values(skillsByCategory).reduce((acc, arr) => acc + arr.length, 0);
-    if (categories.length === 0 || totalSkills === 0) applyFallbackSkills('empty library');
-    else
-      libStatus.textContent += ` \u2022 ${totalSkills} skills in ${categories.length} categories`;
-  }
-
   function parseCSV(text) {
     const rows = [];
     let i = 0,
@@ -3145,7 +3095,7 @@
         if (monitorId) return;
         let lastValue = skillInput.value;
         monitorId = window.setInterval(() => {
-          if (!document.body.contains(skillInput)) return;
+          if (!document.body.contains(skillInput)) { stopMonitor(); return; }
           if (skillInput.value !== lastValue) {
             lastValue = skillInput.value;
             syncFromInput();
