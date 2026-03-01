@@ -612,10 +612,13 @@
     const apt = c.UmaAptitudes;
     if (apt && Object.keys(apt).length) {
       aptHtml = '<div class="deck-aptitudes">';
+      const APT_GROUP_I18N = { 'Surface': 'deck.surface', 'Distance': 'deck.distance', 'Strategy': 'deck.strategy' };
       for (const [group, entries] of Object.entries(apt)) {
-        aptHtml += `<div class="apt-group"><span class="apt-group-label">${escHtml(group)}</span>`;
+        const groupLabel = APT_GROUP_I18N[group] ? t(APT_GROUP_I18N[group]) : group;
+        aptHtml += `<div class="apt-group"><span class="apt-group-label">${escHtml(groupLabel)}</span>`;
         for (const [name, grade] of Object.entries(entries || {})) {
-          aptHtml += `<span class="apt-badge"><span class="apt-name">${escHtml(name)}</span> <span class="apt-grade" data-grade="${escHtml(String(grade))}">${escHtml(String(grade))}</span></span>`;
+          const aptLabel = CHAR_FILTER_I18N[name] ? t(CHAR_FILTER_I18N[name]) : name;
+          aptHtml += `<span class="apt-badge"><span class="apt-name">${escHtml(aptLabel)}</span> <span class="apt-grade" data-grade="${escHtml(String(grade))}">${escHtml(String(grade))}</span></span>`;
         }
         aptHtml += '</div>';
       }

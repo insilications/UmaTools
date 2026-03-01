@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v42';
+const CACHE_VERSION = 'v43';
 const STATIC_CACHE = `umatools-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `umatools-runtime-${CACHE_VERSION}`;
 
