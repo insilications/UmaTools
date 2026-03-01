@@ -156,6 +156,12 @@
       document.body.appendChild(coachmark);
       document.body.appendChild(toast);
 
+      // Apply i18n translations to dynamically created elements
+      if (typeof window.applyI18n === 'function') {
+        window.applyI18n(panel);
+        window.applyI18n(toast);
+      }
+
       this.panel = panel;
       this.coachmark = coachmark;
       this.toast = toast;

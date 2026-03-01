@@ -218,7 +218,13 @@
     if (!skill) return (fallback || '').trim();
     const server = getSkillLanguage();
     if (server !== 'jp') return (skill.name || fallback || '').trim();
-    if (getSiteLanguage() === 'jp') return (skill.name || fallback || '').trim();
+    if (getSiteLanguage() === 'jp') {
+      const jp =
+        typeof window.getLocalizedSkillName === 'function'
+          ? window.getLocalizedSkillName(skill.name)
+          : skill.name;
+      return (jp || skill.name || fallback || '').trim();
+    }
     const alias = getPrimaryAliasName(skill, { preferEnglish: true });
     if (alias) return alias;
     const localized = (skill.localizedName || '').trim();
@@ -338,18 +344,36 @@
           if (localizedKey && !nextIndex.has(localizedKey)) nextIndex.set(localizedKey, enriched);
           addLooseLookup(skill.localizedName, enriched);
         }
-        if (isJPServer) {
-          if (siteLanguage === 'jp') {
-            addSuggestionName(skill.name);
-          } else {
-            addSuggestionName(getPreferredSkillInputName(enriched, skill.name));
+        // Datalist suggestions: show only the display-language name
+        if (siteLanguage === 'jp') {
+          // JP site language: show only JP name in datalist
+          let jpDisplay;
+          if (isJPServer && skill.jpName) {
+            jpDisplay = skill.jpName;
+          } else if (typeof window.getLocalizedSkillName === 'function') {
+            const jp = window.getLocalizedSkillName(skill.name);
+            if (jp !== skill.name) jpDisplay = jp;
           }
+          addSuggestionName(jpDisplay || skill.name);
+        } else if (isJPServer) {
+          // JP server + EN lang: show English name only
+          addSuggestionName(getPreferredSkillInputName(enriched, skill.name));
         } else {
+          // EN server + EN lang: show English with aliases
           addSuggestionName(skill.name);
           if (Array.isArray(skill.aliasNames) && skill.aliasNames.length) {
             skill.aliasNames.forEach((alias) => addSuggestionName(alias));
           }
           if (skill.localizedName) addSuggestionName(skill.localizedName);
+        }
+        // Always index JP names for search lookup (not in datalist)
+        if (typeof window.getLocalizedSkillName === 'function') {
+          const jp = window.getLocalizedSkillName(skill.name);
+          if (jp !== skill.name) {
+            const jpKey = normalize(jp);
+            if (jpKey && !nextIndex.has(jpKey)) nextIndex.set(jpKey, enriched);
+            addLooseLookup(jp, enriched);
+          }
         }
       });
     });
@@ -375,8 +399,11 @@
     const skill =
       typeof skillOrName === 'string' ? findSkillByName(skillOrName) : skillOrName || null;
     if (!skill) return typeof skillOrName === 'string' ? skillOrName : '';
-    if (getSkillLanguage() !== 'jp') return skill.name;
-    return getPreferredSkillInputName(skill, skill.name);
+    const displayName =
+      getSkillLanguage() !== 'jp' ? skill.name : getPreferredSkillInputName(skill, skill.name);
+    if (typeof window.getLocalizedSkillName === 'function')
+      return window.getLocalizedSkillName(displayName);
+    return displayName;
   }
 
   function formatCategoryLabel(cat) {
@@ -656,6 +683,7 @@
           registerAliasNames(collectNames(entry?.gene_version));
         });
         officialEnglishNameSet = nextOfficialNames;
+        if (typeof window.buildJPSkillNameMap === 'function') window.buildJPSkillNameMap(list);
         return true;
       } catch (err) {
         lastErr = err;
@@ -1377,6 +1405,8 @@
 
   window.addEventListener('i18n:changed', function () {
     if (typeof window.applyI18n === 'function') window.applyI18n();
+    rebuildSkillCaches();
+    updateSelectedSkillsDisplay();
   });
 
   init();

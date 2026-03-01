@@ -5,34 +5,39 @@
   var SKILLS_URLS = ['/assets/skills_all.json', './assets/skills_all.json'];
   var HINTS_URLS = ['/assets/support_hints.json', './assets/support_hints.json'];
 
-  var EFFECT_LABELS = {
-    1: 'Speed',
-    2: 'Stamina',
-    3: 'Power',
-    4: 'Guts',
-    5: 'Wisdom',
-    6: 'Running Style',
-    8: 'Field of View',
-    9: 'Stamina Recovery',
-    10: 'Lane Change Speed',
-    13: 'Position Awareness',
-    14: 'Pace Control',
-    21: 'Target Speed',
-    22: 'Target Speed',
-    27: 'Target Speed',
-    28: 'Acceleration',
-    29: 'Deceleration Block',
-    31: 'Acceleration',
-    32: 'Special',
-    35: 'Special',
-    37: 'Special',
-    38: 'Special',
-    41: 'Special',
-    42: 'Special',
-    501: 'Stat Boost',
-    502: 'Stat Boost',
-    503: 'Stat Boost',
+  var EFFECT_I18N_KEYS = {
+    1: 'skillPopup.effectSpeed',
+    2: 'skillPopup.effectStamina',
+    3: 'skillPopup.effectPower',
+    4: 'skillPopup.effectGuts',
+    5: 'skillPopup.effectWisdom',
+    6: 'skillPopup.effectRunningStyle',
+    8: 'skillPopup.effectFieldOfView',
+    9: 'skillPopup.effectStaminaRecovery',
+    10: 'skillPopup.effectLaneChangeSpeed',
+    13: 'skillPopup.effectPositionAwareness',
+    14: 'skillPopup.effectPaceControl',
+    21: 'skillPopup.effectTargetSpeed',
+    22: 'skillPopup.effectTargetSpeed',
+    27: 'skillPopup.effectTargetSpeed',
+    28: 'skillPopup.effectAcceleration',
+    29: 'skillPopup.effectDecelerationBlock',
+    31: 'skillPopup.effectAcceleration',
+    32: 'skillPopup.effectSpecial',
+    35: 'skillPopup.effectSpecial',
+    37: 'skillPopup.effectSpecial',
+    38: 'skillPopup.effectSpecial',
+    41: 'skillPopup.effectSpecial',
+    42: 'skillPopup.effectSpecial',
+    501: 'skillPopup.effectStatBoost',
+    502: 'skillPopup.effectStatBoost',
+    503: 'skillPopup.effectStatBoost',
   };
+
+  function getEffectLabel(type) {
+    var key = EFFECT_I18N_KEYS[type];
+    return key ? t(key) : 'Effect ' + type;
+  }
 
   // Effect types where value represents HP (not divided by 10000)
   var HP_EFFECT_TYPES = { 9: true };
@@ -79,6 +84,15 @@
     }
   }
 
+  function getSiteLang() {
+    try {
+      var val = (localStorage.getItem('umatoolsSiteLanguage') || '').trim().toLowerCase();
+      return val === 'ja' || val === 'jp' ? 'ja' : 'en';
+    } catch (e) {
+      return 'en';
+    }
+  }
+
   function t(key) {
     return typeof global.t === 'function' ? global.t(key) : key;
   }
@@ -120,6 +134,7 @@
         if (!Array.isArray(data)) return;
         global.__skillsAllData = data;
         buildSkillMaps(data);
+        if (typeof global.buildJPSkillNameMap === 'function') global.buildJPSkillNameMap(data);
       })
       .catch(function () {
         /* silent */
@@ -171,6 +186,7 @@
           if (!card.SupportId) return;
           cardById.set(String(card.SupportId), {
             name: card.SupportName || '',
+            nameJP: card.SupportNameJP || '',
             rarity: card.SupportRarity || '',
             image: card.SupportImage || '',
             server: card.SupportServer || '',
@@ -192,7 +208,9 @@
           if (!u.UmaId) return;
           umaById.set(String(u.UmaId), {
             name: u.UmaName || '',
+            nameJP: u.UmaNameJP || '',
             nickname: u.UmaNickname || '',
+            nicknameJP: u.UmaNicknameJP || '',
             server: u.UmaServer || '',
             image: u.UmaImage || '',
           });
@@ -280,11 +298,13 @@
   var RARITY_SUFFIX_RE = /\s*\((SSR|SR|R)\)\s*$/i;
 
   function renderCardRow(c) {
+    var siteLang = getSiteLang();
+    var name = (siteLang === 'ja' && c.nameJP) || c.name;
     var row = '<div class="sp-card-row">';
     if (c.image) {
       row += '<img class="sp-card-thumb" src="' + escapeHtml(c.image) + '" alt="" loading="lazy">';
     }
-    var displayName = c.rarity ? c.name.replace(RARITY_SUFFIX_RE, '') : c.name;
+    var displayName = c.rarity ? name.replace(RARITY_SUFFIX_RE, '') : name;
     row += '<span class="sp-card-name">' + escapeHtml(displayName) + '</span>';
     if (c.rarity) {
       row += '<span class="sp-card-rarity">' + escapeHtml(c.rarity) + '</span>';
@@ -294,31 +314,33 @@
   }
 
   function renderCharRow(u) {
+    var siteLang = getSiteLang();
+    var name = (siteLang === 'ja' && u.nameJP) || u.name;
+    var nickname = (siteLang === 'ja' && u.nicknameJP) || u.nickname;
     var row = '<div class="sp-card-row">';
     if (u.image) {
       row += '<img class="sp-card-thumb" src="' + escapeHtml(u.image) + '" alt="" loading="lazy">';
     }
-    var label = u.nickname ? u.name + ' (' + u.nickname + ')' : u.name;
+    var label = nickname ? name + ' (' + nickname + ')' : name;
     row += '<span class="sp-card-name">' + escapeHtml(label) + '</span>';
     row += '</div>';
     return row;
   }
 
   function buildPopupHTML(skill, rawName) {
-    var lang = getLanguage();
+    var siteLang = getSiteLang();
+    var isJP = siteLang === 'ja';
 
-    // Name resolution
-    var displayName =
-      lang === 'jp'
-        ? skill.jpname || skill.name_en || skill.enname || rawName
-        : skill.name_en || skill.enname || skill.jpname || rawName;
-    var altName = lang === 'jp' ? skill.name_en || skill.enname || '' : skill.jpname || '';
+    // Name resolution — follows site language
+    var displayName = isJP
+      ? skill.jpname || skill.name_en || skill.enname || rawName
+      : skill.name_en || skill.enname || skill.jpname || rawName;
+    var altName = isJP ? skill.name_en || skill.enname || '' : skill.jpname || '';
 
-    // Description
-    var desc =
-      lang === 'jp'
-        ? skill.jpdesc || skill.desc_en || skill.endesc || ''
-        : skill.desc_en || skill.endesc || skill.jpdesc || '';
+    // Description — follows site language
+    var desc = isJP
+      ? skill.jpdesc || skill.desc_en || skill.endesc || ''
+      : skill.desc_en || skill.endesc || skill.jpdesc || '';
 
     var rarity = skill.rarity;
     var cost = typeof skill.cost === 'number' ? skill.cost : null;
@@ -341,7 +363,7 @@
     if (altName && normalize(altName) !== normalize(displayName)) {
       html +=
         '<div class="sp-section"><div class="sp-label">' +
-        escapeHtml(lang === 'jp' ? t('skillPopup.english') : t('skillPopup.japanese')) +
+        escapeHtml(isJP ? t('skillPopup.english') : t('skillPopup.japanese')) +
         '</div><div class="sp-desc">' +
         escapeHtml(altName) +
         '</div></div>';
@@ -382,7 +404,7 @@
       var effectItems = [];
       condGroups.forEach(function (cg) {
         (cg.effects || []).forEach(function (eff) {
-          var label = EFFECT_LABELS[eff.type] || 'Effect ' + eff.type;
+          var label = getEffectLabel(eff.type);
           var val = '';
           if (eff.value != null && eff.value !== 0) {
             if (HP_EFFECT_TYPES[eff.type]) {
@@ -629,6 +651,8 @@
   function init() {
     document.addEventListener('click', handleClick, true);
     document.addEventListener('keydown', handleKeydown);
+    // Preload skill data immediately so JP name map is available for all pages
+    loadData();
   }
 
   if (document.readyState === 'loading') {

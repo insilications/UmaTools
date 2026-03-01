@@ -431,6 +431,11 @@ async function buildCharacters(outPath, manifest, noFetch, thumbDir) {
     // Clean bracket prefix e.g. "[Special Dreamer]" → "Special Dreamer"
     nickname = nickname.replace(/^\[(.+)\]$/, '$1').trim();
 
+    // JP name and nickname
+    const nameJP = (card.name_jp || '').trim() || null;
+    let nicknameJP = (card.title_jp || '').trim();
+    nicknameJP = nicknameJP ? nicknameJP.replace(/^\[(.+)\]$/, '$1').trim() : null;
+
     const slug = card.url_name || `${cardId}-${slugify(name)}`;
 
     // Stats
@@ -473,7 +478,9 @@ async function buildCharacters(outPath, manifest, noFetch, thumbDir) {
     result.push({
       UmaKey: nickname ? `${name} :: ${nickname}` : `${name} :: ${slug}`,
       UmaName: name,
+      UmaNameJP: nameJP,
       UmaNickname: nickname || null,
+      UmaNicknameJP: nicknameJP,
       UmaSlug: slug,
       UmaId: String(cardId),
       UmaServer: card.release_en ? 'global' : 'jp',
@@ -770,6 +777,8 @@ async function buildSupports(outEventsPath, outHintsPath, manifest, noFetch, thu
     const rarity = RARITY_MAP[card.rarity] || 'UNKNOWN';
     const slug = card.url_name || `${supId}-${slugify(charName)}`;
     const displayName = charName ? `${charName} (${rarity})` : `Support #${supId} (${rarity})`;
+    const charNameJP = (card.name_jp || '').trim();
+    const displayNameJP = charNameJP ? `${charNameJP} (${rarity})` : null;
 
     // Hints
     const hintSkills = card.hints?.hint_skills || [];
@@ -824,6 +833,7 @@ async function buildSupports(outEventsPath, outHintsPath, manifest, noFetch, thu
       SupportSlug: slug,
       SupportId: String(supId),
       SupportName: displayName,
+      SupportNameJP: displayNameJP,
       SupportRarity: rarity,
       SupportServer: card.release_en ? 'global' : 'jp',
       SupportType: supportType,

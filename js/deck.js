@@ -10,6 +10,70 @@
   const SUPPORT_TYPES = ['Speed', 'Stamina', 'Power', 'Guts', 'Wit', 'Friend', 'Group'];
   const RARITY_ORDER = ['SSR', 'SR', 'R'];
 
+  // i18n mappings for support type filter buttons
+  const TYPE_I18N = {
+    'Speed': 'common.speed',
+    'Stamina': 'common.stamina',
+    'Power': 'common.power',
+    'Guts': 'common.guts',
+    'Wit': 'deck.wit',
+    'Friend': 'deck.friend',
+    'Group': 'deck.group',
+  };
+
+  // i18n mappings for effect names
+  const EFFECT_I18N = {
+    'Race Bonus': 'deck.effect.raceBonus',
+    'Fan Bonus': 'deck.effect.fanBonus',
+    'Training Effectiveness': 'deck.effect.trainingEffectiveness',
+    'Speed Bonus': 'deck.effect.speedBonus',
+    'Stamina Bonus': 'deck.effect.staminaBonus',
+    'Power Bonus': 'deck.effect.powerBonus',
+    'Guts Bonus': 'deck.effect.gutsBonus',
+    'Wit Bonus': 'deck.effect.witBonus',
+    'Skill Point Bonus': 'deck.effect.skillPointBonus',
+    'Hint Levels': 'deck.effect.hintLevels',
+    'Friendship Bonus': 'deck.effect.friendshipBonus',
+    'Initial Speed': 'deck.effect.initialSpeed',
+    'Initial Stamina': 'deck.effect.initialStamina',
+    'Initial Power': 'deck.effect.initialPower',
+    'Initial Guts': 'deck.effect.initialGuts',
+    'Initial Wit': 'deck.effect.initialWit',
+    'Initial Friendship Gauge': 'deck.effect.initialFriendshipGauge',
+    'Hint Frequency': 'deck.effect.hintFrequency',
+    'Specialty Priority': 'deck.effect.specialtyPriority',
+    'Wit Friendship Recovery': 'deck.effect.witFriendshipRecovery',
+    'Mood Effect': 'deck.effect.moodEffect',
+    'Energy Cost Reduction': 'deck.effect.energyCostReduction',
+    'Event Effectiveness': 'deck.effect.eventEffectiveness',
+    'Event Recovery': 'deck.effect.eventRecovery',
+    'Failure Protection': 'deck.effect.failureProtection',
+  };
+
+  function localizeEffectName(name) {
+    var key = EFFECT_I18N[name];
+    return key ? t(key) : name;
+  }
+
+  function localizeTypeName(name) {
+    var key = TYPE_I18N[name];
+    return key ? t(key) : name;
+  }
+
+  // i18n mappings for character filter buttons
+  const CHAR_FILTER_I18N = {
+    'Short': 'common.sprint',
+    'Mile': 'common.mile',
+    'Medium': 'common.medium',
+    'Long': 'common.long',
+    'Turf': 'common.turf',
+    'Dirt': 'common.dirt',
+    'Front': 'common.front',
+    'Pace': 'common.pace',
+    'Late': 'common.late',
+    'End': 'common.end',
+  };
+
   // Limit break labels (5 stops)
   const LB_LABELS = ['LB0', 'LB1', 'LB2', 'LB3', 'MLB'];
 
@@ -147,19 +211,24 @@
 
   // --- Skill categorization ---
   const HINT_CATEGORIES = {
-    sprint: { label: 'Sprint', order: 0 },
-    mile: { label: 'Mile', order: 1 },
-    medium: { label: 'Medium', order: 2 },
-    long: { label: 'Long', order: 3 },
-    'front-pace': { label: 'Front/Pace', order: 4 },
-    'late-end': { label: 'Late/End', order: 5 },
-    corner: { label: 'Corner', order: 6 },
-    straight: { label: 'Straight', order: 7 },
-    dirt: { label: 'Dirt', order: 8 },
-    turf: { label: 'Turf', order: 9 },
-    debuff: { label: 'Debuff', order: 10 },
-    general: { label: 'General', order: 11 },
+    sprint: { i18nKey: 'common.sprint', order: 0 },
+    mile: { i18nKey: 'common.mile', order: 1 },
+    medium: { i18nKey: 'common.medium', order: 2 },
+    long: { i18nKey: 'common.long', order: 3 },
+    'front-pace': { i18nKey: 'common.frontPace', order: 4 },
+    'late-end': { i18nKey: 'common.lateEnd', order: 5 },
+    corner: { i18nKey: 'common.corner', order: 6 },
+    straight: { i18nKey: 'common.straight', order: 7 },
+    dirt: { i18nKey: 'common.dirt', order: 8 },
+    turf: { i18nKey: 'common.turf', order: 9 },
+    debuff: { i18nKey: 'common.debuff', order: 10 },
+    general: { i18nKey: 'common.general', order: 11 },
   };
+
+  function hintCatLabel(catKey) {
+    var cat = HINT_CATEGORIES[catKey];
+    return cat ? t(cat.i18nKey) : catKey;
+  }
 
   function categorizeSkill(skill) {
     const types = skill?.type || [];
@@ -422,7 +491,7 @@
           hintDetails.set(h.Name, { sources: [], totalLevel: 0, skillId: h.SkillId });
         }
         const entry = hintDetails.get(h.Name);
-        entry.sources.push({ cardName: cleanCardName(card.SupportName), hintLevel: cardHintLv });
+        entry.sources.push({ cardName: cleanCardName(getLocalizedSupportName(card)), hintLevel: cardHintLv });
         entry.totalLevel += cardHintLv;
       }
     }
@@ -553,9 +622,10 @@
       aptHtml += '</div>';
     }
 
+    const locChar = getLocalizedUmaName(c);
     const charImgSrc = c.UmaImage || '';
     const charImgHtml = charImgSrc
-      ? `<img class="char-thumb" src="${escHtml(charImgSrc)}" alt="${escHtml(c.UmaName)}" loading="lazy">`
+      ? `<img class="char-thumb" src="${escHtml(charImgSrc)}" alt="${escHtml(locChar.name)}" loading="lazy">`
       : '';
 
     let starBtnsHtml = '<div class="slot-star-row">';
@@ -569,8 +639,8 @@
       <div class="deck-character-card">
         ${charImgHtml}
         <div class="char-info">
-          <div class="char-name">${escHtml(c.UmaName)}</div>
-          ${c.UmaNickname ? `<div class="char-nickname">${escHtml(c.UmaNickname)}</div>` : ''}
+          <div class="char-name">${escHtml(locChar.name)}</div>
+          ${locChar.nickname ? `<div class="char-nickname">${escHtml(locChar.nickname)}</div>` : ''}
           ${starBtnsHtml}
           ${statsHtml}
           ${aptHtml}
@@ -587,7 +657,7 @@
     for (let i = 0; i < MAX_SUPPORTS; i++) {
       const s = selectedSupports[i];
       if (s) {
-        const name = cleanCardName(s.SupportName);
+        const name = cleanCardName(getLocalizedSupportName(s));
         const imgSrc = s.SupportImage || '';
         const imgHtml = imgSrc
           ? `<img class="support-thumb" src="${escHtml(imgSrc)}" alt="${escHtml(name)}" loading="lazy">`
@@ -595,7 +665,7 @@
 
         const typeStr = s.SupportType || '';
         const typeBadge = typeStr
-          ? `<span class="support-type-badge" data-type="${escHtml(typeStr)}">${escHtml(typeStr)}</span>`
+          ? `<span class="support-type-badge" data-type="${escHtml(typeStr)}">${escHtml(localizeTypeName(typeStr))}</span>`
           : '';
 
         const lb = supportLbStops[i] ?? 4;
@@ -729,7 +799,7 @@
       const effectRows = DECK_EFFECT_NAMES.filter((n) => totals[n]).map((n) => {
         const sym = symbols[n] === 'percent' ? '%' : '';
         return `<div class="effect-row">
-          <span class="effect-name">${escHtml(n)}</span>
+          <span class="effect-name">${escHtml(localizeEffectName(n))}</span>
           <span class="effect-value">${totals[n]}${sym}</span>
         </div>`;
       });
@@ -757,7 +827,7 @@
           }
           const entry = hintSources.get(h.Name);
           entry.count++;
-          entry.sources.push(cleanCardName(s.SupportName));
+          entry.sources.push(cleanCardName(getLocalizedSupportName(s)));
         }
       }
 
@@ -796,17 +866,17 @@
 
         html += '<div class="deck-hints-grouped">';
         for (const cat of sortedCats) {
-          const catInfo = HINT_CATEGORIES[cat] || { label: cat };
           const hints = grouped[cat].sort((a, b) => a.name.localeCompare(b.name, 'en'));
           html += '<div class="hint-category">';
-          html += `<span class="hint-cat-label">${escHtml(catInfo.label)}</span>`;
+          html += `<span class="hint-cat-label">${escHtml(hintCatLabel(cat))}</span>`;
           for (const h of hints) {
             const isShared = h.count > 1;
             const isAptMatch = aptCategories.has(cat);
             let cls = 'hint-pill';
             if (isShared) cls += ' shared';
             if (isAptMatch) cls += ' apt-match';
-            const label = isShared ? `${h.name} (${h.count})` : h.name;
+            var hintDisplayName = typeof window.getLocalizedSkillName === 'function' ? window.getLocalizedSkillName(h.name) : h.name;
+            const label = isShared ? `${hintDisplayName} (${h.count})` : hintDisplayName;
             const tooltip = h.sources.join(', ');
             html += `<span class="${cls}" data-skill-name="${escHtml(h.name)}" tabindex="0" role="button" title="${escHtml(tooltip)}">${escHtml(label)}</span>`;
           }
@@ -826,7 +896,7 @@
       html += '<div class="synergy-type-coverage">';
       html += `<span>${t('deck.typeCoverage')}: ${coverage.covered.length}/${coverage.total}</span>`;
       for (const [type, count] of Object.entries(coverage.typeCounts)) {
-        html += `<span class="synergy-type-badge" data-type="${escHtml(type)}"><span>${escHtml(type)}</span><span class="synergy-type-count">&times;${count}</span></span>`;
+        html += `<span class="synergy-type-badge" data-type="${escHtml(type)}"><span>${escHtml(localizeTypeName(type))}</span><span class="synergy-type-count">&times;${count}</span></span>`;
       }
       html += '</div>';
 
@@ -836,8 +906,9 @@
         html += '<div class="synergy-shared-hints">';
         for (const sh of sharedHints) {
           const srcNames = sh.sources.map((s) => s.cardName).join(', ');
+          var shDisplayName = typeof window.getLocalizedSkillName === 'function' ? window.getLocalizedSkillName(sh.name) : sh.name;
           html += `<div class="synergy-hint-row">
-            <span class="hint-pill shared" data-skill-name="${escHtml(sh.name)}" tabindex="0" role="button">${escHtml(sh.name)}</span>
+            <span class="hint-pill shared" data-skill-name="${escHtml(sh.name)}" tabindex="0" role="button">${escHtml(shDisplayName)}</span>
             <span class="synergy-detail">Lv${sh.effectiveLevel} (${sh.discountPct}% off) &mdash; ${escHtml(srcNames)}</span>
           </div>`;
         }
@@ -1041,7 +1112,8 @@
     let html = '';
     for (let i = 0; i < decks.length; i++) {
       const d = decks[i];
-      const charName = d.char ? findCharBySlug(d.char)?.UmaName || d.char : t('deck.noCharacter');
+      const charObj = d.char ? findCharBySlug(d.char) : null;
+      const charName = charObj ? getLocalizedUmaName(charObj).name || d.char : t('deck.noCharacter');
       const supCount = (d.supports || []).length;
 
       html += `<div class="saved-deck-item" data-idx="${i}">
@@ -1059,7 +1131,7 @@
   }
 
   function openSavedDecksModal() {
-    saveDeckName.value = selectedChar ? selectedChar.UmaName : '';
+    saveDeckName.value = selectedChar ? getLocalizedUmaName(selectedChar).name : '';
     renderSavedDecks();
     savedDecksModal.hidden = false;
   }
@@ -1266,7 +1338,7 @@
       const cardPills = cards
         .map(
           (c) =>
-            `<span class="template-card-pill"><span class="pill-type" data-type="${escHtml(c.SupportType)}">${escHtml(c.SupportType)}</span>${escHtml(c.SupportName)}</span>`
+            `<span class="template-card-pill"><span class="pill-type" data-type="${escHtml(c.SupportType)}">${escHtml(c.SupportType)}</span>${escHtml(cleanCardName(getLocalizedSupportName(c)))}</span>`
         )
         .join('');
       const usageText = t('deck.templateUsage').replace('{0}', tmpl.usage);
@@ -1328,14 +1400,14 @@
 
   function initFilterButtons() {
     typeFiltersEl.innerHTML = '';
-    for (const t of SUPPORT_TYPES) {
+    for (const tp of SUPPORT_TYPES) {
       const btn = document.createElement('button');
       btn.className = 'filter-btn';
-      btn.textContent = t;
-      btn.dataset.type = t;
+      btn.textContent = localizeTypeName(tp);
+      btn.dataset.type = tp;
       btn.addEventListener('click', () => {
-        if (filterTypes.has(t)) filterTypes.delete(t);
-        else filterTypes.add(t);
+        if (filterTypes.has(tp)) filterTypes.delete(tp);
+        else filterTypes.add(tp);
         updateFilterButtons();
         renderModalList();
       });
@@ -1388,14 +1460,20 @@
 
   const supportSortEl = document.getElementById('supportSort');
 
-  function initSortDropdown() {
+  function populateSortDropdown() {
+    const prev = supportSortEl.value;
     supportSortEl.innerHTML = `<option value="">\u2014</option>`;
     for (const name of SORTABLE_EFFECTS) {
       const opt = document.createElement('option');
       opt.value = name;
-      opt.textContent = name;
+      opt.textContent = localizeEffectName(name);
       supportSortEl.appendChild(opt);
     }
+    supportSortEl.value = prev;
+  }
+
+  function initSortDropdown() {
+    populateSortDropdown();
     supportSortEl.addEventListener('change', () => {
       sortByEffect = supportSortEl.value;
       renderModalList();
@@ -1420,7 +1498,8 @@
         if (!matchesServer(s)) return false;
         if (filterTypes.size > 0 && !filterTypes.has(s.SupportType)) return false;
         if (filterRarity && s.SupportRarity !== filterRarity) return false;
-        if (search && !cleanCardName(s.SupportName).toLowerCase().includes(search)) return false;
+        if (search && !cleanCardName(s.SupportName).toLowerCase().includes(search) &&
+            !cleanCardName(s.SupportNameJP || '').toLowerCase().includes(search)) return false;
         return true;
       })
       .map((s) => {
@@ -1446,11 +1525,11 @@
 
     let html = '';
     for (const s of filtered) {
-      const name = cleanCardName(s.SupportName);
+      const name = cleanCardName(getLocalizedSupportName(s));
       const cls = s._selected ? 'modal-card-item disabled' : 'modal-card-item';
       const typeStr = s.SupportType || '';
       const typeBadge = typeStr
-        ? `<span class="support-type-badge" data-type="${escHtml(typeStr)}">${escHtml(typeStr)}</span>`
+        ? `<span class="support-type-badge" data-type="${escHtml(typeStr)}">${escHtml(localizeTypeName(typeStr))}</span>`
         : '';
       const imgSrc = s.SupportImage || '';
       const imgHtml = imgSrc
@@ -1539,7 +1618,7 @@
     effectsLbStop = lbStop ?? 4;
     effectsLevelSlider.max = 4;
     effectsLevelSlider.value = effectsLbStop;
-    effectsPanelTitle.textContent = cleanCardName(card.SupportName);
+    effectsPanelTitle.textContent = cleanCardName(getLocalizedSupportName(card));
     renderEffects();
     effectsPanel.hidden = false;
   }
@@ -1567,7 +1646,7 @@
       const symbol = eff.symbol === 'percent' ? '%' : '';
       const cls = val === 0 ? 'effect-value zero' : 'effect-value';
       html += `<div class="effect-row">
-        <span class="effect-name">${escHtml(eff.name)}</span>
+        <span class="effect-name">${escHtml(localizeEffectName(eff.name))}</span>
         <span class="${cls}">${val}${symbol}</span>
       </div>`;
     }
@@ -1606,7 +1685,10 @@
       if (search) {
         const name = (c.UmaName || '').toLowerCase();
         const nick = (c.UmaNickname || '').toLowerCase();
-        if (!name.includes(search) && !nick.includes(search)) return false;
+        const nameJP = (c.UmaNameJP || '').toLowerCase();
+        const nickJP = (c.UmaNicknameJP || '').toLowerCase();
+        if (!name.includes(search) && !nick.includes(search) &&
+            !nameJP.includes(search) && !nickJP.includes(search)) return false;
       }
       // AND across groups: must pass all non-empty groups
       const apt = c.UmaAptitudes;
@@ -1632,7 +1714,7 @@
       for (const key of g.keys) {
         const btn = document.createElement('button');
         btn.className = 'filter-btn';
-        btn.textContent = key;
+        btn.textContent = CHAR_FILTER_I18N[key] ? t(CHAR_FILTER_I18N[key]) : key;
         btn.dataset.key = key;
         btn.addEventListener('click', () => {
           if (g.set.has(key)) g.set.delete(key);
@@ -1668,8 +1750,9 @@
 
     let html = '';
     for (const c of filtered) {
-      const name = c.UmaName || '';
-      const nick = c.UmaNickname || '';
+      const locC = getLocalizedUmaName(c);
+      const name = locC.name;
+      const nick = locC.nickname;
       const isSelected = selectedChar && selectedChar.UmaSlug === c.UmaSlug;
       const cls = isSelected ? 'modal-card-item disabled' : 'modal-card-item';
       const imgSrc = c.UmaImage || '';
@@ -1951,6 +2034,30 @@
     if (!supportModal.hidden) renderModalList();
     if (!charModal.hidden) renderCharModalList();
   });
+
+  // Re-render visible sections when site language changes (EN↔JP)
+  function refreshLocalizedDisplay() {
+    renderCharacter();
+    renderSupportSlots();
+    renderSummary();
+    initFilterButtons();
+    updateFilterButtons();
+    initCharFilterButtons();
+    updateCharFilterButtons();
+    populateSortDropdown();
+    if (!supportModal.hidden) renderModalList();
+    if (!charModal.hidden) renderCharModalList();
+    if (!savedDecksModal.hidden) renderSavedDecks();
+    if (!templatesModal.hidden) renderTemplates();
+    if (!effectsPanel.hidden && effectsCard) {
+      effectsPanelTitle.textContent = cleanCardName(getLocalizedSupportName(effectsCard));
+      renderEffects();
+    }
+  }
+  window.addEventListener('umatools:site-language-change', refreshLocalizedDisplay);
+
+  // Re-render when JP skill name map becomes available (async load from skill-popup.js)
+  window.addEventListener('i18n:jpnames-ready', refreshLocalizedDisplay);
 
   // --- Init ---
   currentServer = readServerPref();

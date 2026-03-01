@@ -336,7 +336,7 @@
     if (!skill) return (fallback || '').trim();
     const server = getSkillLanguage();
     if (server !== 'jp') return (skill.name || fallback || '').trim();
-    if (getSiteLanguage() === 'jp') return (skill.name || fallback || '').trim();
+    if (getSiteLanguage() === 'jp') return (skill.jpName || skill.name || fallback || '').trim();
     const alias = getPrimaryAliasName(skill, { preferEnglish: true });
     if (alias) return alias;
     const localized = (skill.localizedName || '').trim();
@@ -513,6 +513,7 @@
         });
         officialEnglishNameSet = nextOfficialEnglishNames;
         officialEnglishNameMap = nextOfficialNameMap;
+        if (typeof window.buildJPSkillNameMap === 'function') window.buildJPSkillNameMap(list);
         if (window.TeamTrialsOptimizer?.buildEnglishSkillIndex) {
           const teamIndex = window.TeamTrialsOptimizer.buildEnglishSkillIndex(list);
           teamTrialsSkillMetaById.clear();
@@ -1726,12 +1727,26 @@
         if (!isDoubleCircle && !skill.isEvo) {
           // Show base name in datalist for paired ○, full name otherwise
           const displayName = isPairedSingle ? skill.circleBaseName : skill.name;
-          if (isJPServer && siteLanguage === 'jp') {
-            addSuggestionName(displayName);
+
+          if (siteLanguage === 'jp') {
+            // JP site language: show only JP name in datalist
+            let jpDisplay;
+            if (isJPServer) {
+              jpDisplay = isPairedSingle && skill.jpCircleBaseName
+                ? skill.jpCircleBaseName : skill.jpName;
+            }
+            if (!jpDisplay && typeof window.getLocalizedSkillName === 'function') {
+              const jp = window.getLocalizedSkillName(displayName);
+              if (jp !== displayName) jpDisplay = jp;
+            }
+            addSuggestionName(jpDisplay || displayName);
           } else {
+            // EN site language: show only English name(s) in datalist
             addSuggestionName(displayName);
             if (Array.isArray(skill.aliasNames) && skill.aliasNames.length) {
               skill.aliasNames.forEach((alias) => {
+                // Skip Japanese aliases when showing English
+                if (hasJapaneseScript(alias)) return;
                 // Strip ○/◎ suffix from aliases for paired circle skills
                 const clean =
                   isPairedSingle && (alias.endsWith(' ○') || alias.endsWith(' ◎'))
@@ -1746,7 +1761,7 @@
                 addSuggestionName(clean);
               });
             }
-            if (skill.localizedName) {
+            if (skill.localizedName && !hasJapaneseScript(skill.localizedName)) {
               const clean =
                 isPairedSingle &&
                 (skill.localizedName.endsWith(' ○') || skill.localizedName.endsWith(' ◎'))
@@ -1791,11 +1806,15 @@
     const skill =
       typeof skillOrName === 'string' ? findSkillByName(skillOrName) : skillOrName || null;
     if (!skill) return typeof skillOrName === 'string' ? skillOrName : '';
+    let displayName;
     if (getSkillLanguage() !== 'jp') {
       const official = officialEnglishNameMap.get(normalize(skill.name));
-      return official || skill.name;
+      displayName = official || skill.name;
+    } else {
+      displayName = getPreferredSkillInputName(skill, skill.name);
     }
-    return getPreferredSkillInputName(skill, skill.name);
+    if (typeof window.getLocalizedSkillName === 'function') return window.getLocalizedSkillName(displayName);
+    return displayName;
   }
 
   function getEvosForSkill(skillName) {
@@ -1973,6 +1992,7 @@
         .filter(Boolean);
       // JP CSV: use localized_name (official EN) as primary, then first alias; keep JP name as alias
       const isJPCSV = getSkillLanguage() === 'jp';
+      const jpOriginalName = isJPCSV ? rawName : '';
       const jpSwapName = isJPCSV ? localizedName || aliasNames[0] || '' : '';
       const name = jpSwapName || rawName;
       if (isJPCSV && jpSwapName && rawName !== name) {
@@ -2064,6 +2084,7 @@
       if (!catMap[type]) catMap[type] = [];
       catMap[type].push({
         name,
+        jpName: jpOriginalName,
         aliasNames,
         localizedName,
         score,
@@ -2102,6 +2123,15 @@
         // grouping in buildGroups before the circle-specific logic runs.
         pair.single.lowerSkillId = '';
         pair.double.lowerSkillId = '';
+        // Store JP circle base names for localized display
+        if (pair.single.jpName) {
+          pair.single.jpCircleBaseName = (pair.single.jpName.endsWith(' ○') || pair.single.jpName.endsWith(' ◎'))
+            ? pair.single.jpName.slice(0, -2) : pair.single.jpName;
+        }
+        if (pair.double.jpName) {
+          pair.double.jpCircleBaseName = (pair.double.jpName.endsWith(' ○') || pair.double.jpName.endsWith(' ◎'))
+            ? pair.double.jpName.slice(0, -2) : pair.double.jpName;
+        }
       }
     }
 
@@ -4191,17 +4221,16 @@
         // Show rating score in the meta, not the combined optimization score
         const displayScore = it.ratingScore !== undefined ? it.ratingScore : it.score;
         // For circle skills, show which tier was chosen
-        let displayName = it.name;
+        let displayName = formatSkillDisplayName(it.name);
         const skill = findSkillByName(it.name);
         if (circleComboBaseIds.has(it.id) && skill?.circleBaseName) {
-          // ◎ upgrade was chosen (combo) — show base name with ◎
-          displayName = skill.circleBaseName + ' \u25ce';
+          // ◎ upgrade was chosen (combo) — show localized base name with ◎
+          displayName = formatSkillDisplayName(skill.circleBaseName) + ' \u25ce';
         } else if (skill?.circleUpgrade) {
-          // ○ only was chosen (no upgrade) — show base name with ○
-          displayName = skill.circleBaseName + ' \u25cb';
+          // ○ only was chosen (no upgrade) — show localized base name with ○
+          displayName = formatSkillDisplayName(skill.circleBaseName) + ' \u25cb';
         }
         if (skill?.isEvo) displayName += ' (evo)';
-        displayName = appendLocalizedDisplayName(displayName, it.name);
         const meta = includedWith
           ? t('optimizer.includedWith', { name: includedWith })
           : t('optimizer.costScoreDisplay', { cost: it.cost, score: displayScore });
@@ -4547,13 +4576,18 @@
         });
       });
 
+      const isJPDisplay = getSiteLanguage() === 'jp';
       const frag = document.createDocumentFragment();
       skills.forEach((skill) => {
         const cat = canonicalCategory(skill.category);
         const isGold = isGoldCategory(cat);
         const isPairedSingle = !!skill.circleUpgrade;
         const displayName = isPairedSingle && skill.circleBaseName
-          ? skill.circleBaseName
+          ? (isJPDisplay && skill.jpCircleBaseName
+            ? skill.jpCircleBaseName
+            : (isJPDisplay && typeof window.getLocalizedSkillName === 'function'
+              ? window.getLocalizedSkillName(skill.circleBaseName)
+              : skill.circleBaseName))
           : formatSkillDisplayName(skill);
         const addName = isPairedSingle && skill.circleBaseName ? skill.circleBaseName : skill.name;
 
@@ -5567,63 +5601,63 @@
     const tutorial = window.UmaTutorial.create({
       pageKey: 'optimizer',
       openButton: '#tutorial-open',
-      panelTitle: 'Optimizer quick tour',
+      panelTitle: t('optimizer.tutorialTitle'),
       getTokens: () => ({
         goalLabel: optimizeModeSelect?.selectedOptions?.[0]?.textContent?.trim() || 'Rating',
       }),
       steps: [
         {
-          title: 'Quick setup path',
-          shortTitle: 'Quick setup path',
-          text: 'This lightweight tour is skippable and re-openable any time from this Help / Tutorial button.',
+          title: t('optimizer.tutStep1'),
+          shortTitle: t('optimizer.tutStep1'),
+          text: t('optimizer.tutStep1Text'),
           target: '#tutorial-open',
         },
         {
-          title: 'Add your skill points',
-          shortTitle: 'Skill points',
-          text: 'Set your available skill points budget here. Recommendations and remaining points use this value.',
+          title: t('optimizer.tutStep2'),
+          shortTitle: t('optimizer.tutStep2Short'),
+          text: t('optimizer.tutStep2Text'),
           target: '#budget',
         },
         {
-          title: 'Use Fast Learner when needed',
-          shortTitle: 'Fast Learner toggle',
-          text: 'Turn this on if your Uma has reduced skill costs. Skill costs update automatically.',
+          title: t('optimizer.tutStep3'),
+          shortTitle: t('optimizer.tutStep3Short'),
+          text: t('optimizer.tutStep3Text'),
           target: '#fast-learner',
         },
         {
-          title: 'Optimize for {goalLabel}',
-          shortTitle: 'Optimize for goal',
-          text: 'Choose the selected goal or category. Current mode is {goalLabel}, and you can switch any time.',
+          title: t('optimizer.tutStep4'),
+          shortTitle: t('optimizer.tutStep4Short'),
+          text: t('optimizer.tutStep4Text'),
           target: '#optimize-mode',
         },
         {
-          title: 'Match race affinities',
-          shortTitle: 'Race configuration',
-          text: 'Set track, distance, and strategy to match your Uma. Affinities change how skills are scored.',
+          title: t('optimizer.tutStep5'),
+          shortTitle: t('optimizer.tutStep5Short'),
+          text: t('optimizer.tutStep5Text'),
           target: '#optimizer-race-config .race-config-pane',
         },
         {
-          title: 'Use the skill builder',
-          shortTitle: 'Skill builder',
-          text: 'Generate Build auto-picks strong rating skills for your selected categories, then you can fine-tune rows.',
+          title: t('optimizer.tutStep6'),
+          shortTitle: t('optimizer.tutStep6Short'),
+          text: t('optimizer.tutStep6Text'),
           target: '#optimizer-skill-builder',
         },
         {
-          title: 'Enter stats and star level',
-          shortTitle: 'Stats and stars',
-          text: 'Input final stats, star rarity, and unique level so projected rating matches your Uma.',
+          title: t('optimizer.tutStep7'),
+          shortTitle: t('optimizer.tutStep7Short'),
+          text: t('optimizer.tutStep7Text'),
           target: '#rating-card',
         },
         {
-          title: 'Add skills to the optimizer',
-          shortTitle: 'Add skills',
-          text: 'Type skills in these rows. Type and category are detected, and costs update with your settings.',
+          title: t('optimizer.tutStep8'),
+          shortTitle: t('optimizer.tutStep8Short'),
+          text: t('optimizer.tutStep8Text'),
           target: '#rows',
         },
         {
-          title: 'Find your Skills to Buy',
-          shortTitle: 'Skills to Buy',
-          text: 'Your recommended purchase list appears here once rows are filled. This is where to read final picks.',
+          title: t('optimizer.tutStep9'),
+          shortTitle: t('optimizer.tutStep9Short'),
+          text: t('optimizer.tutStep9Text'),
           target: '#skills-to-buy-section',
         },
       ],

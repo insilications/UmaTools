@@ -86,7 +86,8 @@
 
   function renderUmaThumb(u) {
     if (u?.img) {
-      const alt = u?.name ? `${u.name} portrait` : 'Uma Musume portrait';
+      const dName = u ? displayUmaName(u) : '';
+      const alt = dName ? `${dName} portrait` : 'Uma Musume portrait';
       return `<img src="${u.img}" alt="${alt}" loading="lazy" decoding="async" fetchpriority="low">`;
     }
     const init = umaInitialsOf(u?.name || '?');
@@ -97,7 +98,9 @@
   }
 
   function renderUmaWinnerCard(u, extraClass = '') {
-    const nick = u?.nick ? ` <span class="subtle">(${u.nick})</span>` : '';
+    const dName = u ? displayUmaName(u) : 'Unknown';
+    const dNick = u ? displayUmaNickname(u) : '';
+    const nick = dNick ? ` <span class="subtle">(${dNick})</span>` : '';
     const hasImg = !!u?.img;
     return `
       <div class="card reveal uma-winner ${extraClass}">
@@ -105,7 +108,7 @@
           ${renderUmaThumb(u)}
         </div>
         <div class="uma-winner-copy">
-          <h3>${u?.name || 'Unknown'}${nick}</h3>
+          <h3>${dName}${nick}</h3>
           <div class="subtle">${t('random.rollAgain')}</div>
         </div>
       </div>
@@ -167,7 +170,11 @@
         const slug = c?.SupportSlug || c?.slug || null;
         const id = c?.SupportId ?? null;
         const server = c?.SupportServer || 'global';
-        return { name, rawName, rarity, img, slug, id, server };
+        // Preserve raw JP/EN fields for localization
+        const SupportName = c?.SupportName || '';
+        const SupportNameJP = c?.SupportNameJP || '';
+        const nameJP = SupportNameJP ? cleanCardName(SupportNameJP) : '';
+        return { name, nameJP, rawName, rarity, img, slug, id, server, SupportName, SupportNameJP };
       })
       .filter((s) => s.slug); // require slug for uniqueness
   }
@@ -177,6 +184,13 @@
       .map((u) => ({
         name: u?.UmaName || '',
         nick: u?.UmaNickname || '',
+        nameJP: u?.UmaNameJP || '',
+        nickJP: u?.UmaNicknameJP || '',
+        // Preserve raw fields for getLocalizedUmaName()
+        UmaName: u?.UmaName || '',
+        UmaNickname: u?.UmaNickname || '',
+        UmaNameJP: u?.UmaNameJP || '',
+        UmaNicknameJP: u?.UmaNicknameJP || '',
         slug: u?.UmaSlug || null,
         img: u?.UmaImage || u?.UmaImageLocal || u?.UmaThumb || u?.Thumb || null,
         server: u?.UmaServer || 'global',
@@ -184,10 +198,49 @@
       .filter((u) => u.name);
   }
 
+  // ---- Localized display helpers (work with mapped objects) ----
+  function displaySupportName(s) {
+    // If mapped object has raw fields, delegate to global helper
+    if (s.SupportName || s.SupportNameJP) return cleanCardName(getLocalizedSupportName(s));
+    // Fallback for simplified objects
+    var isJP = (window.I18n && window.I18n.getLang() === 'ja');
+    return (isJP && s.nameJP) || s.name || '';
+  }
+
+  function displayUmaName(u) {
+    // If mapped object has raw fields, delegate to global helper
+    if (u.UmaName || u.UmaNameJP) {
+      var loc = getLocalizedUmaName(u);
+      return loc.name || u.name || '';
+    }
+    var isJP = (window.I18n && window.I18n.getLang() === 'ja');
+    return (isJP && u.nameJP) || u.name || '';
+  }
+
+  function displayUmaNickname(u) {
+    if (u.UmaName || u.UmaNameJP) {
+      var loc = getLocalizedUmaName(u);
+      return loc.nickname || u.nick || '';
+    }
+    var isJP = (window.I18n && window.I18n.getLang() === 'ja');
+    return (isJP && u.nickJP) || u.nick || '';
+  }
+
   function buildDatalist() {
-    const opts = supports
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .map((s) => `<option value="${s.name} (${s.rarity}) [${s.slug}]"></option>`)
+    const sorted = supports.slice().sort((a, b) => a.name.localeCompare(b.name));
+    const opts = sorted
+      .map((s) => {
+        const dispName = displaySupportName(s);
+        // Primary option uses localized display name
+        let html = `<option value="${dispName} (${s.rarity}) [${s.slug}]"></option>`;
+        // If JP name differs from EN name, add an extra option with the other language
+        // so users can search in either language
+        if (s.nameJP && s.nameJP !== s.name) {
+          const altName = dispName === s.nameJP ? s.name : s.nameJP;
+          html += `<option value="${altName} (${s.rarity}) [${s.slug}]"></option>`;
+        }
+        return html;
+      })
       .join('');
     els.supportList.innerHTML = opts;
   }
@@ -198,12 +251,19 @@
     const m2 = /^(.+?)\s*\((SSR|SR|R)\)\s*$/.exec(val);
     if (m2) {
       const [_, n, r] = m2;
+      const nLower = n.toLowerCase();
+      const rUpper = r.toUpperCase();
       const hit = supports.find(
-        (s) => s.name.toLowerCase() === n.toLowerCase() && s.rarity === r.toUpperCase()
+        (s) =>
+          (s.name.toLowerCase() === nLower || (s.nameJP && s.nameJP.toLowerCase() === nLower)) &&
+          s.rarity === rUpper
       );
       if (hit) return hit.slug;
     }
-    const hit2 = supports.find((s) => s.name.toLowerCase() === val.toLowerCase());
+    const valLower = val.toLowerCase();
+    const hit2 = supports.find(
+      (s) => s.name.toLowerCase() === valLower || (s.nameJP && s.nameJP.toLowerCase() === valLower)
+    );
     return hit2?.slug || null;
   }
 
@@ -212,7 +272,7 @@
     const chips = ex
       .map((slug) => {
         const s = supports.find((x) => x.slug === slug);
-        const label = s ? `${s.name} (${s.rarity})` : slug;
+        const label = s ? `${displaySupportName(s)} (${s.rarity})` : slug;
         return `<span class="chip">${label}<button data-slug="${slug}" aria-label="Remove ${label}">×</button></span>`;
       })
       .join('');
@@ -257,14 +317,15 @@
   }
 
   function cardMarkup(s, extraClass = '') {
+    const dispName = displaySupportName(s);
     const img = s.img
-      ? `<img src="${s.img}" alt="${s.name}" loading="lazy" decoding="async" fetchpriority="low">`
+      ? `<img src="${s.img}" alt="${dispName}" loading="lazy" decoding="async" fetchpriority="low">`
       : `<span>${initialsOf(s.name)}</span>`;
     return `
       <div class="card card-support ${extraClass}">
         <div class="card-thumb">${img}</div>
         <div class="card-title">
-          <h3>${s.name}</h3>
+          <h3>${dispName}</h3>
           ${renderBadge(s.rarity)}
         </div>
       </div>
@@ -338,10 +399,11 @@
 
       const cycle = setInterval(() => {
         const s = pool[Math.floor(Math.random() * pool.length)];
-        titleEl.textContent = s.name;
+        const dispName = displaySupportName(s);
+        titleEl.textContent = dispName;
         applyBadge(badgeEl, s.rarity);
         const live = s.img
-          ? `<img src="${s.img}" alt="${s.name}" loading="lazy" decoding="async" fetchpriority="low">`
+          ? `<img src="${s.img}" alt="${dispName}" loading="lazy" decoding="async" fetchpriority="low">`
           : `<span>${initialsOf(s.name)}</span>`;
         thumbEl.innerHTML = live;
       }, SPIN_MS);
@@ -371,16 +433,18 @@
   // ------- UMA "CS:GO case" style roll (placeholder thumbs) -------
   let umaRolling = false;
   function umaItemMarkup(u, isWinner = false) {
-    const nick = u.nick ? ` <span class="subtle">(${u.nick})</span>` : '';
+    const dName = displayUmaName(u);
+    const dNick = displayUmaNickname(u);
+    const nick = dNick ? ` <span class="subtle">(${dNick})</span>` : '';
     const hasImg = !!u.img;
     return `
         <div class="case-item${isWinner ? ' winner' : ''}"
             data-umaslug="${u.slug || ''}" data-win="${isWinner ? 1 : 0}"
-            title="${u.name}">
+            title="${dName}">
         <div class="uma-thumb${hasImg ? ' has-img' : ''}" aria-hidden="true">
             ${renderUmaThumb(u)}
         </div>
-        <div class="uma-title">${u.name}${nick}</div>
+        <div class="uma-title">${dName}${nick}</div>
         </div>
     `;
   }
@@ -515,7 +579,7 @@
         const u = umaPool[Math.floor(Math.random() * umaPool.length)];
         const title = item.querySelector('.uma-title');
         const thumb = item.querySelector('.uma-thumb');
-        if (title) title.textContent = u.name || '?';
+        if (title) title.textContent = displayUmaName(u) || '?';
         if (thumb) {
           thumb.classList.toggle('has-img', !!u.img);
           thumb.innerHTML = renderUmaThumb(u);
@@ -565,6 +629,19 @@
       if (next !== currentServer) {
         currentServer = next;
         renderDeckStatic();
+      }
+    });
+
+    // Language change — re-render all display text
+    window.addEventListener('i18n:changed', () => {
+      buildDatalist();
+      renderExclusions();
+      // Re-render the deck only if not mid-roll
+      if (!rolling) renderDeckStatic();
+      // If uma area shows the idle prompt, refresh it
+      const umaIdle = els.umaResult?.querySelector('.inline-note');
+      if (umaIdle && !umaRolling) {
+        els.umaResult.innerHTML = `<div class="inline-note">${t('random.clickToPick')}</div>`;
       }
     });
   }
