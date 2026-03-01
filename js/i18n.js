@@ -510,6 +510,7 @@
       'deck.effect.eventEffectiveness': 'Event Effectiveness',
       'deck.effect.eventRecovery': 'Event Recovery',
       'deck.effect.failureProtection': 'Failure Protection',
+      'deck.effect.initialSkillPoints': 'Initial Skill Points',
 
       'common.corner': 'Corner',
       'common.straight': 'Straight',
@@ -1219,6 +1220,7 @@
       'deck.effect.eventEffectiveness': 'イベント効果アップ',
       'deck.effect.eventRecovery': 'イベント回復量アップ',
       'deck.effect.failureProtection': '失敗率ダウン',
+      'deck.effect.initialSkillPoints': '初期スキルPtアップ',
 
       'common.corner': 'コーナー',
       'common.straight': '直線',

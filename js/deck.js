@@ -48,6 +48,7 @@
     'Event Effectiveness': 'deck.effect.eventEffectiveness',
     'Event Recovery': 'deck.effect.eventRecovery',
     'Failure Protection': 'deck.effect.failureProtection',
+    'Effect #32': 'deck.effect.initialSkillPoints',
   };
 
   function localizeEffectName(name) {
