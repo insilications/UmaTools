@@ -61,30 +61,6 @@ function stats(gray) {
   return { mean, std: Math.sqrt(v2) };
 }
 
-function _toGray(imgData) {
-  const { data, width, height } = imgData;
-  const gray = new Uint8ClampedArray(width * height);
-  for (let i = 0, j = 0; i < data.length; i += 4, j++) {
-    const r = data[i],
-      g = data[i + 1],
-      b = data[i + 2];
-    gray[j] = (r * 0.299 + g * 0.587 + b * 0.114) | 0;
-  }
-  return { gray, width, height };
-}
-function _stats(gray) {
-  let s = 0,
-    s2 = 0;
-  const n = gray.length;
-  for (let i = 0; i < n; i++) {
-    const v = gray[i];
-    s += v;
-    s2 += v * v;
-  }
-  const mean = s / n;
-  const v2 = Math.max(1e-6, s2 / n - mean * mean);
-  return { mean, std: Math.sqrt(v2) };
-}
 
 async function _decodeToCanvasFromBlob(blob) {
   try {
@@ -93,6 +69,7 @@ async function _decodeToCanvasFromBlob(blob) {
     c.width = bmp.width;
     c.height = bmp.height;
     c.getContext('2d', { willReadFrequently: true }).drawImage(bmp, 0, 0);
+    bmp.close();
     return c;
   } catch {
     const url = URL.createObjectURL(blob);
@@ -142,8 +119,8 @@ async function loadTemplate(src) {
   const id = canvasFromImg
     .getContext('2d', { willReadFrequently: true })
     .getImageData(0, 0, canvasFromImg.width, canvasFromImg.height);
-  const g = _toGray(id);
-  const st = _stats(g.gray);
+  const g = toGray(id);
+  const st = stats(g.gray);
   tpl = { w: g.width, h: g.height, gray: g.gray, mean: st.mean, std: st.std };
   console.info(`[ocr] Template loaded ${g.width}x${g.height}`);
 }

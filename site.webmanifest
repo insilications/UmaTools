@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "UmaTools",
   "short_name": "UmaTools",
   "description": "Uma Musume training toolkit with skill optimizer, rating calculator, deck builder, skill library, event OCR, hint finder, stamina check, and more.",
@@ -17,7 +17,8 @@
     {
       "src": "/assets/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

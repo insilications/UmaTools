@@ -29,3 +29,5 @@ BROWSER_COMPATIBILITY_CODE_REVIEW.md
 BROWSER_COMPATIBILITY_CHECKLIST.md
 /api/__pycache__
 /tests
+/badges
+/docs/plans

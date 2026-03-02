@@ -51,6 +51,14 @@
       .trim();
   }
 
+  function localizedCardName(card) {
+    if (typeof getLocalizedSupportName === 'function') {
+      // getLocalizedSupportName expects { SupportName, SupportNameJP }
+      return cleanCardName(getLocalizedSupportName({ SupportName: card.rawName, SupportNameJP: card.SupportNameJP }));
+    }
+    return card.name;
+  }
+
   function initialsOf(title) {
     const cleaned = String(title || '')
       .replace(/\(.*?\)/g, '')
@@ -102,16 +110,31 @@
     const slug = c?.SupportSlug || c?.slug || null;
     const id = c?.SupportId ?? null;
     const server = c?.SupportServer || 'global';
+    const SupportNameJP = c?.SupportNameJP || '';
+    const nameJP = cleanCardName(SupportNameJP);
 
-    return { name, rawName, rarity, hints, img, slug, id, server };
+    return { name, rawName, rarity, hints, img, slug, id, server, SupportNameJP, nameJP };
   });
 
   const allHints = Array.from(new Set(cards.flatMap((c) => c.hints))).sort((a, b) =>
     a.localeCompare(b)
   );
 
-  // Fill datalist
-  hintList.innerHTML = allHints.map((h) => `<option value="${h}"></option>`).join('');
+  // Fill datalist — when JP, use JP names as values so they display in dropdown;
+  // build reverse map so we can convert JP input back to English for matching.
+  let jpToEnHintMap = new Map();
+  function buildHintDatalist() {
+    jpToEnHintMap = new Map();
+    hintList.innerHTML = allHints.map((h) => {
+      var jp = typeof window.getLocalizedSkillName === 'function' ? window.getLocalizedSkillName(h) : h;
+      if (jp !== h) {
+        jpToEnHintMap.set(jp, h);
+        return `<option value="${jp}"></option>`;
+      }
+      return `<option value="${h}"></option>`;
+    }).join('');
+  }
+  buildHintDatalist();
 
   let selected = [];
 
@@ -146,8 +169,10 @@
   function renderChips() {
     chips.innerHTML = selected
       .map(
-        (h, i) =>
-          `<span class="chip">${h}<button aria-label="Remove ${h}" data-i="${i}">×</button></span>`
+        (h, i) => {
+          var displayName = typeof window.getLocalizedSkillName === 'function' ? window.getLocalizedSkillName(h) : h;
+          return `<span class="chip">${displayName}<button aria-label="Remove ${h}" data-i="${i}">×</button></span>`;
+        }
       )
       .join('');
     chips.querySelectorAll('button[data-i]').forEach((btn) => {
@@ -184,7 +209,8 @@
     const wanted = selected.map(norm).filter(Boolean);
     const hN = norm(hint);
     const isMatch = wanted.some((w) => hN.includes(w));
-    return `<span class="pill ${isMatch ? 'match' : ''}" data-skill-name="${hint}" tabindex="0" role="button">${hint}</span>`;
+    var displayName = typeof window.getLocalizedSkillName === 'function' ? window.getLocalizedSkillName(hint) : hint;
+    return `<span class="pill ${isMatch ? 'match' : ''}" data-skill-name="${hint}" tabindex="0" role="button">${displayName}</span>`;
   }
 
   function initialsOf(name) {
@@ -197,14 +223,15 @@
   function renderResults(list) {
     results.innerHTML = list
       .map((card) => {
+        const displayName = localizedCardName(card);
         const thumb = card.img
-          ? `<img src="${card.img}" alt="${card.name}" loading="lazy" decoding="async" fetchpriority="low">`
-          : `<span>${initialsOf(card.name)}</span>`;
+          ? `<img src="${card.img}" alt="${displayName}" loading="lazy" decoding="async" fetchpriority="low">`
+          : `<span>${initialsOf(displayName)}</span>`;
         return `
         <div class="card card-support">
           <div class="card-thumb">${thumb}</div>
           <div class="card-title">
-            <h3>${card.name}</h3>
+            <h3>${displayName}</h3>
             ${renderBadge(card.rarity)}
           </div>
           <div style="grid-column: 1 / -1;">
@@ -224,7 +251,7 @@
   function update() {
     renderChips();
     writeToURL();
-    const matched = cards.filter(matchCard).sort((a, b) => a.name.localeCompare(b.name));
+    const matched = cards.filter(matchCard).sort((a, b) => localizedCardName(a).localeCompare(localizedCardName(b)));
     renderResults(matched);
     updateCounts(matched);
   }
@@ -248,7 +275,9 @@
     if (!raw) return;
     const many = smartSplit(raw);
     many.forEach((h) => {
-      if (!selected.includes(h)) selected.push(h);
+      // Reverse-map JP name to English for matching (selected always stores EN)
+      const en = jpToEnHintMap.get(h) || h;
+      if (!selected.includes(en)) selected.push(en);
     });
     hintInput.value = '';
     update();
@@ -310,6 +339,18 @@
       currentServer = next;
       update();
     }
+  });
+
+  // Language change listener — re-render card names and datalist
+  window.addEventListener('i18n:changed', () => {
+    buildHintDatalist();
+    update();
+  });
+
+  // Re-render when JP skill name map becomes available
+  window.addEventListener('i18n:jpnames-ready', () => {
+    buildHintDatalist();
+    update();
   });
 
   // Init

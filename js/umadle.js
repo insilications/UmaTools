@@ -65,7 +65,18 @@ function cls(c) {
 }
 
 function buildLabel(u) {
+  const loc = typeof getLocalizedUmaName === 'function' ? getLocalizedUmaName(u) : { name: u.UmaName || '', nickname: u.UmaNickname || '' };
+  return loc.nickname ? `${loc.name} \u2014 ${loc.nickname}` : loc.name;
+}
+
+function buildLabelEN(u) {
   return u.UmaNickname ? `${u.UmaName} \u2014 ${u.UmaNickname}` : u.UmaName;
+}
+
+function buildLabelJP(u) {
+  const name = u.UmaNameJP || u.UmaName || '';
+  const nick = u.UmaNicknameJP || u.UmaNickname || '';
+  return nick ? `${name} \u2014 ${nick}` : name;
 }
 
 function buildGuessThumb(uma) {
@@ -102,8 +113,9 @@ function renderGuess(rowsWrap, g, target) {
 
   const titleWrap = el('div', 'guess-summary-title');
   const textWrap = el('div', 'guess-summary-text');
-  textWrap.append(el('div', 'uma-name', g.UmaName || 'Unknown'));
-  if (g.UmaNickname) textWrap.append(el('div', 'uma-nick muted', `(${g.UmaNickname})`));
+  const gLoc = typeof getLocalizedUmaName === 'function' ? getLocalizedUmaName(g) : { name: g.UmaName || '', nickname: g.UmaNickname || '' };
+  textWrap.append(el('div', 'uma-name', gLoc.name || 'Unknown'));
+  if (gLoc.nickname) textWrap.append(el('div', 'uma-nick muted', `(${gLoc.nickname})`));
   titleWrap.append(buildGuessThumb(g), textWrap);
   const meta = el('div', 'guess-summary-meta', 'View details');
   summary.append(titleWrap, meta);
@@ -195,7 +207,9 @@ function renderGuess(rowsWrap, g, target) {
 
       const byLabel = {};
       data.forEach((u) => {
-        byLabel[buildLabel(u).toLowerCase()] = u;
+        byLabel[buildLabelEN(u).toLowerCase()] = u;
+        const jpLabel = buildLabelJP(u).toLowerCase();
+        if (jpLabel) byLabel[jpLabel] = u;
       });
 
       // Track guessed slugs
@@ -235,8 +249,9 @@ function renderGuess(rowsWrap, g, target) {
         const q = filterSearch.toLowerCase();
         const filtered = pool.filter((u) => {
           if (q) {
-            const label = buildLabel(u).toLowerCase();
-            if (!label.includes(q)) return false;
+            const labelEN = buildLabelEN(u).toLowerCase();
+            const labelJP = buildLabelJP(u).toLowerCase();
+            if (!labelEN.includes(q) && !labelJP.includes(q)) return false;
           }
           return true;
         });
@@ -248,8 +263,9 @@ function renderGuess(rowsWrap, g, target) {
 
         let html = '';
         for (const c of filtered) {
-          const name = c.UmaName || '';
-          const nick = c.UmaNickname || '';
+          const cLoc = typeof getLocalizedUmaName === 'function' ? getLocalizedUmaName(c) : { name: c.UmaName || '', nickname: c.UmaNickname || '' };
+          const name = cLoc.name || '';
+          const nick = cLoc.nickname || '';
           const isGuessed = guessedSlugs.has(c.UmaSlug);
           const itemCls = isGuessed ? 'modal-card-item disabled' : 'modal-card-item';
           const imgSrc = c.UmaImage || '';
@@ -356,7 +372,8 @@ function renderGuess(rowsWrap, g, target) {
 
       // --- Win modal ---
       function openWinModal() {
-        winMsg.textContent = `${target.UmaName}${target.UmaNickname ? ' (' + target.UmaNickname + ')' : ''}`;
+        const tLoc = typeof getLocalizedUmaName === 'function' ? getLocalizedUmaName(target) : { name: target.UmaName || '', nickname: target.UmaNickname || '' };
+        winMsg.textContent = `${tLoc.name}${tLoc.nickname ? ' (' + tLoc.nickname + ')' : ''}`;
         winModal.classList.add('open');
         winModal.setAttribute('aria-hidden', 'false');
         setTimeout(() => winNewBtn.focus(), 0);
@@ -399,6 +416,11 @@ function renderGuess(rowsWrap, g, target) {
           // Re-render modal if open
           if (!modal.hidden) renderModalList();
         }
+      });
+
+      // Language change listener — re-render displayed names
+      window.addEventListener('i18n:changed', () => {
+        if (!modal.hidden) renderModalList();
       });
     });
 })();

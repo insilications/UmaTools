@@ -140,6 +140,7 @@
         var list = await res.json();
         if (!Array.isArray(list) || !list.length) continue;
         window.__skillsAllData = list;
+        if (typeof window.buildJPSkillNameMap === 'function') window.buildJPSkillNameMap(list);
         var nextOfficialNames = new Set();
         var nextOfficialIds = new Set();
         var nextJpNameToId = new Map();
@@ -397,7 +398,12 @@
     var query = normalize(searchQuery);
     filteredSkills = allSkills.filter(function (s) {
       if (activeCategory !== 'all' && s.category !== activeCategory) return false;
-      if (query && normalize(s.name).indexOf(query) === -1) return false;
+      if (query) {
+        var nameMatch = normalize(s.name).indexOf(query) !== -1;
+        var localizedMatch = typeof window.getLocalizedSkillName === 'function'
+          && normalize(window.getLocalizedSkillName(s.name)).indexOf(query) !== -1;
+        if (!nameMatch && !localizedMatch) return false;
+      }
       return true;
     });
     filteredSkills.sort(function (a, b) {
@@ -519,7 +525,7 @@
         '<td class="col-name"><span data-skill-name="' +
         escapeAttr(skill.name) +
         '" tabindex="0" role="button">' +
-        escapeHtml(skill.name) +
+        escapeHtml(typeof window.getLocalizedSkillName === 'function' ? window.getLocalizedSkillName(skill.name) : skill.name) +
         '</span></td>' +
         '<td class="col-type"><span class="skill-cat-pill ' +
         catCls +

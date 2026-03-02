@@ -66,6 +66,7 @@
       'nav.deckBuilder': 'Deck Builder',
       'nav.data': 'Data',
       'nav.skillLibrary': 'Skill Library',
+      'nav.rankBreakdown': 'Rank Breakdown',
       'nav.fun': 'Fun',
       'nav.randomizer': 'Randomizer',
       'nav.umadle': 'Umadle',
@@ -119,6 +120,27 @@
       'home.umadleDesc': 'Daily guessing game with Uma Musume data.',
       'home.umadleBadge': 'Daily challenge',
       'home.openUmadle': 'Open Umadle',
+
+      // ── Rank Breakdown ──
+      'rankBreakdown.title': 'Rating Rank Breakdown',
+      'rankBreakdown.subtitle': 'Thresholds and badge icons from G to LS24.',
+      'rankBreakdown.loading': 'Loading rank breakdown...',
+      'rankBreakdown.unavailable': 'Unable to load rank breakdown data.',
+      'rankBreakdown.colIcon': 'Icon',
+      'rankBreakdown.colRank': 'Rank',
+      'rankBreakdown.colMinimum': 'Minimum',
+      'rankBreakdown.colNext': 'Next Threshold',
+      'rankBreakdown.colRange': 'Range',
+      'rankBreakdown.maxRank': 'Max rank',
+      'rankBreakdown.rangeTemplate': '{min} - {max}',
+      'rankBreakdown.rangeNoUpper': '{min}+',
+      'rankBreakdown.iconAlt': '{rank} rank icon',
+      'rankBreakdown.lookupLabel': 'Find by Rating',
+      'rankBreakdown.lookupPlaceholder': 'Enter rating...',
+      'rankBreakdown.lookupGo': 'Go',
+      'rankBreakdown.lookupInvalid': 'Enter a valid rating (0 or higher).',
+      'rankBreakdown.lookupResult': '{rating} -> {rank} ({range})',
+      'rankBreakdown.overallProgress': 'Overall Progress',
 
       // ── Changelog ──
       'changelog.whatsNew': "What's New",
@@ -240,9 +262,13 @@
       'optimizer.viewSavedBuilds': 'View Saved Builds',
       'optimizer.shareBuild': 'Share Build',
       'optimizer.clearAllSkills': 'Clear All Skills',
+      'optimizer.browseSkills': 'Browse Skills',
+      'optimizer.searchSkills': 'Search skills...',
+      'optimizer.color': 'Color',
+      'optimizer.showingCount': 'Showing {count} of {total} skills',
+      'optimizer.addSelected': 'Add Selected',
       'optimizer.detectedSkills': 'Detected Skills',
       'optimizer.addAllToOptimizer': 'Add All to Optimizer',
-      'optimizer.addSelected': 'Add Selected',
       'optimizer.saveBuildModal': 'Save Build',
       'optimizer.buildName': 'Build Name',
       'optimizer.required': '(required)',
@@ -263,6 +289,60 @@
       'optimizer.hintLv': 'Hint Lv',
       'optimizer.floatProjected': 'Projected',
       'optimizer.reference': 'Reference:',
+      'optimizer.tutorialTitle': 'Optimizer quick tour',
+      'optimizer.tutStep1': 'Quick setup path',
+      'optimizer.tutStep1Text':
+        'This lightweight tour is skippable and re-openable any time from this Help / Tutorial button.',
+      'optimizer.tutStep2': 'Add your skill points',
+      'optimizer.tutStep2Short': 'Skill points',
+      'optimizer.tutStep2Text':
+        'Set your available skill points budget here. Recommendations and remaining points use this value.',
+      'optimizer.tutStep3': 'Use Fast Learner when needed',
+      'optimizer.tutStep3Short': 'Fast Learner toggle',
+      'optimizer.tutStep3Text':
+        'Turn this on if your Uma has reduced skill costs. Skill costs update automatically.',
+      'optimizer.tutStep4': 'Optimize for {goalLabel}',
+      'optimizer.tutStep4Short': 'Optimize for goal',
+      'optimizer.tutStep4Text':
+        'Choose the selected goal or category. Current mode is {goalLabel}, and you can switch any time.',
+      'optimizer.tutStep5': 'Match race affinities',
+      'optimizer.tutStep5Short': 'Race configuration',
+      'optimizer.tutStep5Text':
+        'Set track, distance, and strategy to match your Uma. Affinities change how skills are scored.',
+      'optimizer.tutStep6': 'Use the skill builder',
+      'optimizer.tutStep6Short': 'Skill builder',
+      'optimizer.tutStep6Text':
+        'Generate Build auto-picks strong rating skills for your selected categories, then you can fine-tune rows.',
+      'optimizer.tutStep7': 'Enter stats and star level',
+      'optimizer.tutStep7Short': 'Stats and stars',
+      'optimizer.tutStep7Text':
+        'Input final stats, star rarity, and unique level so projected rating matches your Uma.',
+      'optimizer.tutStep8': 'Add skills to the optimizer',
+      'optimizer.tutStep8Short': 'Add skills',
+      'optimizer.tutStep8Text':
+        'Type skills in these rows. Type and category are detected, and costs update with your settings.',
+      'optimizer.tutStep9': 'Find your Skills to Buy',
+      'optimizer.tutStep9Short': 'Skills to Buy',
+      'optimizer.tutStep9Text':
+        'Your recommended purchase list appears here once rows are filled. This is where to read final picks.',
+
+      // ── Skill Popup Effects ──
+      'skillPopup.effectSpeed': 'Speed',
+      'skillPopup.effectStamina': 'Stamina',
+      'skillPopup.effectPower': 'Power',
+      'skillPopup.effectGuts': 'Guts',
+      'skillPopup.effectWisdom': 'Wisdom',
+      'skillPopup.effectRunningStyle': 'Running Style',
+      'skillPopup.effectFieldOfView': 'Field of View',
+      'skillPopup.effectStaminaRecovery': 'Stamina Recovery',
+      'skillPopup.effectLaneChangeSpeed': 'Lane Change Speed',
+      'skillPopup.effectPositionAwareness': 'Position Awareness',
+      'skillPopup.effectPaceControl': 'Pace Control',
+      'skillPopup.effectTargetSpeed': 'Target Speed',
+      'skillPopup.effectAcceleration': 'Acceleration',
+      'skillPopup.effectDecelerationBlock': 'Deceleration Block',
+      'skillPopup.effectSpecial': 'Special',
+      'skillPopup.effectStatBoost': 'Stat Boost',
 
       // ── Stamina ──
       'stamina.title': 'Stamina Calculator',
@@ -400,6 +480,44 @@
       'deck.distance': 'Distance',
       'deck.surface': 'Surface',
       'deck.strategy': 'Strategy',
+      'deck.nothingToSave': 'Nothing to save.',
+      'deck.loadedDeck': 'Loaded "{name}"',
+      'deck.loadedTemplate': 'Loaded {distance} template',
+      'deck.friend': 'Friend',
+      'deck.group': 'Group',
+      'deck.effect.raceBonus': 'Race Bonus',
+      'deck.effect.fanBonus': 'Fan Bonus',
+      'deck.effect.trainingEffectiveness': 'Training Effectiveness',
+      'deck.effect.speedBonus': 'Speed Bonus',
+      'deck.effect.staminaBonus': 'Stamina Bonus',
+      'deck.effect.powerBonus': 'Power Bonus',
+      'deck.effect.gutsBonus': 'Guts Bonus',
+      'deck.effect.witBonus': 'Wit Bonus',
+      'deck.effect.skillPointBonus': 'Skill Point Bonus',
+      'deck.effect.hintLevels': 'Hint Levels',
+      'deck.effect.friendshipBonus': 'Friendship Bonus',
+      'deck.effect.initialSpeed': 'Initial Speed',
+      'deck.effect.initialStamina': 'Initial Stamina',
+      'deck.effect.initialPower': 'Initial Power',
+      'deck.effect.initialGuts': 'Initial Guts',
+      'deck.effect.initialWit': 'Initial Wit',
+      'deck.effect.initialFriendshipGauge': 'Initial Friendship Gauge',
+      'deck.effect.hintFrequency': 'Hint Frequency',
+      'deck.effect.specialtyPriority': 'Specialty Priority',
+      'deck.effect.witFriendshipRecovery': 'Wit Friendship Recovery',
+      'deck.effect.moodEffect': 'Mood Effect',
+      'deck.effect.energyCostReduction': 'Energy Cost Reduction',
+      'deck.effect.eventEffectiveness': 'Event Effectiveness',
+      'deck.effect.eventRecovery': 'Event Recovery',
+      'deck.effect.failureProtection': 'Failure Protection',
+      'deck.effect.initialSkillPoints': 'Initial Skill Points',
+
+      'common.corner': 'Corner',
+      'common.straight': 'Straight',
+      'common.debuff': 'Debuff',
+      'common.general': 'General',
+      'common.frontPace': 'Front/Pace',
+      'common.lateEnd': 'Late/End',
 
       // ── Random ──
       'random.title': 'Randomizer',
@@ -666,6 +784,7 @@
       'nav.deckBuilder': 'デッキ編成',
       'nav.data': 'データ',
       'nav.skillLibrary': 'スキル一覧',
+      'nav.rankBreakdown': 'ランク内訳',
       'nav.fun': 'お楽しみ',
       'nav.randomizer': 'ランダマイザー',
       'nav.umadle': 'ウマドル',
@@ -718,6 +837,27 @@
       'home.umadleDesc': 'ウマ娘データを使った毎日の推測ゲーム。',
       'home.umadleBadge': 'デイリーチャレンジ',
       'home.openUmadle': 'ウマドルを開く',
+
+      // ── Rank Breakdown ──
+      'rankBreakdown.title': 'レーティングランク内訳',
+      'rankBreakdown.subtitle': 'GからLS24までのしきい値とランクアイコンを一覧表示します。',
+      'rankBreakdown.loading': 'ランクデータを読み込み中...',
+      'rankBreakdown.unavailable': 'ランクデータを読み込めませんでした。',
+      'rankBreakdown.colIcon': 'アイコン',
+      'rankBreakdown.colRank': 'ランク',
+      'rankBreakdown.colMinimum': '下限',
+      'rankBreakdown.colNext': '次のしきい値',
+      'rankBreakdown.colRange': '範囲',
+      'rankBreakdown.maxRank': '最大ランク',
+      'rankBreakdown.rangeTemplate': '{min} - {max}',
+      'rankBreakdown.rangeNoUpper': '{min}+',
+      'rankBreakdown.iconAlt': '{rank} ランクアイコン',
+      'rankBreakdown.lookupLabel': 'レーティング検索',
+      'rankBreakdown.lookupPlaceholder': 'レーティングを入力...',
+      'rankBreakdown.lookupGo': '移動',
+      'rankBreakdown.lookupInvalid': '0以上の有効なレーティングを入力してください。',
+      'rankBreakdown.lookupResult': '{rating} -> {rank} ({range})',
+      'rankBreakdown.overallProgress': '全体進捗',
 
       // ── Changelog ──
       'changelog.whatsNew': '新着情報',
@@ -833,9 +973,13 @@
       'optimizer.viewSavedBuilds': '保存済みビルド一覧',
       'optimizer.shareBuild': 'ビルド共有',
       'optimizer.clearAllSkills': '全スキルクリア',
+      'optimizer.browseSkills': 'スキル一覧',
+      'optimizer.searchSkills': 'スキルを検索...',
+      'optimizer.color': '色',
+      'optimizer.showingCount': '{total}件中{count}件表示',
+      'optimizer.addSelected': '選択を追加',
       'optimizer.detectedSkills': '検出スキル',
       'optimizer.addAllToOptimizer': '全てオプティマイザーに追加',
-      'optimizer.addSelected': '選択を追加',
       'optimizer.saveBuildModal': 'ビルド保存',
       'optimizer.buildName': 'ビルド名',
       'optimizer.required': '（必須）',
@@ -856,6 +1000,60 @@
       'optimizer.hintLv': 'ヒント Lv',
       'optimizer.floatProjected': '予想',
       'optimizer.reference': '参照:',
+      'optimizer.tutorialTitle': 'オプティマイザー クイックツアー',
+      'optimizer.tutStep1': 'クイックセットアップ',
+      'optimizer.tutStep1Text':
+        'このツアーはスキップ可能で、いつでもヘルプ/チュートリアルボタンから再開できます。',
+      'optimizer.tutStep2': 'スキルポイントを入力',
+      'optimizer.tutStep2Short': 'スキルポイント',
+      'optimizer.tutStep2Text':
+        '利用可能なスキルポイントの予算をここに設定します。推奨と残りポイントはこの値を使用します。',
+      'optimizer.tutStep3': 'たづなを使う',
+      'optimizer.tutStep3Short': 'たづなトグル',
+      'optimizer.tutStep3Text':
+        'ウマ娘のスキルコストが割引される場合はオンにしてください。スキルコストが自動更新されます。',
+      'optimizer.tutStep4': '{goalLabel}で最適化',
+      'optimizer.tutStep4Short': '最適化目標',
+      'optimizer.tutStep4Text':
+        '選択した目標またはカテゴリを選びます。現在のモードは{goalLabel}で、いつでも切り替え可能です。',
+      'optimizer.tutStep5': 'レース適性を合わせる',
+      'optimizer.tutStep5Short': 'レース設定',
+      'optimizer.tutStep5Text':
+        'バ場・距離・脚質をウマ娘に合わせて設定します。適性によりスキルの評価が変わります。',
+      'optimizer.tutStep6': 'スキルビルダーを使う',
+      'optimizer.tutStep6Short': 'スキルビルダー',
+      'optimizer.tutStep6Text':
+        'ビルド生成で選択カテゴリのレーティング高スキルを自動選択し、行を微調整できます。',
+      'optimizer.tutStep7': 'ステータスと星レベルを入力',
+      'optimizer.tutStep7Short': 'ステータスと星',
+      'optimizer.tutStep7Text':
+        '最終ステータス、星レアリティ、固有レベルを入力して予想レーティングをウマ娘に合わせます。',
+      'optimizer.tutStep8': 'スキルを追加する',
+      'optimizer.tutStep8Short': 'スキル追加',
+      'optimizer.tutStep8Text':
+        'これらの行にスキルを入力します。タイプとカテゴリは自動検出され、コストも設定に応じて更新されます。',
+      'optimizer.tutStep9': '購入スキルを確認',
+      'optimizer.tutStep9Short': '購入スキル',
+      'optimizer.tutStep9Text':
+        '行を埋めると推奨購入リストがここに表示されます。最終的な選択はここで確認します。',
+
+      // ── Skill Popup Effects ──
+      'skillPopup.effectSpeed': 'スピード',
+      'skillPopup.effectStamina': 'スタミナ',
+      'skillPopup.effectPower': 'パワー',
+      'skillPopup.effectGuts': '根性',
+      'skillPopup.effectWisdom': '賢さ',
+      'skillPopup.effectRunningStyle': '作戦',
+      'skillPopup.effectFieldOfView': '視野',
+      'skillPopup.effectStaminaRecovery': 'スタミナ回復',
+      'skillPopup.effectLaneChangeSpeed': 'レーン移動速度',
+      'skillPopup.effectPositionAwareness': '位置取り',
+      'skillPopup.effectPaceControl': 'ペース制御',
+      'skillPopup.effectTargetSpeed': '目標速度',
+      'skillPopup.effectAcceleration': '加速',
+      'skillPopup.effectDecelerationBlock': '減速防止',
+      'skillPopup.effectSpecial': '特殊',
+      'skillPopup.effectStatBoost': 'ステータスブースト',
 
       // ── Stamina ──
       'stamina.title': 'スタミナ計算機',
@@ -992,6 +1190,44 @@
       'deck.distance': '距離',
       'deck.surface': 'バ場',
       'deck.strategy': '脚質',
+      'deck.nothingToSave': '保存するものがありません。',
+      'deck.loadedDeck': '「{name}」を読み込みました',
+      'deck.loadedTemplate': '{distance}テンプレートを読み込みました',
+      'deck.friend': 'フレンド',
+      'deck.group': 'グループ',
+      'deck.effect.raceBonus': 'レースボーナス',
+      'deck.effect.fanBonus': 'ファン数ボーナス',
+      'deck.effect.trainingEffectiveness': 'トレーニング効果アップ',
+      'deck.effect.speedBonus': 'スピードボーナス',
+      'deck.effect.staminaBonus': 'スタミナボーナス',
+      'deck.effect.powerBonus': 'パワーボーナス',
+      'deck.effect.gutsBonus': '根性ボーナス',
+      'deck.effect.witBonus': '賢さボーナス',
+      'deck.effect.skillPointBonus': 'スキルPtボーナス',
+      'deck.effect.hintLevels': 'ヒントLvアップ',
+      'deck.effect.friendshipBonus': '友情ボーナス',
+      'deck.effect.initialSpeed': '初期スピードアップ',
+      'deck.effect.initialStamina': '初期スタミナアップ',
+      'deck.effect.initialPower': '初期パワーアップ',
+      'deck.effect.initialGuts': '初期根性アップ',
+      'deck.effect.initialWit': '初期賢さアップ',
+      'deck.effect.initialFriendshipGauge': '初期絆ゲージアップ',
+      'deck.effect.hintFrequency': 'ヒント発生率アップ',
+      'deck.effect.specialtyPriority': '得意率アップ',
+      'deck.effect.witFriendshipRecovery': '賢さ友情回復量アップ',
+      'deck.effect.moodEffect': 'やる気効果アップ',
+      'deck.effect.energyCostReduction': '体力消費ダウン',
+      'deck.effect.eventEffectiveness': 'イベント効果アップ',
+      'deck.effect.eventRecovery': 'イベント回復量アップ',
+      'deck.effect.failureProtection': '失敗率ダウン',
+      'deck.effect.initialSkillPoints': '初期スキルPtアップ',
+
+      'common.corner': 'コーナー',
+      'common.straight': '直線',
+      'common.debuff': 'デバフ',
+      'common.general': '汎用',
+      'common.frontPace': '逃げ/先行',
+      'common.lateEnd': '差し/追込',
 
       // ── Random ──
       'random.title': 'ランダマイザー',
@@ -1274,13 +1510,80 @@
   }
 
   // Expose global API
+  // Localized name helpers — used by deck, random, umadle, hints, skill-popup
+  function getLocalizedUmaName(uma) {
+    if (!uma) return { name: '', nickname: '' };
+    var isJP = currentLang === 'ja';
+    return {
+      name: (isJP && uma.UmaNameJP) || uma.UmaName || '',
+      nickname: (isJP && uma.UmaNicknameJP) || uma.UmaNickname || '',
+    };
+  }
+
+  function getLocalizedSupportName(card) {
+    if (!card) return '';
+    var isJP = currentLang === 'ja';
+    return (isJP && card.SupportNameJP) || card.SupportName || '';
+  }
+
+  // ── JP skill name lookup (shared across all pages) ──
+  var jpSkillNameMap = null; // Map<normalized_name, jp_name>
+
+  function buildJPSkillNameMap(skillsAllData) {
+    if (!Array.isArray(skillsAllData)) return;
+    jpSkillNameMap = new Map();
+    skillsAllData.forEach(function (skill) {
+      var jpname = ((skill && skill.jpname) || '').trim();
+      if (!jpname) return;
+      var variants = [skill.name_en, skill.enname, skill.jpname, skill.name];
+      variants.forEach(function (n) {
+        var key = ((n || '') + '').trim().toLowerCase();
+        if (key && !jpSkillNameMap.has(key)) jpSkillNameMap.set(key, jpname);
+      });
+      // Also index gene_version
+      if (skill.gene_version) {
+        var gv = skill.gene_version;
+        var gvJp = ((gv.jpname) || '').trim();
+        if (gvJp) {
+          var gvVariants = [gv.name_en, gv.enname, gv.jpname, gv.name];
+          gvVariants.forEach(function (n) {
+            var key = ((n || '') + '').trim().toLowerCase();
+            if (key && !jpSkillNameMap.has(key)) jpSkillNameMap.set(key, gvJp);
+          });
+        }
+      }
+    });
+    // Notify pages that JP skill names are now available for re-rendering
+    try { window.dispatchEvent(new Event('i18n:jpnames-ready')); } catch (_) {}
+  }
+
+  function getLocalizedSkillName(name) {
+    if (!name) return name || '';
+    if (currentLang !== 'ja') return name;
+    // Lazy-build the map if data is available but map hasn't been built yet
+    if (!jpSkillNameMap && window.__skillsAllData) {
+      buildJPSkillNameMap(window.__skillsAllData);
+    }
+    if (!jpSkillNameMap) return name;
+    var key = (name + '').trim().toLowerCase();
+    return jpSkillNameMap.get(key) || name;
+  }
+
   window.t = t;
   window.applyI18n = applyI18n;
+  window.getLocalizedUmaName = getLocalizedUmaName;
+  window.getLocalizedSupportName = getLocalizedSupportName;
+  window.buildJPSkillNameMap = buildJPSkillNameMap;
+  window.getLocalizedSkillName = getLocalizedSkillName;
   window.I18n = {
     t: t,
     apply: applyI18n,
     getLang: getLang,
     setLang: setLang,
+    getLocalizedUmaName: getLocalizedUmaName,
+    getLocalizedSupportName: getLocalizedSupportName,
+    buildJPSkillNameMap: buildJPSkillNameMap,
+    getLocalizedSkillName: getLocalizedSkillName,
     TRANSLATIONS: TRANSLATIONS,
   };
 })();

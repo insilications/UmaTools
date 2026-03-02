@@ -429,8 +429,8 @@
         [3, 9],
       ],
       LC: [
+        [2, 9],
         [1, 9],
-        [1, 11],
         [11, 10],
         [10, 10],
         [9, 10],
@@ -440,7 +440,7 @@
         [5, 10],
         [4, 10],
         [3, 10],
-        [2, 9],
+        [2, 10],
         [12, 11],
         [11, 11],
         [10, 11],
@@ -451,7 +451,7 @@
         [5, 11],
         [4, 11],
         [3, 11],
-        [2, 10],
+        [1, 11],
         [12, 12],
         [11, 12],
       ],
@@ -1095,6 +1095,30 @@
       };
     }
 
+    function getBadgeBreakdown() {
+      return RATING_BADGE_MINIMA.map((badge, idx) => {
+        const next = RATING_BADGE_MINIMA[idx + 1];
+        const sprite = GAME_RANK_SPRITE_MAP[badge.label];
+        return {
+          label: badge.label,
+          min: badge.min,
+          max: next ? next.min - 1 : null,
+          nextThreshold: next ? next.min : null,
+          sprite: sprite ? { ...sprite } : null,
+        };
+      });
+    }
+
+    function getBadgeSpriteSheetInfo() {
+      const url = RATING_SPRITE.version
+        ? `${RATING_SPRITE.url}?v=${RATING_SPRITE.version}`
+        : RATING_SPRITE.url;
+      return {
+        url,
+        version: RATING_SPRITE.version || '',
+      };
+    }
+
     function applyRatingState(data) {
       if (!data || typeof data !== 'object') return;
       const stats = data.stats || {};
@@ -1127,11 +1151,26 @@
       applyRatingState,
       initRatingInputs,
       loadRatingSprite,
+      getBadgeBreakdown,
+      getBadgeSpriteSheetInfo,
+    };
+  }
+
+  function getRatingBadgeCatalog() {
+    const engine = createRatingEngine({
+      ratingInputs: {},
+      ratingDisplays: {},
+      onChange: null,
+    });
+    return {
+      badges: engine.getBadgeBreakdown(),
+      sprite: engine.getBadgeSpriteSheetInfo(),
     };
   }
 
   global.RatingShared = {
     createAffinityHelpers,
     createRatingEngine,
+    getRatingBadgeCatalog,
   };
 })(window);

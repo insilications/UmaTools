@@ -1438,3 +1438,402 @@
     padding: 2px 6px;
   }
 }
+
+/* ── Skill Browser Modal ── */
+#skill-browser-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  display: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2rem 1rem;
+}
+
+#skill-browser-backdrop.open {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+#skill-browser-modal {
+  position: relative;
+  width: min(720px, 92vw);
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-1);
+  color: var(--text-1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+#skill-browser-modal .modal-body {
+  flex: 1;
+  overflow: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+#skill-browser-search {
+  width: 100%;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.skill-browser-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.filter-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-group-label {
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  min-width: 48px;
+  padding-top: 6px;
+  flex-shrink: 0;
+}
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+
+.filter-chip:hover {
+  border-color: var(--primary);
+}
+
+.filter-chip.active {
+  border-color: var(--primary);
+  background: rgb(var(--primary-rgb) / 0.15);
+  color: var(--primary);
+}
+
+.filter-chip .chip-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.filter-chip-group {
+  position: relative;
+}
+
+.filter-chip-group .filter-chip-sub {
+  display: none;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.filter-chip-group.expanded .filter-chip-sub {
+  display: flex;
+}
+
+.filter-chip-arrow {
+  font-size: 0.65rem;
+  transition: transform 0.15s;
+}
+
+.filter-chip-group.expanded .filter-chip-arrow {
+  transform: rotate(180deg);
+}
+
+.skill-browser-count {
+  font-size: 0.82rem;
+  color: var(--muted);
+  padding: 4px 0 8px;
+  flex-shrink: 0;
+}
+
+.skill-browser-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  flex: 1 1 0%;
+  min-height: 0;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
+}
+
+.skill-browser-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.skill-browser-grid::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border-radius: 999px;
+}
+
+body.dark .skill-browser-grid {
+  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+}
+
+body.dark .skill-browser-grid::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+}
+
+#skill-browser-modal .modal-body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
+}
+
+#skill-browser-modal .modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+#skill-browser-modal .modal-body::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border-radius: 999px;
+}
+
+body.dark #skill-browser-modal .modal-body {
+  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+}
+
+body.dark #skill-browser-modal .modal-body::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+}
+
+.skill-card {
+  position: relative;
+  padding: 8px 10px 22px;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  min-width: 0;
+}
+
+.skill-card > * + * {
+  margin-top: 2px;
+}
+
+.skill-card:hover {
+  border-color: var(--primary);
+  filter: brightness(1.05);
+}
+
+.skill-card.selected {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+/* Color-tinted backgrounds (gold cards use lower skill's color) */
+.skill-card.tint-gold { background: color-mix(in srgb, var(--cat-gold) 10%, var(--surface-2)); }
+.skill-card.tint-yellow { background: color-mix(in srgb, var(--cat-yellow) 10%, var(--surface-2)); }
+.skill-card.tint-blue { background: color-mix(in srgb, var(--cat-blue) 10%, var(--surface-2)); }
+.skill-card.tint-green { background: color-mix(in srgb, var(--cat-green) 10%, var(--surface-2)); }
+.skill-card.tint-red { background: color-mix(in srgb, var(--cat-red) 10%, var(--surface-2)); }
+.skill-card.tint-purple { background: color-mix(in srgb, var(--cat-purple) 10%, var(--surface-2)); }
+.skill-card.tint-evo { background: color-mix(in srgb, var(--cat-evo) 10%, var(--surface-2)); }
+.skill-card.tint-ius, .skill-card.tint-orange { background: color-mix(in srgb, var(--cat-orange) 10%, var(--surface-2)); }
+
+/* Gold cards: taller to fit lower skill row */
+.skill-card.is-gold {
+  padding-bottom: 24px;
+}
+
+/* Lower skill color dot */
+.skill-card .card-lower::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.skill-card .card-lower.lower-yellow::before { background: var(--cat-yellow); }
+.skill-card .card-lower.lower-blue::before { background: var(--cat-blue); }
+.skill-card .card-lower.lower-green::before { background: var(--cat-green); }
+.skill-card .card-lower.lower-red::before { background: var(--cat-red); }
+.skill-card .card-lower.lower-purple::before { background: var(--cat-purple); }
+
+.skill-card .card-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.skill-card.selected .card-check {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+
+.skill-card .card-name {
+  font-weight: 600;
+  font-size: 0.82rem;
+  line-height: 1.25;
+  padding-right: 22px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.skill-card .card-name:hover {
+  text-decoration: underline;
+  color: var(--primary);
+}
+
+.skill-card .card-lower {
+  font-size: 0.72rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 22px;
+  padding-left: 12px;
+  position: relative;
+  cursor: pointer;
+}
+
+.skill-card .card-lower:hover {
+  text-decoration: underline;
+  color: var(--primary);
+}
+
+.skill-card .card-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.skill-card .card-hints {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  display: flex;
+  gap: 3px;
+}
+
+.card-hint-btn {
+  all: unset;
+  font-size: 0.65rem;
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-1);
+  cursor: pointer;
+  line-height: 1.3;
+  color: var(--muted);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.card-hint-btn:hover {
+  border-color: var(--primary);
+}
+
+.card-hint-btn.active {
+  border-color: var(--primary);
+  background: rgb(var(--primary-rgb) / 0.15);
+  color: var(--text-1);
+  font-weight: 600;
+}
+
+.hint-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 2px;
+  vertical-align: middle;
+}
+
+.hint-dot.dot-gold { background: var(--cat-gold); }
+.hint-dot.dot-yellow { background: var(--cat-yellow); }
+.hint-dot.dot-blue { background: var(--cat-blue); }
+.hint-dot.dot-green { background: var(--cat-green); }
+.hint-dot.dot-red { background: var(--cat-red); }
+.hint-dot.dot-purple { background: var(--cat-purple); }
+
+/* Category colors for skill cards */
+.skill-card.cat-gold { border-left-color: var(--cat-gold); }
+.skill-card.cat-yellow { border-left-color: var(--cat-yellow); }
+.skill-card.cat-blue { border-left-color: var(--cat-blue); }
+.skill-card.cat-green { border-left-color: var(--cat-green); }
+.skill-card.cat-red { border-left-color: var(--cat-red); }
+.skill-card.cat-purple { border-left-color: var(--cat-purple); }
+.skill-card.cat-evo { border-left-color: var(--cat-evo); }
+.skill-card.cat-ius, .skill-card.cat-orange { border-left-color: var(--cat-orange); }
+
+/* Color dots for filter chips */
+.chip-dot.dot-gold { background: var(--cat-gold); }
+.chip-dot.dot-yellow { background: var(--cat-yellow); }
+.chip-dot.dot-blue { background: var(--cat-blue); }
+.chip-dot.dot-green { background: var(--cat-green); }
+.chip-dot.dot-red { background: var(--cat-red); }
+.chip-dot.dot-purple { background: var(--cat-purple); }
+.chip-dot.dot-evo { background: var(--cat-evo); }
+.chip-dot.dot-ius, .chip-dot.dot-orange { background: var(--cat-orange); }
+
+@media (max-width: 700px) {
+  #skill-browser-backdrop {
+    padding: 0;
+  }
+  #skill-browser-modal {
+    width: 100%;
+    max-width: 100%;
+    height: 100vh;
+    border-radius: 0;
+  }
+  .skill-browser-grid {
+    grid-template-columns: 1fr;
+  }
+}
