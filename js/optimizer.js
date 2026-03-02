@@ -126,8 +126,9 @@
   let _restoringState = false; // suppress save/optimize during state restoration
   let _initComplete = false; // prevent saves before state is loaded
   let allSkillNames = [];
+  let allSkillNamesNormalized = []; // pre-normalized for fast datalist filtering
   const MAX_SKILL_SUGGESTIONS = 300;
-  const MAX_SKILL_SUGGESTIONS_WITH_PREFIX = 2000;
+  const MAX_SKILL_SUGGESTIONS_WITH_PREFIX = 15;
 
   // Performance optimization: track active skill keys for O(1) duplicate detection
   const activeSkillKeys = new Map(); // skillKey -> rowId
@@ -1788,6 +1789,7 @@
     skillIdIndex = nextIdIndex;
     names.sort((a, b) => a.localeCompare(b));
     allSkillNames = names;
+    allSkillNamesNormalized = names.map((n) => normalize(n));
     rebuildSharedDatalist();
     refreshAllRows();
   }
@@ -2314,13 +2316,15 @@
       : MAX_SKILL_SUGGESTIONS;
     const frag = document.createDocumentFragment();
     let added = 0;
-    allSkillNames.forEach((name) => {
-      if (normalizedPrefix && !normalize(name).startsWith(normalizedPrefix)) return;
-      if (added >= suggestionLimit) return;
+    for (let i = 0; i < allSkillNames.length; i++) {
+      if (added >= suggestionLimit) break;
+      const normalizedName = allSkillNamesNormalized[i];
+      if (normalizedPrefix && !normalizedName.startsWith(normalizedPrefix)) continue;
+      const name = allSkillNames[i];
       const opt = document.createElement('option');
       opt.value = name;
       const skill = findSkillByName(name);
-      const isCanonical = !!skill && normalize(name) === normalize(skill.name);
+      const isCanonical = !!skill && normalizedName === normalize(skill.name);
       const display = isCanonical ? formatSkillDisplayName(skill) : name;
       if (display && display !== name) {
         opt.label = display;
@@ -2328,7 +2332,7 @@
       }
       frag.appendChild(opt);
       added++;
-    });
+    }
     sharedSkillDatalist.appendChild(frag);
   }
 
@@ -3109,36 +3113,25 @@
     row.cleanupSkillTracking = removeSkillKeyTracking;
     setCategoryDisplay(row.dataset.skillCategory || '');
     if (skillInput) {
+      // Full sync: rebuild datalist + sync skill category
       const syncFromInput = () => {
         rebuildSharedDatalist(skillInput.value || '');
         syncSkillCategory({ triggerOptimize: true, updateCost: true });
       };
-      skillInput.addEventListener('input', syncFromInput);
+      // Debounced version for typing — avoids expensive work on every keystroke
+      const debouncedSync = debounce(syncFromInput, 200);
+      // While typing, debounce to avoid per-keystroke DOM thrashing
+      skillInput.addEventListener('input', debouncedSync);
+      // On commit actions (datalist pick, leave field, Enter), sync immediately
       skillInput.addEventListener('change', syncFromInput);
       skillInput.addEventListener('blur', syncFromInput);
       skillInput.addEventListener('keyup', (event) => {
         if (event.key === 'Enter') syncFromInput();
       });
-      let monitorId = null;
-      const startMonitor = () => {
+      // On focus, rebuild datalist suggestions (no polling needed)
+      skillInput.addEventListener('focus', () => {
         rebuildSharedDatalist(skillInput.value || '');
-        if (monitorId) return;
-        let lastValue = skillInput.value;
-        monitorId = window.setInterval(() => {
-          if (!document.body.contains(skillInput)) { stopMonitor(); return; }
-          if (skillInput.value !== lastValue) {
-            lastValue = skillInput.value;
-            syncFromInput();
-          }
-        }, 120);
-      };
-      const stopMonitor = () => {
-        if (!monitorId) return;
-        window.clearInterval(monitorId);
-        monitorId = null;
-      };
-      skillInput.addEventListener('focus', startMonitor);
-      skillInput.addEventListener('blur', stopMonitor);
+      });
     }
     if (hintSelect) {
       hintSelect.addEventListener('change', () => {
