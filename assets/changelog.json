@@ -1,17 +1,13 @@
 {
-  "version": "2026-03",
+  "version": "2026-03b",
   "summary": {
-    "en": "New pages, Japanese support, and mobile performance improvements",
-    "ja": "新ページ追加、日本語対応強化、モバイル性能改善"
+    "en": "New Valid Accel Checker, duplicate skill name fixes, and data updates",
+    "ja": "新VAC判定チェッカー、スキル名重複修正、データ更新"
   },
   "entries": [
-    { "en": "New Rank Breakdown page \u2014 view detailed rating component analysis", "ja": "新しいランク内訳ページ \u2014 評価の詳細分析を表示" },
-    { "en": "New Skill Browser in optimizer \u2014 browse, filter, and bulk-add skills", "ja": "オプティマイザーにスキルブラウザ追加 \u2014 スキルの閲覧・フィルター・一括追加" },
-    { "en": "Japanese name translations for skills, support cards, and characters", "ja": "スキル・サポートカード・キャラクターの日本語名翻訳対応" },
-    { "en": "Define Effect support for skill scoring", "ja": "固有効果のスキルスコアリング対応" },
-    { "en": "Fixed aptitudes translation in JP deck builder", "ja": "デッキ編成の適性翻訳を修正" },
-    { "en": "Fixed Legend rank badge display issues", "ja": "レジェンドランクバッジの表示不具合を修正" },
-    { "en": "Mobile performance improvements \u2014 reduced input lag when entering skills", "ja": "モバイル性能改善 \u2014 スキル入力時のラグを軽減" },
-    { "en": "Bug fixes, accessibility improvements, and performance optimizations", "ja": "バグ修正、アクセシビリティ改善、パフォーマンス最適化" }
+    { "en": "New Valid Accel Checker page \u2014 check valid acceleration skills for a race setup with VAC timing logic", "ja": "新VAC判定チェッカー \u2014 レース設定に対する有効な加速スキルをVACタイミングロジックで確認" },
+    { "en": "Fixed duplicate English skill names (e.g. Steadfast) causing wrong skill matches on EN server", "ja": "英語スキル名の重複（例：Steadfast）によるENサーバーでのスキル誤マッチを修正" },
+    { "en": "Fan-only skills that share a name with an officially translated skill are now hidden on EN server", "ja": "公式翻訳スキルと同名のファン翻訳スキルがENサーバーで非表示に" },
+    { "en": "Skill popups now use skill IDs for accurate lookup when names collide", "ja": "スキルポップアップが名前衝突時にスキルIDで正確に検索" }
   ]
 }

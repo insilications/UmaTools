@@ -94,6 +94,10 @@
       'home.staminaCheckDesc': 'See if your stamina meets distance and style thresholds.',
       'home.staminaCheckBadge': 'Stamina guide',
       'home.openStaminaCheck': 'Open Stamina Check',
+      'home.accelChecker': 'Accel Checker',
+      'home.accelCheckerDesc': 'Check which acceleration skills are valid for your race setup.',
+      'home.accelCheckerBadge': 'VAC checker',
+      'home.openAccelChecker': 'Open Accel Checker',
       'home.eventOCR': 'Event OCR',
       'home.eventOCRDesc': 'Capture event screens and search outcomes instantly.',
       'home.eventOCRBadge': 'OCR search',
@@ -339,6 +343,7 @@
       'skillPopup.effectPositionAwareness': 'Position Awareness',
       'skillPopup.effectPaceControl': 'Pace Control',
       'skillPopup.effectTargetSpeed': 'Target Speed',
+      'skillPopup.effectLaneMovementSpeed': 'Lane Movement Speed',
       'skillPopup.effectAcceleration': 'Acceleration',
       'skillPopup.effectDecelerationBlock': 'Deceleration Block',
       'skillPopup.effectSpecial': 'Special',
@@ -425,6 +430,8 @@
       'hints.loadFailed': 'Failed to load support hints.',
       'hints.loadSupportFailed': 'Failed to load support data. Please refresh.',
       'hints.copyLink': 'Copy link',
+      'hints.counts':
+        '{matched} card(s) matched | {total} cards total | {hints} unique hints',
 
       // ── Deck ──
       'deck.title': 'Deck Builder',
@@ -610,6 +617,10 @@
       'optimizer.mustBuy': 'Must Buy',
       'optimizer.lock': 'Lock',
       'optimizer.removeRow': 'Remove',
+      'optimizer.catGold': 'Gold',
+      'optimizer.catPurple': 'Purple',
+      'optimizer.catEvo': 'Evo',
+      'optimizer.catUnique': 'Unique',
       'optimizer.hintLvFormat': 'Lv{lvl} ({pct}% off)',
       'optimizer.loadedSkills': 'Loaded {count} skills',
       'optimizer.officialEnFiltered': 'Official EN only ({count} filtered)',
@@ -812,6 +823,10 @@
       'home.staminaCheckDesc': 'スタミナが距離と脚質の基準を満たしているか確認できます。',
       'home.staminaCheckBadge': 'スタミナガイド',
       'home.openStaminaCheck': 'スタミナチェックを開く',
+      'home.accelChecker': '加速スキルチェッカー',
+      'home.accelCheckerDesc': 'レース設定に対して有効な加速スキルを確認できます。',
+      'home.accelCheckerBadge': 'VAC判定',
+      'home.openAccelChecker': '加速チェッカーを開く',
       'home.eventOCR': 'イベントOCR',
       'home.eventOCRDesc': 'イベント画面をキャプチャして結果を即座に検索します。',
       'home.eventOCRBadge': 'OCR検索',
@@ -1050,6 +1065,7 @@
       'skillPopup.effectPositionAwareness': '位置取り',
       'skillPopup.effectPaceControl': 'ペース制御',
       'skillPopup.effectTargetSpeed': '目標速度',
+      'skillPopup.effectLaneMovementSpeed': 'レーン移動速度',
       'skillPopup.effectAcceleration': '加速',
       'skillPopup.effectDecelerationBlock': '減速防止',
       'skillPopup.effectSpecial': '特殊',
@@ -1135,6 +1151,8 @@
       'hints.loadFailed': 'サポートヒントの読み込みに失敗しました。',
       'hints.loadSupportFailed': 'サポートデータの読み込みに失敗しました。更新してください。',
       'hints.copyLink': 'リンクをコピー',
+      'hints.counts':
+        '{matched}件一致 | 全{total}枚 | ヒント{hints}種',
 
       // ── Deck ──
       'deck.title': 'デッキ編成',
@@ -1317,6 +1335,10 @@
       'optimizer.mustBuy': '必須',
       'optimizer.lock': 'ロック',
       'optimizer.removeRow': '削除',
+      'optimizer.catGold': '金',
+      'optimizer.catPurple': '紫',
+      'optimizer.catEvo': '進化',
+      'optimizer.catUnique': '固有',
       'optimizer.hintLvFormat': 'Lv{lvl} ({pct}%引き)',
       'optimizer.loadedSkills': '{count}件のスキルを読み込み',
       'optimizer.officialEnFiltered': '公式ENのみ（{count}件除外）',
@@ -1532,25 +1554,37 @@
   function buildJPSkillNameMap(skillsAllData) {
     if (!Array.isArray(skillsAllData)) return;
     jpSkillNameMap = new Map();
-    skillsAllData.forEach(function (skill) {
-      var jpname = ((skill && skill.jpname) || '').trim();
+    // Track first JP name per key to detect collisions with duplicate EN names
+    var enKeyFirstJP = new Map();
+
+    function indexSkill(jpname, variants) {
       if (!jpname) return;
-      var variants = [skill.name_en, skill.enname, skill.jpname, skill.name];
       variants.forEach(function (n) {
         var key = ((n || '') + '').trim().toLowerCase();
-        if (key && !jpSkillNameMap.has(key)) jpSkillNameMap.set(key, jpname);
-      });
-      // Also index gene_version
-      if (skill.gene_version) {
-        var gv = skill.gene_version;
-        var gvJp = ((gv.jpname) || '').trim();
-        if (gvJp) {
-          var gvVariants = [gv.name_en, gv.enname, gv.jpname, gv.name];
-          gvVariants.forEach(function (n) {
-            var key = ((n || '') + '').trim().toLowerCase();
-            if (key && !jpSkillNameMap.has(key)) jpSkillNameMap.set(key, gvJp);
-          });
+        if (!key) return;
+        if (!jpSkillNameMap.has(key)) {
+          jpSkillNameMap.set(key, jpname);
+          if (!enKeyFirstJP.has(key)) enKeyFirstJP.set(key, jpname);
+        } else if (jpSkillNameMap.get(key) !== jpname) {
+          // Collision: same EN key maps to different JP names
+          // Add disambiguated entries for both skills
+          var disambigKey = key + ' (' + jpname.trim().toLowerCase() + ')';
+          if (!jpSkillNameMap.has(disambigKey)) jpSkillNameMap.set(disambigKey, jpname);
+          var firstJP = enKeyFirstJP.get(key);
+          if (firstJP) {
+            var firstDisambigKey = key + ' (' + firstJP.trim().toLowerCase() + ')';
+            if (!jpSkillNameMap.has(firstDisambigKey)) jpSkillNameMap.set(firstDisambigKey, firstJP);
+          }
         }
+      });
+    }
+
+    skillsAllData.forEach(function (skill) {
+      var jpname = ((skill && skill.jpname) || '').trim();
+      indexSkill(jpname, [skill.name_en, skill.enname, skill.jpname, skill.name]);
+      if (skill.gene_version) {
+        var gvJp = ((skill.gene_version.jpname) || '').trim();
+        indexSkill(gvJp, [skill.gene_version.name_en, skill.gene_version.enname, skill.gene_version.jpname, skill.gene_version.name]);
       }
     });
     // Notify pages that JP skill names are now available for re-rendering

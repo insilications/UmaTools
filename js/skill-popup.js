@@ -20,7 +20,7 @@
     21: 'skillPopup.effectTargetSpeed',
     22: 'skillPopup.effectTargetSpeed',
     27: 'skillPopup.effectTargetSpeed',
-    28: 'skillPopup.effectAcceleration',
+    28: 'skillPopup.effectLaneMovementSpeed',
     29: 'skillPopup.effectDecelerationBlock',
     31: 'skillPopup.effectAcceleration',
     32: 'skillPopup.effectSpecial',
@@ -613,7 +613,7 @@
 
   // ── Event Delegation ──
   function handleClick(e) {
-    var target = e.target.closest('[data-skill-name]');
+    var target = e.target.closest('[data-skill-name],[data-skill-id]');
     if (!target) return;
 
     // Don't interfere with other interactive elements
@@ -626,8 +626,11 @@
     e.preventDefault();
     e.stopPropagation();
 
+    // Prefer ID-based lookup to avoid collisions with duplicate EN names
+    var skillId = target.getAttribute('data-skill-id');
     var skillName = target.getAttribute('data-skill-name');
-    if (skillName) openPopup(skillName, target);
+    if (skillId) openPopup(skillId, target);
+    else if (skillName) openPopup(skillName, target);
   }
 
   function handleKeydown(e) {
@@ -639,11 +642,13 @@
       (e.key === 'Enter' || e.key === ' ') &&
       e.target &&
       e.target.hasAttribute &&
-      e.target.hasAttribute('data-skill-name')
+      (e.target.hasAttribute('data-skill-name') || e.target.hasAttribute('data-skill-id'))
     ) {
       e.preventDefault();
+      var skillId = e.target.getAttribute('data-skill-id');
       var skillName = e.target.getAttribute('data-skill-name');
-      if (skillName) openPopup(skillName, e.target);
+      if (skillId) openPopup(skillId, e.target);
+      else if (skillName) openPopup(skillName, e.target);
     }
   }
 

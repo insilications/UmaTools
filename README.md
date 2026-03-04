@@ -46,6 +46,10 @@ Reference table for all rating badge tiers from G through LS24, including thresh
 
 Verify whether your uma has enough stamina for the race. Set distance, surface, condition, style, and mood, then enter stats and recovery skills to compare needed vs. actual stamina.
 
+### [Accel Checker](https://daftuyda.moe/accel)
+
+Check which acceleration skills are valid for a given race setup. Select distance, surface, running style, and position to see which accel skills can activate with VAC timing logic. Supports both global-only and JP skill pools.
+
 ### [Umadle](https://daftuyda.moe/umadle)
 
 A daily guessing game. Pick an uma, compare stats and hint grids, and narrow down the answer.
@@ -74,6 +78,7 @@ For deeper technical details on how things work under the hood:
 | [Team Trials](docs/team-trials.md)        | Consistency-first skill selection, automated skill scoring, trigger analysis, green/volatile penalties, expected value scoring, tuning weights                |
 | [OCR Guide](docs/ocr-guide.md)            | Image preprocessing pipeline, Tesseract config, fuzzy matching algorithm, tuning thresholds, troubleshooting                                                  |
 | [Translation Guide](docs/translations.md) | i18n system, adding new languages, key naming conventions, variable interpolation, testing coverage                                                           |
+| [Accel Checker](docs/accel-checker.md)    | VAC timing logic, data pipeline from master.mdb, segment classification, offset judgment, uncertainty scoring, impact estimation                               |
 
 ---
 
@@ -84,7 +89,7 @@ The site is organized into four groups:
 | Group      | Pages                                  |
 | ---------- | -------------------------------------- |
 | **Rating** | Optimizer, Calculator                                |
-| **Tools**  | Event OCR, Support Hints, Deck Builder, Stamina Check |
+| **Tools**  | Event OCR, Support Hints, Deck Builder, Stamina Check, Accel Checker |
 | **Data**   | Skill Library, Rank Breakdown                        |
 | **Fun**    | Randomizer, Umadle                     |
 

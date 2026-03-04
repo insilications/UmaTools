@@ -432,6 +432,7 @@
 
   // ------- UMA "CS:GO case" style roll (placeholder thumbs) -------
   let umaRolling = false;
+  let lastUmaWinner = null;
   function umaItemMarkup(u, isWinner = false) {
     const dName = displayUmaName(u);
     const dNick = displayUmaNickname(u);
@@ -483,6 +484,7 @@
       .sort(() => Math.random() - 0.5)
       .slice(0, Math.min(postCount, umaPool.length));
     const winner = umaPool[Math.floor(Math.random() * umaPool.length)];
+    lastUmaWinner = winner;
 
     // pick 2 placeholders, try to avoid duplicating the winner
     const placeholders = [];
@@ -638,10 +640,18 @@
       renderExclusions();
       // Re-render the deck only if not mid-roll
       if (!rolling) renderDeckStatic();
-      // If uma area shows the idle prompt, refresh it
-      const umaIdle = els.umaResult?.querySelector('.inline-note');
-      if (umaIdle && !umaRolling) {
-        els.umaResult.innerHTML = `<div class="inline-note">${t('random.clickToPick')}</div>`;
+      // Re-render the Uma area
+      if (!umaRolling) {
+        if (lastUmaWinner) {
+          // Re-render the winner card with updated localized names
+          els.umaResult.innerHTML = renderUmaWinnerCard(lastUmaWinner);
+        } else {
+          // Refresh the idle prompt
+          const umaIdle = els.umaResult?.querySelector('.inline-note');
+          if (umaIdle) {
+            els.umaResult.innerHTML = `<div class="inline-note">${t('random.clickToPick')}</div>`;
+          }
+        }
       }
     });
   }

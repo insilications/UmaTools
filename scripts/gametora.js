@@ -61,6 +61,7 @@ function parseArgs(argv) {
     outUma: path.join(DEFAULT_OUTPUT_DIR, 'uma_data.json'),
     outSupports: path.join(DEFAULT_OUTPUT_DIR, 'support_card.json'),
     outSupportHints: path.join(DEFAULT_OUTPUT_DIR, 'support_hints.json'),
+    outRaces: path.join(DEFAULT_OUTPUT_DIR, 'races.json'),
     outSkills: SKILLS_ALL_PATH,
     charThumbDir: path.join(DEFAULT_OUTPUT_DIR, 'character_thumbs'),
     supportThumbDir: path.join(DEFAULT_OUTPUT_DIR, 'support_thumbs'),
@@ -75,6 +76,7 @@ function parseArgs(argv) {
     else if (arg === '--out-uma') opts.outUma = argv[++i];
     else if (arg === '--out-supports') opts.outSupports = argv[++i];
     else if (arg === '--out-support-hints') opts.outSupportHints = argv[++i];
+    else if (arg === '--out-races') opts.outRaces = argv[++i];
     else if (arg === '--out-skills') opts.outSkills = argv[++i];
     else if (arg === '--char-thumb-dir') opts.charThumbDir = argv[++i];
     else if (arg === '--support-thumb-dir') opts.supportThumbDir = argv[++i];
@@ -98,11 +100,12 @@ function printHelp() {
       'Usage: node scripts/gametora.js [options]',
       '',
       'Options:',
-      '  --what <skills|uma|supports|all>         What to scrape (default: all)',
+      '  --what <skills|uma|supports|races|all>   What to scrape (default: all)',
       '  --server <global|japan>                  Server (default: global)',
       '  --out-uma <path>          Output for character data',
       '  --out-supports <path>     Output for support events',
       '  --out-support-hints <path> Output for support hints',
+      '  --out-races <path>        Output for race geometry data',
       '  --out-skills <path>       Output for skills metadata',
       '  --char-thumb-dir <path>   Where to save character thumbnails',
       '  --support-thumb-dir <path> Where to save support thumbnails',
@@ -900,6 +903,213 @@ function describeHintOther(type, value) {
 // 4. Build race data from manifest
 // ---------------------------------------------------------------------------
 
+const TRACK_VENUE_JP = Object.freeze({
+  10001: '\u672d\u5e4c',
+  10002: '\u51fd\u9928',
+  10003: '\u798f\u5cf6',
+  10004: '\u65b0\u6f5f',
+  10005: '\u6771\u4eac',
+  10006: '\u4e2d\u5c71',
+  10007: '\u4e2d\u4eac',
+  10008: '\u4eac\u90fd',
+  10009: '\u962a\u795e',
+  10010: '\u5c0f\u5009',
+  10101: '\u5927\u4e95',
+  10102: '\u5ddd\u5d0e',
+  10103: '\u8239\u6a4b',
+  10104: '\u76db\u5ca1',
+  10105: '\u4f50\u8cc0',
+  10201: '\u30ed\u30f3\u30b7\u30e3\u30f3',
+  10202: '\u30b5\u30f3\u30bf\u30a2\u30cb\u30bf\u30d1\u30fc\u30af',
+  10203: '\u30c7\u30eb\u30de\u30fc',
+});
+
+function toFiniteNumber(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function parseSegments(raw) {
+  const segments = [];
+  for (const item of raw || []) {
+    const start = toFiniteNumber(item?.start);
+    const end = toFiniteNumber(item?.end);
+    if (start == null || end == null || end <= start) continue;
+    segments.push({ start: Math.round(start), end: Math.round(end) });
+  }
+  segments.sort((a, b) => (a.start !== b.start ? a.start - b.start : a.end - b.end));
+  return segments;
+}
+
+function mergeRanges(ranges) {
+  if (!ranges.length) return [];
+  const merged = [];
+  let cur = [ranges[0][0], ranges[0][1]];
+  for (let i = 1; i < ranges.length; i += 1) {
+    const next = ranges[i];
+    if (next[0] <= cur[1] + 1) cur[1] = Math.max(cur[1], next[1]);
+    else {
+      merged.push(cur);
+      cur = [next[0], next[1]];
+    }
+  }
+  merged.push(cur);
+  return merged;
+}
+
+function parseSlopes(raw, uphill) {
+  const ranges = [];
+  for (const item of raw || []) {
+    const slope = toFiniteNumber(item?.slope);
+    const start = toFiniteNumber(item?.start);
+    const end = toFiniteNumber(item?.end);
+    if (slope == null || start == null || end == null || end <= start) continue;
+    if (uphill && slope <= 0) continue;
+    if (!uphill && slope >= 0) continue;
+    ranges.push([Math.round(start), Math.round(end)]);
+  }
+  ranges.sort((a, b) => (a[0] !== b[0] ? a[0] - b[0] : a[1] - b[1]));
+  return mergeRanges(ranges);
+}
+
+function deriveLs(course, distance) {
+  const spurtStart = toFiniteNumber(course?.spurtStart?.meters);
+  if (spurtStart != null) return Math.round(spurtStart);
+  if (distance != null) return Math.floor((distance * 2) / 3);
+  return null;
+}
+
+function deriveFinalCornerStart(corners, ls) {
+  if (!corners.length || ls == null) return null;
+  const containing = corners.find((corner) => ls >= corner.start && ls <= corner.end);
+  if (containing) return containing.start;
+  const after = corners.find((corner) => corner.start >= ls);
+  if (after) return after.start;
+  return corners[corners.length - 1].start;
+}
+
+function deriveFinalStraightStart(straights, fc, ls) {
+  if (!straights.length) return null;
+  if (fc != null) {
+    const afterCorner = straights.find((straight) => straight.start >= fc);
+    if (afterCorner) return afterCorner.start;
+  }
+  if (ls != null) {
+    const afterLs = straights.find((straight) => straight.start >= ls);
+    if (afterLs) return afterLs.start;
+    const containing = straights.find((straight) => ls >= straight.start && ls <= straight.end);
+    if (containing) return containing.start;
+  }
+  return straights[straights.length - 1].start;
+}
+
+function collectRaceInstances(raceInstances) {
+  const byRaceId = new Map();
+  if (!Array.isArray(raceInstances)) return byRaceId;
+
+  for (const row of raceInstances) {
+    if (!row || typeof row !== 'object') continue;
+    const details = row.details || {};
+    const raceId = toFiniteNumber(details.id);
+    if (raceId == null) continue;
+    if (!byRaceId.has(raceId)) byRaceId.set(raceId, []);
+    byRaceId.get(raceId).push({
+      year: toFiniteNumber(row.year),
+      month: toFiniteNumber(row.month),
+      half: toFiniteNumber(row.half),
+    });
+  }
+  return byRaceId;
+}
+
+async function buildRaces(outPath, manifest, noFetch) {
+  console.log('[races] Loading manifest data...');
+  const [racesRaw, racetracksRaw, raceInstancesRaw] = await Promise.all([
+    loadManifestData(manifest, 'races', noFetch),
+    loadManifestData(manifest, 'racetracks', noFetch),
+    loadManifestData(manifest, 'race_instances', noFetch),
+  ]);
+
+  if (!Array.isArray(racesRaw) || !racesRaw.length) {
+    console.error('[races] No races data');
+    return { count: 0 };
+  }
+  if (!Array.isArray(racetracksRaw) || !racetracksRaw.length) {
+    console.error('[races] No racetracks data');
+    return { count: 0 };
+  }
+
+  const coursesById = new Map();
+  for (const track of racetracksRaw) {
+    const trackId = toFiniteNumber(track?.id);
+    if (trackId == null) continue;
+    for (const course of track?.courses || []) {
+      const courseId = toFiniteNumber(course?.id);
+      if (courseId == null) continue;
+      coursesById.set(courseId, { trackId, course });
+    }
+  }
+
+  const raceInstancesById = collectRaceInstances(raceInstancesRaw);
+  const rows = [];
+
+  for (const race of racesRaw) {
+    if (!race || typeof race !== 'object') continue;
+    const id = toFiniteNumber(race.id);
+    const raceId = toFiniteNumber(race.race_id);
+    const distance = toFiniteNumber(race.distance);
+    const trackId = toFiniteNumber(race.track);
+    const courseId = toFiniteNumber(race.course_id);
+    if (id == null || distance == null || trackId == null) continue;
+
+    const bundle = courseId != null ? coursesById.get(courseId) : null;
+    const course = bundle ? bundle.course : null;
+    const corners = parseSegments(course?.corners);
+    const straights = parseSegments(course?.straights);
+    const ls = deriveLs(course, distance);
+    const fc = deriveFinalCornerStart(corners, ls);
+    const fs = deriveFinalStraightStart(straights, fc, ls);
+    const us = parseSlopes(course?.slopes, true);
+    const ds = parseSlopes(course?.slopes, false);
+
+    const terrain = toFiniteNumber(race.terrain);
+    const venue = TRACK_VENUE_JP[trackId] || `Track ${trackId}`;
+
+    rows.push({
+      id: Math.round(id),
+      race_id: raceId == null ? null : Math.round(raceId),
+      name: race.name_jp || race.name_en || `Race ${Math.round(id)}`,
+      name_en: race.name_en || race.name_jp || `Race ${Math.round(id)}`,
+      venue,
+      track_id: Math.round(trackId),
+      course_id: courseId == null ? null : Math.round(courseId),
+      distance: Math.round(distance),
+      gt: terrain === 2 ? 2 : 1,
+      ls,
+      fc,
+      fs,
+      us,
+      ds,
+      terrain: terrain == null ? null : Math.round(terrain),
+      grade: toFiniteNumber(race.grade),
+      group: toFiniteNumber(race.group),
+      season: toFiniteNumber(race.season),
+      entries: toFiniteNumber(race.entries),
+      instances: raceInstancesById.get(Math.round(id)) || [],
+    });
+  }
+
+  rows.sort((a, b) => {
+    if (a.track_id !== b.track_id) return a.track_id - b.track_id;
+    if (a.distance !== b.distance) return a.distance - b.distance;
+    return a.id - b.id;
+  });
+
+  writeJsonFile(outPath, rows);
+  console.log(`[races] Done: ${rows.length} race presets`);
+  return { count: rows.length };
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -954,6 +1164,11 @@ async function main() {
         opts.noFetch,
         opts.supportThumbDir
       );
+    }
+
+    if (opts.what === 'races' || opts.what === 'all') {
+      console.log('\n=== Races ===');
+      metadata.results.races = await buildRaces(opts.outRaces, manifest, opts.noFetch);
     }
   } catch (err) {
     console.error(`[fatal] ${err.message}`);

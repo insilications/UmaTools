@@ -221,6 +221,7 @@
   }
   const skillCostMapNormalized = new Map(); // punctuation-stripped key -> meta
   const skillCostMapExact = new Map(); // exact lowercased name -> meta
+  const skillCostMapByJP = new Map(); // normalize(jpname) -> meta (always unique)
   const skillCostById = new Map(); // skillId -> base cost
   const skillMetaById = new Map(); // skillId -> { cost, versions, parents }
   const externalAliasLookup = new Map(); // normalized name -> Set(other known aliases)
@@ -510,6 +511,17 @@
                 skillCostMapExact.set(exactKey, meta);
               if (key && !skillCostMapNormalized.has(key)) skillCostMapNormalized.set(key, meta);
             });
+            // Index by JP name for collision-safe CSV join (JP names are always unique)
+            const jpn = (entry?.jpname || '').trim();
+            if (jpn) {
+              const jpKey = normalize(jpn);
+              if (jpKey && !skillCostMapByJP.has(jpKey)) skillCostMapByJP.set(jpKey, meta);
+            }
+            const gvJpn = (entry?.gene_version?.jpname || '').trim();
+            if (gvJpn) {
+              const gvJpKey = normalize(gvJpn);
+              if (gvJpKey && !skillCostMapByJP.has(gvJpKey)) skillCostMapByJP.set(gvJpKey, meta);
+            }
           }
         });
         officialEnglishNameSet = nextOfficialEnglishNames;
@@ -1693,6 +1705,9 @@
       names.push(label);
     };
 
+    // Track EN name collisions for disambiguation
+    const enNameCollisions = new Map(); // normalizedKey -> [enriched, ...]
+
     Object.entries(skillsByCategory).forEach(([category, list = []]) => {
       list.forEach((skill) => {
         if (!skill || !skill.name) return;
@@ -1704,7 +1719,32 @@
         const isDoubleCircle = !!skill.circleUpgradeOf; // ◎ with paired ○
         const isPairedSingle = !!skill.circleUpgrade; // ○ with paired ◎
 
-        nextIndex.set(key, enriched);
+        if (!nextIndex.has(key)) {
+          nextIndex.set(key, enriched);
+          enNameCollisions.set(key, [enriched]);
+        } else {
+          // Collision: store under disambiguated key using JP name
+          if (!enNameCollisions.has(key)) enNameCollisions.set(key, [nextIndex.get(key)]);
+          enNameCollisions.get(key).push(enriched);
+          const jpSuffix = (enriched.jpName || '').trim();
+          if (jpSuffix) {
+            const disambigKey = normalize(skill.name + ' (' + jpSuffix + ')');
+            if (disambigKey && !nextIndex.has(disambigKey)) {
+              nextIndex.set(disambigKey, enriched);
+              addLooseLookup(skill.name + ' (' + jpSuffix + ')', enriched);
+            }
+          }
+          // Also add disambiguated key for the first occupant
+          const firstEnriched = nextIndex.get(key);
+          const firstJpSuffix = (firstEnriched?.jpName || '').trim();
+          if (firstJpSuffix) {
+            const firstDisambigKey = normalize(firstEnriched.name + ' (' + firstJpSuffix + ')');
+            if (!nextIndex.has(firstDisambigKey)) {
+              nextIndex.set(firstDisambigKey, firstEnriched);
+              addLooseLookup(firstEnriched.name + ' (' + firstJpSuffix + ')', firstEnriched);
+            }
+          }
+        }
         addLooseLookup(skill.name, enriched);
         if (Array.isArray(skill.aliasNames) && skill.aliasNames.length) {
           skill.aliasNames.forEach((alias) => {
@@ -1784,6 +1824,27 @@
         }
       });
     });
+    // Post-process: disambiguate datalist suggestions for colliding EN names
+    enNameCollisions.forEach((group, key) => {
+      if (group.length < 2) return;
+      // Remove the single clean-name suggestion
+      const cleanLabel = group[0].name;
+      const cleanIdx = names.indexOf(cleanLabel);
+      if (cleanIdx !== -1) {
+        names.splice(cleanIdx, 1);
+        seenSuggestions.delete(normalize(cleanLabel));
+      }
+      // Add disambiguated entries for each skill in the collision group
+      group.forEach((s) => {
+        const jpSuffix = (s.jpName || '').trim();
+        if (jpSuffix) {
+          addSuggestionName(s.name + ' (' + jpSuffix + ')');
+        } else {
+          addSuggestionName(s.name);
+        }
+      });
+    });
+
     skillIndex = nextIndex;
     skillLookupLoose = nextLooseLookup;
     skillIdIndex = nextIdIndex;
@@ -1856,12 +1917,12 @@
   }
 
   function formatCategoryLabel(cat) {
-    if (!cat) return 'Auto';
+    if (!cat) return t('optimizer.auto');
     const canon = canonicalCategory(cat);
-    if (canon === 'gold') return 'Gold';
-    if (canon === 'purple') return 'Purple';
-    if (canon === 'evo') return 'Evo';
-    if (canon === 'ius') return 'Unique';
+    if (canon === 'gold') return t('optimizer.catGold');
+    if (canon === 'purple') return t('optimizer.catPurple');
+    if (canon === 'evo') return t('optimizer.catEvo');
+    if (canon === 'ius') return t('optimizer.catUnique');
     return cat.charAt(0).toUpperCase() + cat.slice(1);
   }
 
@@ -1982,6 +2043,17 @@
     let filteredOut = 0;
     let loaded = 0;
     const catMap = {};
+    // First pass: collect names that have official localized translations
+    const officiallyLocalizedNames = new Set();
+    if (getSkillLanguage() !== 'jp') {
+      for (let r = 1; r < rows.length; r++) {
+        const cols = rows[r];
+        if (!cols || !cols.length) continue;
+        const n = (cols[idx.name] || '').trim();
+        const loc = idx.localized !== -1 ? (cols[idx.localized] || '').trim() : '';
+        if (n && loc) officiallyLocalizedNames.add(normalize(n));
+      }
+    }
     for (let r = 1; r < rows.length; r++) {
       const cols = rows[r];
       if (!cols || !cols.length) continue;
@@ -2066,13 +2138,22 @@
       if (!isNaN(badVal)) score.bad = badVal;
       if (!isNaN(terrVal)) score.terrible = terrVal;
       let meta = null;
-      const lookupNames = [name, ...aliasNames];
-      if (localizedName) lookupNames.push(localizedName);
-      for (const lookupName of lookupNames) {
-        const exactKey = normalize(lookupName);
-        const lookupKey = normalizeCostKey(lookupName);
-        meta = skillCostMapExact.get(exactKey) || skillCostMapNormalized.get(lookupKey) || null;
-        if (meta) break;
+      // Try JP name first (unique) to avoid collisions when EN names are duplicated
+      const jpLookupName = isJPCSV ? rawName : (aliasNames.find((a) => hasJapaneseScript(a)) || '');
+      if (jpLookupName) {
+        const jpKey = normalize(jpLookupName);
+        if (jpKey) meta = skillCostMapByJP.get(jpKey) || null;
+      }
+      // Fallback to EN name lookup
+      if (!meta) {
+        const lookupNames = [name, ...aliasNames];
+        if (localizedName) lookupNames.push(localizedName);
+        for (const lookupName of lookupNames) {
+          const exactKey = normalize(lookupName);
+          const lookupKey = normalizeCostKey(lookupName);
+          meta = skillCostMapExact.get(exactKey) || skillCostMapNormalized.get(lookupKey) || null;
+          if (meta) break;
+        }
       }
       const resolvedCost =
         meta && typeof meta.cost === 'number' ? meta.cost : isNaN(baseCost) ? undefined : baseCost;
@@ -2083,10 +2164,18 @@
           ? String(meta.versions[0])
           : '';
       const skillId = meta?.id;
+      // On EN server: skip fan-only skills whose name collides with an officially translated skill
+      if (!isJPCSV && !localizedName && officiallyLocalizedNames.has(normalize(name))) {
+        filteredOut++;
+        continue;
+      }
       if (!catMap[type]) catMap[type] = [];
+      const resolvedJpName = isJPCSV
+        ? jpOriginalName
+        : (aliasNames.find((a) => hasJapaneseScript(a)) || '');
       catMap[type].push({
         name,
-        jpName: jpOriginalName,
+        jpName: resolvedJpName,
         aliasNames,
         localizedName,
         score,
@@ -2412,18 +2501,18 @@
     row.dataset.rowId = id;
     row.innerHTML = `
       <div class="type-cell">
-        <label>${t('optimizer.type')}</label>
+        <label data-i18n="optimizer.type">${t('optimizer.type')}</label>
         <div class="category-chip" data-empty="true">${t('optimizer.auto')}</div>
       </div>
       <div class="skill-cell">
-        <label>${t('optimizer.skill')}</label>
-        <input type="text" class="skill-name field-control" list="skills-datalist-shared" placeholder="${t('optimizer.startTyping')}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+        <label data-i18n="optimizer.skill">${t('optimizer.skill')}</label>
+        <input type="text" class="skill-name field-control" list="skills-datalist-shared" data-i18n-placeholder="optimizer.startTyping" placeholder="${t('optimizer.startTyping')}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
         <div class="skill-name-meta" data-empty="true"></div>
         <div class="dup-warning" role="status" aria-live="polite"></div>
         <div class="evo-options" data-empty="true"></div>
       </div>
       <div class="hint-cell">
-        <label>${t('optimizer.hintDiscount')}</label>
+        <label data-i18n="optimizer.hintDiscount">${t('optimizer.hintDiscount')}</label>
         <div class="hint-controls">
           <select class="hint-level field-control">
             ${HINT_LEVELS.map((lvl) => `<option value="${lvl}">${t('optimizer.hintLvFormat', { lvl: lvl, pct: getTotalHintDiscountPct(lvl) })}</option>`).join('')}
@@ -2432,20 +2521,20 @@
         </div>
       </div>
       <div class="cost-cell">
-        <label>${t('optimizer.cost')}</label>
-        <input type="number" min="0" step="1" class="cost field-control" placeholder="${t('optimizer.cost')}" />
+        <label data-i18n="optimizer.cost">${t('optimizer.cost')}</label>
+        <input type="number" min="0" step="1" class="cost field-control" data-i18n-placeholder="optimizer.cost" placeholder="${t('optimizer.cost')}" />
       </div>
       <div class="actions-cell">
         <div class="required-cell">
-          <label>${t('optimizer.mustBuy')}</label>
+          <label data-i18n="optimizer.mustBuy">${t('optimizer.mustBuy')}</label>
           <label class="required-toggle">
             <input type="checkbox" class="required-skill" />
-            ${t('optimizer.lock')}
+            <span data-i18n="optimizer.lock">${t('optimizer.lock')}</span>
           </label>
         </div>
         <div class="remove-cell">
           <label class="remove-label">&nbsp;</label>
-          <button type="button" class="btn remove">${t('optimizer.removeRow')}</button>
+          <button type="button" class="btn remove" data-i18n="optimizer.removeRow">${t('optimizer.removeRow')}</button>
         </div>
       </div>
     `;
@@ -4159,7 +4248,7 @@
       if (mode === TEAM_TRIALS_MODE) {
         const breakdown = teamBreakdownMap.get(it.id) || {};
         if (includedWith) {
-          li.innerHTML = `<span class="res-name" data-skill-name="${attrEsc(it.name)}" tabindex="0" role="button">${formatSkillDisplayName(it.name)}</span> <span class="res-meta">${t('optimizer.includedWith', { name: includedWith })}</span>`;
+          li.innerHTML = `<span class="res-name" data-skill-name="${attrEsc(it.name)}"${it.skillId ? ` data-skill-id="${attrEsc(String(it.skillId))}"` : ''} tabindex="0" role="button">${formatSkillDisplayName(it.name)}</span> <span class="res-meta">${t('optimizer.includedWith', { name: includedWith })}</span>`;
         } else {
           const rating = Number.isFinite(breakdown.ratingScore)
             ? breakdown.ratingScore
@@ -4173,6 +4262,7 @@
           const nameEl = document.createElement('span');
           nameEl.className = 'res-name';
           nameEl.setAttribute('data-skill-name', it.name);
+          if (it.skillId) nameEl.setAttribute('data-skill-id', String(it.skillId));
           nameEl.setAttribute('tabindex', '0');
           nameEl.setAttribute('role', 'button');
           nameEl.textContent = formatSkillDisplayName(it.name);
@@ -4227,7 +4317,7 @@
         const meta = includedWith
           ? t('optimizer.includedWith', { name: includedWith })
           : t('optimizer.costScoreDisplay', { cost: it.cost, score: displayScore });
-        li.innerHTML = `<span class="res-name" data-skill-name="${attrEsc(it.name)}" tabindex="0" role="button">${displayName}</span> <span class="res-meta">${meta}</span>`;
+        li.innerHTML = `<span class="res-name" data-skill-name="${attrEsc(it.name)}"${it.skillId ? ` data-skill-id="${attrEsc(String(it.skillId))}"` : ''} tabindex="0" role="button">${displayName}</span> <span class="res-meta">${meta}</span>`;
       }
       selectedListEl.appendChild(li);
     });
@@ -4614,7 +4704,7 @@
         if (isGold && lowerSkill) {
           lowerCat = canonicalCategory(lowerSkill.category);
           const lowerName = formatSkillDisplayName(lowerSkill);
-          lowerHtml = `<div class="card-lower lower-${lowerCat}" data-skill-name="${attrEsc(lowerSkill.name)}">${attrEsc(lowerName)}</div>`;
+          lowerHtml = `<div class="card-lower lower-${lowerCat}" data-skill-name="${attrEsc(lowerSkill.name)}"${lowerSkill.skillId ? ` data-skill-id="${attrEsc(String(lowerSkill.skillId))}"` : ''}>${attrEsc(lowerName)}</div>`;
         }
 
         const card = document.createElement('div');
@@ -4622,7 +4712,7 @@
         card.className = `skill-card cat-${cat}${isGold ? ' is-gold' : ''} tint-${tintCat}`;
         card.innerHTML =
           `<div class="card-check"></div>` +
-          `<div class="card-name" data-skill-name="${attrEsc(skill.name)}" title="${attrEsc(skill.name)}">${attrEsc(displayName)}</div>` +
+          `<div class="card-name" data-skill-name="${attrEsc(skill.name)}"${skill.skillId ? ` data-skill-id="${attrEsc(String(skill.skillId))}"` : ''} title="${attrEsc(skill.name)}">${attrEsc(displayName)}</div>` +
           lowerHtml +
           `<div class="card-meta"><span class="card-cost-value">${costText}</span>${typeText ? `<span>${typeText}</span>` : ''}</div>` +
           `<div class="card-hints">` +
@@ -5736,6 +5826,7 @@
     refreshAllRowCosts();
     ensureOneEmptyRow();
     clearAutoHighlights();
+    updateSkillLibraryStatus();
     autoOptimizeDebounced();
     saveState();
   });

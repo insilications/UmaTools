@@ -325,12 +325,39 @@
       names.push(label);
     };
 
+    // Track EN name collisions for disambiguation
+    const enNameCollisions = new Map(); // normalizedKey -> [enriched, ...]
+
     Object.entries(skillsByCategory).forEach(([category, list = []]) => {
       list.forEach((skill) => {
         if (!skill || !skill.name) return;
         const key = normalize(skill.name);
         const enriched = { ...skill, category };
-        nextIndex.set(key, enriched);
+        if (!nextIndex.has(key)) {
+          nextIndex.set(key, enriched);
+          enNameCollisions.set(key, [enriched]);
+        } else {
+          // Collision: store under disambiguated key using JP name
+          if (!enNameCollisions.has(key)) enNameCollisions.set(key, [nextIndex.get(key)]);
+          enNameCollisions.get(key).push(enriched);
+          const jpSuffix = (enriched.jpName || '').trim();
+          if (jpSuffix) {
+            const disambigKey = normalize(skill.name + ' (' + jpSuffix + ')');
+            if (disambigKey && !nextIndex.has(disambigKey)) {
+              nextIndex.set(disambigKey, enriched);
+              addLooseLookup(skill.name + ' (' + jpSuffix + ')', enriched);
+            }
+          }
+          const firstEnriched = nextIndex.get(key);
+          const firstJpSuffix = (firstEnriched?.jpName || '').trim();
+          if (firstJpSuffix) {
+            const firstDisambigKey = normalize(firstEnriched.name + ' (' + firstJpSuffix + ')');
+            if (!nextIndex.has(firstDisambigKey)) {
+              nextIndex.set(firstDisambigKey, firstEnriched);
+              addLooseLookup(firstEnriched.name + ' (' + firstJpSuffix + ')', firstEnriched);
+            }
+          }
+        }
         addLooseLookup(skill.name, enriched);
         if (Array.isArray(skill.aliasNames) && skill.aliasNames.length) {
           skill.aliasNames.forEach((alias) => {
@@ -377,6 +404,25 @@
         }
       });
     });
+    // Post-process: disambiguate datalist suggestions for colliding EN names
+    enNameCollisions.forEach((group) => {
+      if (group.length < 2) return;
+      const cleanLabel = group[0].name;
+      const cleanIdx = names.indexOf(cleanLabel);
+      if (cleanIdx !== -1) {
+        names.splice(cleanIdx, 1);
+        seenSuggestions.delete(normalize(cleanLabel));
+      }
+      group.forEach((s) => {
+        const jpSuffix = (s.jpName || '').trim();
+        if (jpSuffix) {
+          addSuggestionName(s.name + ' (' + jpSuffix + ')');
+        } else {
+          addSuggestionName(s.name);
+        }
+      });
+    });
+
     skillIndex = nextIndex;
     skillLookupLoose = nextLooseLookup;
     names.sort((a, b) => a.localeCompare(b));
@@ -527,6 +573,17 @@
     let filteredOut = 0;
     let loaded = 0;
     const catMap = {};
+    // First pass: collect names that have official localized translations
+    const officiallyLocalizedNames = new Set();
+    if (getSkillLanguage() !== 'jp') {
+      for (let r = 1; r < rows.length; r++) {
+        const cols = rows[r];
+        if (!cols || !cols.length) continue;
+        const n = (cols[idx.name] || '').trim();
+        const loc = idx.localized !== -1 ? (cols[idx.localized] || '').trim() : '';
+        if (n && loc) officiallyLocalizedNames.add(normalize(n));
+      }
+    }
     for (let r = 1; r < rows.length; r++) {
       const cols = rows[r];
       if (!cols || !cols.length) continue;
@@ -539,6 +596,7 @@
         .filter(Boolean);
       // JP CSV: use localized_name (official EN) as primary, then first alias; keep JP name as alias
       const isJPCSV = getSkillLanguage() === 'jp';
+      const jpOriginalName = isJPCSV ? rawName : '';
       const jpSwapName = isJPCSV ? localizedName || aliasNames[0] || '' : '';
       const name = jpSwapName || rawName;
       if (isJPCSV && jpSwapName && rawName !== name) {
@@ -563,6 +621,11 @@
         });
       });
       if (!name) continue;
+      // On EN server: skip fan-only skills whose name collides with an officially translated skill
+      if (!isJPCSV && !localizedName && officiallyLocalizedNames.has(normalize(name))) {
+        filteredOut++;
+        continue;
+      }
       if (officialFilterActive && !officialEnglishNameSet.has(normalizeOfficialSkillName(name))) {
         filteredOut++;
         continue;
@@ -608,8 +671,12 @@
       if (!isNaN(badVal)) score.bad = badVal;
       if (!isNaN(terrVal)) score.terrible = terrVal;
       if (!catMap[type]) catMap[type] = [];
+      const resolvedJpName = isJPCSV
+        ? jpOriginalName
+        : (aliasNames.find((a) => hasJapaneseScript(a)) || '');
       catMap[type].push({
         name,
+        jpName: resolvedJpName,
         aliasNames,
         localizedName,
         score,

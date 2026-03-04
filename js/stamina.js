@@ -805,6 +805,8 @@
     isHydrated = true;
     update();
     window.addEventListener('i18n:changed', function () {
+      populateUniqueSelect();
+      renderUniqueList();
       update();
     });
   }
