@@ -36,6 +36,11 @@
           path: '/stamina',
           file: '/stamina.html',
         },
+        {
+          label: 'Accel Checker',
+          path: '/accel',
+          file: '/accel.html',
+        },
       ],
     },
     {

@@ -271,6 +271,13 @@
     }
   }
 
+  window.addEventListener('i18n:changed', function () {
+    if (!badgeRows.length) return;
+    renderRows(badgeRows);
+    paintIcons();
+    applyRatingLookup({ smoothScroll: false });
+  });
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init, { once: true });
   } else {

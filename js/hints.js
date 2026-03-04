@@ -245,7 +245,11 @@
 
   function updateCounts(list) {
     const serverCards = cards.filter(matchesServer);
-    counts.textContent = `${list.length} card(s) matched | ${serverCards.length} cards total | ${allHints.length} unique hints`;
+    counts.textContent = t('hints.counts', {
+      matched: list.length,
+      total: serverCards.length,
+      hints: allHints.length,
+    });
   }
 
   function update() {

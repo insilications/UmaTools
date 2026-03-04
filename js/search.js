@@ -306,4 +306,18 @@ function attachUI() {
 }
 document.addEventListener('DOMContentLoaded', attachUI);
 
+window.addEventListener('i18n:changed', () => {
+  const status = $('#status');
+  const input = $('#query');
+  // If no search has been performed, refresh the idle prompt
+  if (!LAST_QUERY_KEY && status) {
+    status.textContent = _t('events.typeAndSearch');
+  }
+  // If a search was already performed, re-run it to refresh translated text
+  if (LAST_QUERY_KEY && input && input.value) {
+    LAST_QUERY_KEY = null; // clear cache so performSearch actually re-renders
+    performSearch(input.value);
+  }
+});
+
 window.performSearch = performSearch;
