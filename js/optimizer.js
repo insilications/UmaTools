@@ -129,12 +129,16 @@
   let allSkillNamesNormalized = []; // pre-normalized for fast datalist filtering
   const MAX_SKILL_SUGGESTIONS = 300;
   const MAX_SKILL_SUGGESTIONS_WITH_PREFIX = 15;
+  const DATALIST_CACHE_MAX_KEYS = 120;
 
   // Performance optimization: track active skill keys for O(1) duplicate detection
   const activeSkillKeys = new Map(); // skillKey -> rowId
 
   // Performance optimization: shared datalist for all skill inputs
   let sharedSkillDatalist = null;
+  let datalistSuggestionCache = new Map();
+  let lastDatalistPrefix = null;
+  let skillLibraryRevision = 0;
   const HINT_DISCOUNT_STEP = 0.1;
   const HINT_DISCOUNTS = { 0: 0.0, 1: 0.1, 2: 0.2, 3: 0.3, 4: 0.35, 5: 0.4 };
   const HINT_LEVELS = [0, 1, 2, 3, 4, 5];
@@ -1679,7 +1683,33 @@
     };
     renderResults(mergedResult, budget);
   }
-  const autoOptimizeDebounced = debounce(tryAutoOptimize, 120);
+  let autoOptimizeIdleHandle = null;
+  function scheduleAutoOptimize() {
+    if (autoOptimizeIdleHandle != null) {
+      if (typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(autoOptimizeIdleHandle);
+      } else {
+        window.clearTimeout(autoOptimizeIdleHandle);
+      }
+      autoOptimizeIdleHandle = null;
+    }
+    if (typeof window.requestIdleCallback === 'function') {
+      autoOptimizeIdleHandle = window.requestIdleCallback(
+        () => {
+          autoOptimizeIdleHandle = null;
+          tryAutoOptimize();
+        },
+        { timeout: 400 }
+      );
+      return;
+    }
+    autoOptimizeIdleHandle = window.setTimeout(() => {
+      autoOptimizeIdleHandle = null;
+      tryAutoOptimize();
+    }, 0);
+  }
+  const autoOptimizeDebounced = debounce(scheduleAutoOptimize, 140);
+  const saveStateDebounced = debounce(() => saveState(), 220);
 
   function rebuildSkillCaches() {
     const nextIndex = new Map();
@@ -1851,6 +1881,9 @@
     names.sort((a, b) => a.localeCompare(b));
     allSkillNames = names;
     allSkillNamesNormalized = names.map((n) => normalize(n));
+    datalistSuggestionCache.clear();
+    lastDatalistPrefix = null;
+    skillLibraryRevision += 1;
     rebuildSharedDatalist();
     refreshAllRows();
   }
@@ -2398,18 +2431,34 @@
 
   function rebuildSharedDatalist(prefix = '') {
     if (!sharedSkillDatalist) return;
-    sharedSkillDatalist.innerHTML = '';
     const normalizedPrefix = normalize(prefix);
+    if (normalizedPrefix === lastDatalistPrefix) return;
+    lastDatalistPrefix = normalizedPrefix;
+
     const suggestionLimit = normalizedPrefix
       ? MAX_SKILL_SUGGESTIONS_WITH_PREFIX
       : MAX_SKILL_SUGGESTIONS;
+
+    const cacheKey = `${normalizedPrefix}|${suggestionLimit}`;
+    let suggestionNames = datalistSuggestionCache.get(cacheKey);
+    if (!suggestionNames) {
+      suggestionNames = [];
+      for (let i = 0; i < allSkillNames.length; i++) {
+        if (suggestionNames.length >= suggestionLimit) break;
+        const normalizedName = allSkillNamesNormalized[i];
+        if (normalizedPrefix && !normalizedName.startsWith(normalizedPrefix)) continue;
+        suggestionNames.push(allSkillNames[i]);
+      }
+      if (datalistSuggestionCache.size >= DATALIST_CACHE_MAX_KEYS) {
+        datalistSuggestionCache.clear();
+      }
+      datalistSuggestionCache.set(cacheKey, suggestionNames);
+    }
+
+    sharedSkillDatalist.innerHTML = '';
     const frag = document.createDocumentFragment();
-    let added = 0;
-    for (let i = 0; i < allSkillNames.length; i++) {
-      if (added >= suggestionLimit) break;
-      const normalizedName = allSkillNamesNormalized[i];
-      if (normalizedPrefix && !normalizedName.startsWith(normalizedPrefix)) continue;
-      const name = allSkillNames[i];
+    suggestionNames.forEach((name) => {
+      const normalizedName = normalize(name);
       const opt = document.createElement('option');
       opt.value = name;
       const skill = findSkillByName(name);
@@ -2420,8 +2469,7 @@
         opt.textContent = display;
       }
       frag.appendChild(opt);
-      added++;
-    }
+    });
     sharedSkillDatalist.appendChild(frag);
   }
 
@@ -2585,6 +2633,7 @@
     const baseCostDisplay = row.querySelector('.base-cost');
     const costInput = row.querySelector('.cost');
     const requiredToggle = row.querySelector('.required-skill');
+    let trackedSkillKey = '';
 
     function getHintLevel() {
       if (!hintSelect) return 0;
@@ -2746,28 +2795,25 @@
 
     // Update the activeSkillKeys map when this row's skill changes
     function updateSkillKeyTracking(newIdentity) {
-      // Remove old key for this row
-      for (const [key, rowId] of activeSkillKeys) {
-        if (rowId === id) {
-          activeSkillKeys.delete(key);
-          break;
-        }
+      if (trackedSkillKey && activeSkillKeys.get(trackedSkillKey) === id) {
+        activeSkillKeys.delete(trackedSkillKey);
       }
       // Add new key if valid
       const newKey = getSkillKey(newIdentity);
       if (newKey) {
         activeSkillKeys.set(newKey, id);
+        trackedSkillKey = newKey;
+      } else {
+        trackedSkillKey = '';
       }
     }
 
     // Clean up when row is removed
     function removeSkillKeyTracking() {
-      for (const [key, rowId] of activeSkillKeys) {
-        if (rowId === id) {
-          activeSkillKeys.delete(key);
-          break;
-        }
+      if (trackedSkillKey && activeSkillKeys.get(trackedSkillKey) === id) {
+        activeSkillKeys.delete(trackedSkillKey);
       }
+      trackedSkillKey = '';
     }
 
     function showDupWarning(message) {
@@ -2806,9 +2852,6 @@
           const linked = rowsEl.querySelector(`.optimizer-row[data-row-id="${currentLinkedId}"]`);
           if (linked) linked.remove();
           delete row.dataset.lowerRowId;
-          saveState();
-          ensureOneEmptyRow();
-          autoOptimizeDebounced();
         }
         return;
       }
@@ -2836,9 +2879,6 @@
         });
       }
       autofillLinkedLower(linked);
-      saveState();
-      ensureOneEmptyRow();
-      autoOptimizeDebounced();
     }
 
     function ensureLinkedLowerForParent(skill, { allowCreate = true } = {}) {
@@ -2867,9 +2907,6 @@
       rowsEl.insertBefore(linked, row.nextSibling);
       row.dataset.lowerRowId = lid;
       autofillLinkedLower(linked);
-      saveState();
-      ensureOneEmptyRow();
-      autoOptimizeDebounced();
     }
 
     function ensureLinkedCircleUpgrade(skill, { allowCreate = true } = {}) {
@@ -2886,9 +2923,6 @@
             linked.remove();
           }
           delete row.dataset.circleRowId;
-          saveState();
-          ensureOneEmptyRow();
-          autoOptimizeDebounced();
         }
         return;
       }
@@ -2927,9 +2961,6 @@
       if (typeof linked.syncSkillCategory === 'function') {
         linked.syncSkillCategory({ triggerOptimize: false, allowLinking: false, updateCost: true });
       }
-      saveState();
-      ensureOneEmptyRow();
-      autoOptimizeDebounced();
     }
 
     // ── Evo skill checkboxes on gold rows ──
@@ -3155,7 +3186,7 @@
       ensureEvoOptions(skill, { allowCreate: allowLinking });
       if (updateCost) applyHintedCost(skill);
       if (triggerOptimize) {
-        saveState();
+        saveStateDebounced();
         ensureOneEmptyRow();
         autoOptimizeDebounced();
       }
@@ -3203,19 +3234,42 @@
     setCategoryDisplay(row.dataset.skillCategory || '');
     if (skillInput) {
       // Full sync: rebuild datalist + sync skill category
-      const syncFromInput = () => {
-        rebuildSharedDatalist(skillInput.value || '');
-        syncSkillCategory({ triggerOptimize: true, updateCost: true });
+      const syncFromInput = ({
+        triggerOptimize = false,
+        allowLinking = true,
+        refreshSuggestions = true,
+      } = {}) => {
+        if (refreshSuggestions) {
+          rebuildSharedDatalist(skillInput.value || '');
+        }
+        syncSkillCategory({ triggerOptimize, allowLinking, updateCost: true });
       };
       // Debounced version for typing — avoids expensive work on every keystroke
-      const debouncedSync = debounce(syncFromInput, 200);
+      const syncFromTyping = () =>
+        syncFromInput({ triggerOptimize: false, allowLinking: false, refreshSuggestions: true });
+      let lastCommittedValue = '';
+      let lastCommittedRevision = -1;
+      const syncFromCommit = () => {
+        const currentValue = skillInput.value || '';
+        if (
+          normalize(currentValue) === normalize(lastCommittedValue) &&
+          lastCommittedRevision === skillLibraryRevision
+        ) {
+          return;
+        }
+        lastCommittedValue = currentValue;
+        lastCommittedRevision = skillLibraryRevision;
+        syncFromInput({ triggerOptimize: true, allowLinking: true, refreshSuggestions: false });
+      };
+      // Typing updates metadata/costs without creating/removing linked rows.
+      const debouncedSync = debounce(syncFromTyping, 180);
       // While typing, debounce to avoid per-keystroke DOM thrashing
       skillInput.addEventListener('input', debouncedSync);
       // On commit actions (datalist pick, leave field, Enter), sync immediately
-      skillInput.addEventListener('change', syncFromInput);
-      skillInput.addEventListener('blur', syncFromInput);
+      skillInput.addEventListener('change', syncFromCommit);
+      skillInput.addEventListener('blur', syncFromCommit);
       skillInput.addEventListener('keyup', (event) => {
-        if (event.key === 'Enter') syncFromInput();
+        if (event.key === 'Enter') syncFromCommit();
       });
       // On focus, rebuild datalist suggestions (no polling needed)
       skillInput.addEventListener('focus', () => {
@@ -4521,6 +4575,29 @@
     let allCards = [];
     let browserMode = 'append';
     let targetRow = null;
+    let renderedGridRevision = -1;
+    let filterFrameId = 0;
+    const applyFiltersDebounced = debounce(() => applyFilters(), 90);
+
+    function resetCardState() {
+      allCards.forEach((entry) => {
+        if (typeof entry.resetState === 'function') {
+          entry.resetState();
+        }
+      });
+      selectedSkills.clear();
+      updateSelectedCount();
+    }
+
+    function ensureGridReady() {
+      const shouldRebuild = renderedGridRevision !== skillLibraryRevision || !allCards.length;
+      if (shouldRebuild) {
+        buildGrid();
+        renderedGridRevision = skillLibraryRevision;
+      } else {
+        resetCardState();
+      }
+    }
 
     function openBrowser(mode = 'append', row = null) {
       browserMode = mode;
@@ -4531,7 +4608,7 @@
       searchQuery = '';
       if (skillBrowserSearch) skillBrowserSearch.value = '';
       buildFilterChips();
-      buildGrid();
+      ensureGridReady();
       applyFilters();
       updateSelectedCount();
       skillBrowserBackdrop.classList.add('open');
@@ -4540,6 +4617,10 @@
     }
 
     function closeBrowser() {
+      if (filterFrameId) {
+        cancelAnimationFrame(filterFrameId);
+        filterFrameId = 0;
+      }
       skillBrowserBackdrop.classList.remove('open');
       document.body.style.overflow = '';
       targetRow = null;
@@ -4745,6 +4826,19 @@
           else btn.appendChild(document.createTextNode(`Lv${level}`));
         }
 
+        function resetState() {
+          hintLevel = 0;
+          lowerHintLevel = 0;
+          setHintText(hintBtn, hintLevel);
+          hintBtn.classList.remove('active');
+          if (lowerHintBtn) {
+            setHintText(lowerHintBtn, lowerHintLevel);
+            lowerHintBtn.classList.remove('active');
+          }
+          card.classList.remove('selected');
+          updateCostDisplay();
+        }
+
         hintBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           hintLevel = (hintLevel + 1) % 6;
@@ -4785,9 +4879,12 @@
         allCards.push({
           el: card,
           name: addName,
+          nameLower: addName.toLowerCase(),
           category: cat,
           checkTypes,
           aliases: (skill.aliasNames || []).map((a) => a.toLowerCase()),
+          visible: true,
+          resetState,
         });
       });
       skillBrowserGrid.appendChild(frag);
@@ -4800,41 +4897,49 @@
     }
 
     function applyFilters() {
-      const query = searchQuery.toLowerCase();
-      let shown = 0;
+      if (filterFrameId) cancelAnimationFrame(filterFrameId);
+      filterFrameId = requestAnimationFrame(() => {
+        filterFrameId = 0;
+        const query = searchQuery.toLowerCase();
+        let shown = 0;
 
-      allCards.forEach(({ el, name, category, checkTypes, aliases }) => {
-        let visible = true;
+        allCards.forEach((entry) => {
+          const { el, nameLower, category, checkTypes, aliases } = entry;
+          let visible = true;
 
-        if (activeColorFilters.size > 0 && !activeColorFilters.has(category)) {
-          visible = false;
-        }
-
-        if (visible && activeTypeFilters.size > 0) {
-          const isGeneral = checkTypes.length === 0;
-          if (isGeneral) {
-            visible = activeTypeFilters.has('general');
-          } else {
-            visible = checkTypes.some((ct) => activeTypeFilters.has(ct));
+          if (activeColorFilters.size > 0 && !activeColorFilters.has(category)) {
+            visible = false;
           }
-        }
 
-        if (visible && query) {
-          const nameMatch = name.toLowerCase().includes(query);
-          const aliasMatch = aliases.some((a) => a.includes(query));
-          if (!nameMatch && !aliasMatch) visible = false;
-        }
+          if (visible && activeTypeFilters.size > 0) {
+            const isGeneral = checkTypes.length === 0;
+            if (isGeneral) {
+              visible = activeTypeFilters.has('general');
+            } else {
+              visible = checkTypes.some((ct) => activeTypeFilters.has(ct));
+            }
+          }
 
-        el.style.display = visible ? '' : 'none';
-        if (visible) shown++;
-      });
+          if (visible && query) {
+            const nameMatch = nameLower.includes(query);
+            const aliasMatch = aliases.some((a) => a.includes(query));
+            if (!nameMatch && !aliasMatch) visible = false;
+          }
 
-      if (skillBrowserCount) {
-        skillBrowserCount.textContent = t('optimizer.showingCount', {
-          count: shown,
-          total: allCards.length,
+          if (entry.visible !== visible) {
+            entry.visible = visible;
+            el.style.display = visible ? '' : 'none';
+          }
+          if (visible) shown++;
         });
-      }
+
+        if (skillBrowserCount) {
+          skillBrowserCount.textContent = t('optimizer.showingCount', {
+            count: shown,
+            total: allCards.length,
+          });
+        }
+      });
     }
 
     function updateSelectedCount() {
@@ -4910,7 +5015,7 @@
     if (skillBrowserSearch) {
       skillBrowserSearch.addEventListener('input', () => {
         searchQuery = skillBrowserSearch.value;
-        applyFilters();
+        applyFiltersDebounced();
       });
     }
 
@@ -5831,25 +5936,41 @@
     saveState();
   });
 
+  const persistRowStateImmediate = () => {
+    saveStateDebounced();
+    clearAutoHighlights();
+    autoOptimizeDebounced();
+  };
+  const persistRowStateDebounced = debounce(persistRowStateImmediate, 220);
+
   const persistIfRelevant = (e) => {
     const t = e.target;
     if (!t) return;
+    const isInputEvent = e.type === 'input';
+    const isSkillName = !!(t.classList && t.classList.contains('skill-name'));
+    const isCostField = !!(t.classList && t.classList.contains('cost'));
     if (t.closest('.race-config-container')) updateAffinityStyles();
     if (t.closest('.auto-targets')) {
-      saveState();
-      clearAutoHighlights();
-      autoOptimizeDebounced();
+      if (isInputEvent) {
+        persistRowStateDebounced();
+      } else {
+        persistRowStateImmediate();
+      }
       return;
     }
     if (t.closest('.optimizer-row') || t.id === 'budget' || t.closest('.race-config-container')) {
-      saveState();
-      ensureOneEmptyRow();
-      clearAutoHighlights();
-      autoOptimizeDebounced();
+      // Skill-name inputs already run row-local sync/optimize handlers.
+      if (isSkillName) return;
+      if (!isInputEvent && isCostField) ensureOneEmptyRow();
+      if (isInputEvent) {
+        persistRowStateDebounced();
+      } else {
+        persistRowStateImmediate();
+      }
     }
   };
   document.addEventListener('change', persistIfRelevant);
-  document.addEventListener('input', persistIfRelevant);
+  document.addEventListener('input', persistIfRelevant, { passive: true });
 
   function getOCRSkillKey(skillName, resolvedSkill) {
     const name = (skillName || '').trim();
