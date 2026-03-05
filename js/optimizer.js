@@ -127,7 +127,9 @@
   let _initComplete = false; // prevent saves before state is loaded
   let allSkillNames = [];
   let allSkillNamesNormalized = []; // pre-normalized for fast datalist filtering
-  const MAX_SKILL_SUGGESTIONS = 300;
+  let datalistPrefix1Index = new Map(); // first-char prefix -> [name indexes]
+  let datalistPrefix2Index = new Map(); // first-2-char prefix -> [name indexes]
+  const MAX_SKILL_SUGGESTIONS = 80;
   const MAX_SKILL_SUGGESTIONS_WITH_PREFIX = 15;
   const DATALIST_CACHE_MAX_KEYS = 120;
 
@@ -1881,6 +1883,22 @@
     names.sort((a, b) => a.localeCompare(b));
     allSkillNames = names;
     allSkillNamesNormalized = names.map((n) => normalize(n));
+    datalistPrefix1Index = new Map();
+    datalistPrefix2Index = new Map();
+    for (let i = 0; i < allSkillNamesNormalized.length; i++) {
+      const normalizedName = allSkillNamesNormalized[i];
+      if (!normalizedName) continue;
+      const p1 = normalizedName.slice(0, 1);
+      if (p1) {
+        if (!datalistPrefix1Index.has(p1)) datalistPrefix1Index.set(p1, []);
+        datalistPrefix1Index.get(p1).push(i);
+      }
+      const p2 = normalizedName.slice(0, 2);
+      if (p2.length === 2) {
+        if (!datalistPrefix2Index.has(p2)) datalistPrefix2Index.set(p2, []);
+        datalistPrefix2Index.get(p2).push(i);
+      }
+    }
     datalistSuggestionCache.clear();
     lastDatalistPrefix = null;
     skillLibraryRevision += 1;
@@ -2443,11 +2461,29 @@
     let suggestionNames = datalistSuggestionCache.get(cacheKey);
     if (!suggestionNames) {
       suggestionNames = [];
-      for (let i = 0; i < allSkillNames.length; i++) {
-        if (suggestionNames.length >= suggestionLimit) break;
-        const normalizedName = allSkillNamesNormalized[i];
-        if (normalizedPrefix && !normalizedName.startsWith(normalizedPrefix)) continue;
-        suggestionNames.push(allSkillNames[i]);
+      let candidateIndexes = null;
+      if (normalizedPrefix) {
+        if (normalizedPrefix.length >= 2) {
+          candidateIndexes = datalistPrefix2Index.get(normalizedPrefix.slice(0, 2)) || [];
+        } else {
+          candidateIndexes = datalistPrefix1Index.get(normalizedPrefix.slice(0, 1)) || [];
+        }
+      }
+      if (candidateIndexes) {
+        for (let j = 0; j < candidateIndexes.length; j++) {
+          if (suggestionNames.length >= suggestionLimit) break;
+          const idx = candidateIndexes[j];
+          const normalizedName = allSkillNamesNormalized[idx];
+          if (!normalizedName || !normalizedName.startsWith(normalizedPrefix)) continue;
+          suggestionNames.push(allSkillNames[idx]);
+        }
+      } else {
+        for (let i = 0; i < allSkillNames.length; i++) {
+          if (suggestionNames.length >= suggestionLimit) break;
+          const normalizedName = allSkillNamesNormalized[i];
+          if (normalizedPrefix && !normalizedName.startsWith(normalizedPrefix)) continue;
+          suggestionNames.push(allSkillNames[i]);
+        }
       }
       if (datalistSuggestionCache.size >= DATALIST_CACHE_MAX_KEYS) {
         datalistSuggestionCache.clear();
@@ -3245,8 +3281,19 @@
         syncSkillCategory({ triggerOptimize, allowLinking, updateCost: true });
       };
       // Debounced version for typing — avoids expensive work on every keystroke
-      const syncFromTyping = () =>
-        syncFromInput({ triggerOptimize: false, allowLinking: false, refreshSuggestions: true });
+      const syncFromTyping = () => {
+        const query = skillInput.value || '';
+        const normalizedQuery = normalize(query);
+        // Avoid costly list churn on the exact mobile worst-case path:
+        // empty input and first-character edits.
+        if (!normalizedQuery || normalizedQuery.length < 2) return;
+        const refresh = () => rebuildSharedDatalist(query);
+        if (typeof window.requestIdleCallback === 'function') {
+          window.requestIdleCallback(refresh, { timeout: 250 });
+        } else {
+          window.setTimeout(refresh, 0);
+        }
+      };
       let lastCommittedValue = '';
       let lastCommittedRevision = -1;
       const syncFromCommit = () => {
@@ -3262,7 +3309,7 @@
         syncFromInput({ triggerOptimize: true, allowLinking: true, refreshSuggestions: false });
       };
       // Typing updates metadata/costs without creating/removing linked rows.
-      const debouncedSync = debounce(syncFromTyping, 180);
+      const debouncedSync = debounce(syncFromTyping, 320);
       // While typing, debounce to avoid per-keystroke DOM thrashing
       skillInput.addEventListener('input', debouncedSync);
       // On commit actions (datalist pick, leave field, Enter), sync immediately
@@ -4273,6 +4320,10 @@
       if (bg && bg.id === a.id) return -1;
       return (indexMap.get(a.id) || 0) - (indexMap.get(b.id) || 0);
     });
+    const formatCircleDisplayName = (name, marker) => {
+      const base = (name || '').replace(/\s[○◎]$/, '');
+      return base ? `${base} ${marker}` : marker;
+    };
     ordered.forEach((it) => {
       // Skip ○ components of circle combos — the ◎ base shows the combined result
       if (circleComponentIds.has(it.id)) return;
@@ -4362,10 +4413,10 @@
         const skill = findSkillByName(it.name);
         if (circleComboBaseIds.has(it.id) && skill?.circleBaseName) {
           // ◎ upgrade was chosen (combo) — show localized base name with ◎
-          displayName = formatSkillDisplayName(skill.circleBaseName) + ' \u25ce';
+          displayName = formatCircleDisplayName(formatSkillDisplayName(skill.circleBaseName), '◎');
         } else if (skill?.circleUpgrade) {
           // ○ only was chosen (no upgrade) — show localized base name with ○
-          displayName = formatSkillDisplayName(skill.circleBaseName) + ' \u25cb';
+          displayName = formatCircleDisplayName(formatSkillDisplayName(skill.circleBaseName), '○');
         }
         if (skill?.isEvo) displayName += ' (evo)';
         const meta = includedWith
