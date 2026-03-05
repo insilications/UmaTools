@@ -130,6 +130,20 @@
     return normalize(name).replace(/\s+/g, ' ');
   }
 
+  function rebuildDerivedSkillFields() {
+    allSkills.forEach(function (skill) {
+      if (!skill || !skill.name) return;
+      var displayName =
+        typeof window.getLocalizedSkillName === 'function'
+          ? window.getLocalizedSkillName(skill.name)
+          : skill.name;
+      skill._displayName = displayName;
+      skill._searchName = normalize(skill.name);
+      skill._searchDisplay = normalize(displayName);
+      skill._sortName = normalize(displayName || skill.name);
+    });
+  }
+
   // ── Load JSON cost data + build official EN name set ──
   async function loadCostJSON() {
     var urls = ['/assets/skills_all.json', './assets/skills_all.json'];
@@ -390,6 +404,7 @@
       if (ia !== -1 || ib !== -1) return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
       return a.localeCompare(b);
     });
+    rebuildDerivedSkillFields();
     return true;
   }
 
@@ -399,9 +414,8 @@
     filteredSkills = allSkills.filter(function (s) {
       if (activeCategory !== 'all' && s.category !== activeCategory) return false;
       if (query) {
-        var nameMatch = normalize(s.name).indexOf(query) !== -1;
-        var localizedMatch = typeof window.getLocalizedSkillName === 'function'
-          && normalize(window.getLocalizedSkillName(s.name)).indexOf(query) !== -1;
+        var nameMatch = (s._searchName || '').indexOf(query) !== -1;
+        var localizedMatch = (s._searchDisplay || '').indexOf(query) !== -1;
         if (!nameMatch && !localizedMatch) return false;
       }
       return true;
@@ -410,8 +424,8 @@
       var va, vb;
       switch (sortCol) {
         case 'name':
-          va = a.name.toLowerCase();
-          vb = b.name.toLowerCase();
+          va = a._sortName || a.name.toLowerCase();
+          vb = b._sortName || b.name.toLowerCase();
           return sortDir === 'asc'
             ? va < vb
               ? -1
@@ -525,7 +539,7 @@
         '<td class="col-name"><span data-skill-name="' +
         escapeAttr(skill.name) +
         '" tabindex="0" role="button">' +
-        escapeHtml(typeof window.getLocalizedSkillName === 'function' ? window.getLocalizedSkillName(skill.name) : skill.name) +
+        escapeHtml(skill._displayName || skill.name) +
         '</span></td>' +
         '<td class="col-type"><span class="skill-cat-pill ' +
         catCls +
@@ -593,7 +607,7 @@
     loadingEl = document.getElementById('skillLoading');
 
     if (searchInput) {
-      searchInput.addEventListener('input', debounce(onSearch, 150));
+      searchInput.addEventListener('input', debounce(onSearch, 180));
     }
     if (filtersEl) {
       filtersEl.addEventListener('click', onFilterClick);
@@ -635,6 +649,7 @@
 
     // React to language changes (re-render labels)
     window.addEventListener('i18n:changed', function () {
+      rebuildDerivedSkillFields();
       renderFilters();
       refresh();
     });
