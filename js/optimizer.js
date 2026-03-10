@@ -1528,6 +1528,11 @@
       // Pull in gold linked lower
       if (it.lowerRowId && !candidateIds.has(it.lowerRowId) && itemById.has(it.lowerRowId)) {
         candidateIds.add(it.lowerRowId);
+        // Also pull in the lower's ◎ circle upgrade (grandchild of gold)
+        const lower = itemById.get(it.lowerRowId);
+        if (lower.circleRowId && !candidateIds.has(lower.circleRowId) && itemById.has(lower.circleRowId)) {
+          candidateIds.add(lower.circleRowId);
+        }
       }
       // Pull in circle upgrade
       if (it.circleRowId && !candidateIds.has(it.circleRowId) && itemById.has(it.circleRowId)) {
@@ -2634,6 +2639,18 @@
             `.optimizer-row[data-row-id="${row.dataset.lowerRowId}"]`
           );
           if (linked) {
+            // Also clean up the lower's ◎ circle upgrade row if it exists
+            if (linked.dataset.circleRowId) {
+              const circleRow = rowsEl.querySelector(
+                `.optimizer-row[data-row-id="${linked.dataset.circleRowId}"]`
+              );
+              if (circleRow) {
+                if (typeof circleRow.cleanupSkillTracking === 'function') {
+                  circleRow.cleanupSkillTracking();
+                }
+                circleRow.remove();
+              }
+            }
             if (typeof linked.cleanupSkillTracking === 'function') {
               linked.cleanupSkillTracking();
             }
@@ -2886,7 +2903,21 @@
       if (!isGold) {
         if (currentLinkedId) {
           const linked = rowsEl.querySelector(`.optimizer-row[data-row-id="${currentLinkedId}"]`);
-          if (linked) linked.remove();
+          if (linked) {
+            // Also clean up the lower's ◎ circle upgrade row if it exists
+            if (linked.dataset.circleRowId) {
+              const circleRow = rowsEl.querySelector(
+                `.optimizer-row[data-row-id="${linked.dataset.circleRowId}"]`
+              );
+              if (circleRow) {
+                if (typeof circleRow.cleanupSkillTracking === 'function') {
+                  circleRow.cleanupSkillTracking();
+                }
+                circleRow.remove();
+              }
+            }
+            linked.remove();
+          }
           delete row.dataset.lowerRowId;
         }
         return;
@@ -2946,8 +2977,8 @@
     }
 
     function ensureLinkedCircleUpgrade(skill, { allowCreate = true } = {}) {
-      // Don't create upgrade rows for rows that are themselves linked children
-      if (row.dataset.parentGoldId || row.dataset.parentCircleId) return;
+      // Don't create upgrade rows for rows that are themselves circle children
+      if (row.dataset.parentCircleId) return;
       const hasCircleUpgrade = skill && skill.circleUpgrade;
       const currentLinkedId = row.dataset.circleRowId;
       // Clean up if skill changed away from a circle skill
@@ -3259,7 +3290,7 @@
       if (typeof linkedRow.syncSkillCategory === 'function') {
         linkedRow.syncSkillCategory({
           triggerOptimize: false,
-          allowLinking: false,
+          allowLinking: true,
           updateCost: true,
         });
       }
@@ -3327,19 +3358,8 @@
       hintSelect.addEventListener('change', () => {
         const skill = skillInput ? findSkillByName(skillInput.value) : null;
         applyHintedCost(skill);
-        if (row.dataset.parentGoldId) {
-          const parent = rowsEl.querySelector(
-            `.optimizer-row[data-row-id="${row.dataset.parentGoldId}"]`
-          );
-          if (parent && typeof parent.syncSkillCategory === 'function') {
-            parent.syncSkillCategory({
-              triggerOptimize: false,
-              allowLinking: false,
-              updateCost: true,
-            });
-          }
-        }
-        // Mirror hint level to linked ◎ upgrade row
+        // Mirror hint level to linked ◎ upgrade row BEFORE updating gold parent
+        // so the gold's cost recalculation includes the updated ◎ cost
         if (row.dataset.circleRowId) {
           const circleRow = rowsEl.querySelector(
             `.optimizer-row[data-row-id="${row.dataset.circleRowId}"]`
@@ -3355,6 +3375,19 @@
             if (!isNaN(cBaseCost) && cCost) {
               cCost.value = calculateDiscountedCost(cBaseCost, newHint);
             }
+          }
+        }
+        // Update gold parent's cost (after ◎ mirror so gold includes updated ◎ cost)
+        if (row.dataset.parentGoldId) {
+          const parent = rowsEl.querySelector(
+            `.optimizer-row[data-row-id="${row.dataset.parentGoldId}"]`
+          );
+          if (parent && typeof parent.syncSkillCategory === 'function') {
+            parent.syncSkillCategory({
+              triggerOptimize: false,
+              allowLinking: false,
+              updateCost: true,
+            });
           }
         }
         saveState();
@@ -3657,10 +3690,17 @@
       if (isGold && it.lowerRowId && idToIndex.has(it.lowerRowId)) {
         const j = idToIndex.get(it.lowerRowId);
         if (!used[j]) {
-          // gold requires lower: offer none, lower only, or gold with lower cost included
+          // Check if lower has a ◎ circle upgrade that must also be purchased
+          const lowerItem = items[j];
+          const hasCircle = lowerItem.circleRowId && idToIndex.has(lowerItem.circleRowId);
+          const k = hasCircle ? idToIndex.get(lowerItem.circleRowId) : -1;
+          const circleItem = k >= 0 && !used[k] ? items[k] : null;
+
+          // gold requires lower (and its ◎ upgrade if present)
           // For aptitude: lower skill alone counts, gold combo only counts the gold
           const goldOptions = [
             { none: true, items: [] },
+            // Lower ○ only
             {
               pick: j,
               cost: items[j].cost,
@@ -3669,34 +3709,59 @@
               aptitudeScore: items[j].aptitudeScore || 0,
               items: [j],
             },
-            {
+          ];
+          if (circleItem) {
+            // Lower ○ + ◎ upgrade (no gold)
+            goldOptions.push({
+              combo: [j, k],
+              cost: items[j].cost + circleItem.cost,
+              score: circleItem.score,
+              ratingScore: circleItem.ratingScore || 0,
+              aptitudeScore: circleItem.aptitudeScore || 0,
+              items: [j, k],
+            });
+            // Gold combo: it.cost includes gold + ○, add ◎ as prerequisite
+            goldOptions.push({
+              combo: [j, k, i],
+              cost: it.cost + circleItem.cost,
+              score: it.score,
+              ratingScore: it.ratingScore || 0,
+              aptitudeScore: it.aptitudeScore || 0,
+              items: [j, k, i],
+            });
+          } else {
+            // Gold combo without circle: ○ + gold
+            goldOptions.push({
               combo: [j, i],
               cost: it.cost,
               score: it.score,
               ratingScore: it.ratingScore || 0,
               aptitudeScore: it.aptitudeScore || 0,
               items: [j, i],
-            },
-          ];
+            });
+          }
           // Evo options from checkbox-linked evo rows (replace gold at same cost)
           const evoIds = (it.evoRowIds || '').split(',').filter(Boolean);
           evoIds.forEach((eid) => {
             const evoIdx = idToIndex.get(eid);
             if (evoIdx !== undefined && !used[evoIdx]) {
               const evoItem = items[evoIdx];
+              const evoItems = circleItem ? [j, k, i, evoIdx] : [j, i, evoIdx];
+              const evoCost = circleItem ? it.cost + circleItem.cost : it.cost;
               goldOptions.push({
-                combo: [j, i, evoIdx],
-                cost: it.cost,
+                combo: evoItems,
+                cost: evoCost,
                 score: evoItem.score,
                 ratingScore: evoItem.ratingScore || 0,
                 aptitudeScore: evoItem.aptitudeScore || 0,
-                items: [j, i, evoIdx],
+                items: evoItems,
               });
               used[evoIdx] = true;
             }
           });
           groups.push(goldOptions);
           used[i] = used[j] = true;
+          if (k >= 0) used[k] = true;
           continue;
         }
       }
@@ -3908,6 +3973,16 @@
           chosenIds.add(lower.id);
           addedScore += Math.max(0, Math.floor(lower.score || 0));
           addedCost += Math.max(0, Math.floor(lower.cost || 0));
+          // Also include the lower's ◎ circle upgrade if it exists
+          if (lower.circleRowId && idToIndex.has(lower.circleRowId)) {
+            const circle = items[idToIndex.get(lower.circleRowId)];
+            if (circle && !chosenIds.has(circle.id)) {
+              chosen.push({ ...circle, forced: true });
+              chosenIds.add(circle.id);
+              addedScore += Math.max(0, Math.floor(circle.score || 0));
+              addedCost += Math.max(0, Math.floor(circle.cost || 0));
+            }
+          }
         }
       }
     });
@@ -3944,6 +4019,11 @@
         const it = items[idx];
         if (it.lowerRowId && idToIndex.has(it.lowerRowId) && !requiredIds.has(it.lowerRowId)) {
           requiredIds.add(it.lowerRowId);
+          changed = true;
+        }
+        // If this ○ skill is a lower for a gold and has a ◎ circle upgrade, require it too
+        if (it.parentGoldId && it.circleRowId && idToIndex.has(it.circleRowId) && !requiredIds.has(it.circleRowId)) {
+          requiredIds.add(it.circleRowId);
           changed = true;
         }
         if (it.lowerSkillId !== undefined && it.lowerSkillId !== null) {
