@@ -14124,7 +14124,7 @@
     "SupportName": "Mejiro Bright (R)",
     "SupportNameJP": "メジロブライト (R)",
     "SupportRarity": "R",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Stamina",
     "SupportEffects": [
       {
@@ -14282,7 +14282,7 @@
     "SupportName": "Narita Top Road (R)",
     "SupportNameJP": "ナリタトップロード (R)",
     "SupportRarity": "R",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Speed",
     "SupportEffects": [
       {
@@ -27223,7 +27223,7 @@
       },
       {
         "SkillId": "204222",
-        "Name": "One More Push",
+        "Name": "もう一踏ん張り",
         "HintLevel": null
       },
       {
@@ -36939,7 +36939,7 @@
     "SupportName": "Mejiro Ryan (SR)",
     "SupportNameJP": "メジロライアン (SR)",
     "SupportRarity": "SR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Stamina",
     "SupportEffects": [
       {
@@ -37121,7 +37121,7 @@
     "SupportName": "Admire Vega (SR)",
     "SupportNameJP": "アドマイヤベガ (SR)",
     "SupportRarity": "SR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Guts",
     "SupportEffects": [
       {
@@ -37336,7 +37336,7 @@
     "SupportName": "Sakura Bakushin O (SR)",
     "SupportNameJP": "サクラバクシンオー (SR)",
     "SupportRarity": "SR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Power",
     "SupportEffects": [
       {
@@ -37561,7 +37561,7 @@
     "SupportName": "Special Week (SR)",
     "SupportNameJP": "スペシャルウィーク (SR)",
     "SupportRarity": "SR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Power",
     "SupportEffects": [
       {
@@ -69035,7 +69035,7 @@
     "SupportName": "Narita Top Road (SSR)",
     "SupportNameJP": "ナリタトップロード (SSR)",
     "SupportRarity": "SSR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Speed",
     "SupportEffects": [
       {
@@ -69267,7 +69267,7 @@
     "SupportName": "Mejiro Bright (SSR)",
     "SupportNameJP": "メジロブライト (SSR)",
     "SupportRarity": "SSR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Stamina",
     "SupportEffects": [
       {
@@ -69453,7 +69453,7 @@
     "SupportName": "Satono Diamond (SSR)",
     "SupportNameJP": "サトノダイヤモンド (SSR)",
     "SupportRarity": "SSR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Wit",
     "SupportEffects": [
       {
@@ -120913,7 +120913,7 @@
       },
       {
         "SkillId": "204222",
-        "Name": "One More Push",
+        "Name": "もう一踏ん張り",
         "HintLevel": null
       },
       {
