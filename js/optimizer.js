@@ -5802,6 +5802,11 @@
       if (weightsPanel) {
         weightsPanel.style.display = optimizeModeSelect.value === TEAM_TRIALS_MODE ? '' : 'none';
       }
+      // On-demand hydration: if user switches to Team Trials on a low-memory device
+      // where background hydration was skipped, load full data now
+      if (optimizeModeSelect.value === TEAM_TRIALS_MODE && hydrationDeferred) {
+        doHydrateFullData().catch(() => {});
+      }
       saveState();
       autoOptimizeDebounced();
     });
@@ -6059,6 +6064,23 @@
     initTutorial();
   }
 
+  function isLowMemoryDevice() {
+    // navigator.deviceMemory: Chrome/Edge/Opera/Samsung Internet (GB of RAM)
+    // Low-memory: <= 2 GB (common on budget tablets/phones)
+    if (typeof navigator !== 'undefined' && navigator.deviceMemory != null) {
+      return navigator.deviceMemory <= 2;
+    }
+    // Fallback heuristic: mobile devices with limited hardware concurrency
+    // Most budget Android devices: 4 cores + no deviceMemory API = likely low-memory
+    if (typeof navigator !== 'undefined' && /Mobi|Android|Tablet/i.test(navigator.userAgent)) {
+      const cores = navigator.hardwareConcurrency || 0;
+      if (cores > 0 && cores <= 4) return true;
+    }
+    return false;
+  }
+
+  let hydrationDeferred = false;
+
   async function backgroundHydrateFullData() {
     if (loadedFullSkillData) {
       // Already loaded full data (core file was missing, fell back to full)
@@ -6070,6 +6092,17 @@
       }
       return;
     }
+    // On low-memory devices, skip eager background hydration to prevent OOM crashes.
+    // Full data will load on-demand when user switches to Team Trials mode or opens a skill popup.
+    if (isLowMemoryDevice()) {
+      hydrationDeferred = true;
+      console.log('Background hydration skipped: low-memory device detected');
+      return;
+    }
+    await doHydrateFullData();
+  }
+
+  async function doHydrateFullData() {
     const candidates = ['/assets/skills_all.json', './assets/skills_all.json'];
     for (const url of candidates) {
       try {
@@ -6079,6 +6112,7 @@
         if (!Array.isArray(list) || !list.length) continue;
         cachedRawSkillsList = list;
         loadedFullSkillData = true;
+        hydrationDeferred = false;
         window.__skillsAllData = list;
         if (typeof window.buildJPSkillNameMap === 'function') {
           window.buildJPSkillNameMap(list);
