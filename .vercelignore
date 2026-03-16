@@ -1,0 +1,11 @@
+.auto-claude/
+.worktrees/
+node_modules/
+reference/
+tests/
+badges/
+docs/
+scripts/
+logs/
+.git/
+nul

@@ -32,6 +32,14 @@
   const teamConsistencyEl = document.getElementById('team-consistency');
   const teamExpectedPill = document.getElementById('team-expected-pill');
   const teamExpectedEl = document.getElementById('team-expected');
+  const teamSVPill = document.getElementById('team-sv-pill');
+  const teamSVEl = document.getElementById('team-sv');
+  const teamActivationsPill = document.getElementById('team-activations-pill');
+  const teamActivationsEl = document.getElementById('team-activations');
+  const teamSVPerSPPill = document.getElementById('team-sv-per-sp-pill');
+  const teamSVPerSPEl = document.getElementById('team-sv-per-sp');
+  const teamDensityPill = document.getElementById('team-density-pill');
+  const teamDensityEl = document.getElementById('team-density');
   const teamExplainPanel = document.getElementById('team-explain-panel');
   const teamExplainStrengthsEl = document.getElementById('team-explain-strengths');
   const teamExplainRisksEl = document.getElementById('team-explain-risks');
@@ -1637,6 +1645,10 @@
     if (aptitudeScorePill) aptitudeScorePill.style.display = 'none';
     if (teamConsistencyPill) teamConsistencyPill.style.display = 'none';
     if (teamExpectedPill) teamExpectedPill.style.display = 'none';
+    if (teamSVPill) teamSVPill.style.display = 'none';
+    if (teamActivationsPill) teamActivationsPill.style.display = 'none';
+    if (teamSVPerSPPill) teamSVPerSPPill.style.display = 'none';
+    if (teamDensityPill) teamDensityPill.style.display = 'none';
     if (teamExplainPanel) teamExplainPanel.style.display = 'none';
     lastSkillScore = 0;
     ratingEngine.updateRatingDisplay(0);
@@ -4277,6 +4289,38 @@
         teamExpectedEl.textContent = expected.toFixed(2);
       } else {
         teamExpectedPill.style.display = 'none';
+      }
+    }
+    if (teamSVPill && teamSVEl) {
+      if (mode === TEAM_TRIALS_MODE) {
+        teamSVPill.style.display = '';
+        teamSVEl.textContent = String(result.totalSV || 0);
+      } else {
+        teamSVPill.style.display = 'none';
+      }
+    }
+    if (teamActivationsPill && teamActivationsEl) {
+      if (mode === TEAM_TRIALS_MODE) {
+        teamActivationsPill.style.display = '';
+        teamActivationsEl.textContent = String(result.expectedActivations || '0.0');
+      } else {
+        teamActivationsPill.style.display = 'none';
+      }
+    }
+    if (teamSVPerSPPill && teamSVPerSPEl) {
+      if (mode === TEAM_TRIALS_MODE) {
+        teamSVPerSPPill.style.display = '';
+        teamSVPerSPEl.textContent = (result.svPerSP || 0).toFixed(3);
+      } else {
+        teamSVPerSPPill.style.display = 'none';
+      }
+    }
+    if (teamDensityPill && teamDensityEl) {
+      if (mode === TEAM_TRIALS_MODE) {
+        teamDensityPill.style.display = '';
+        teamDensityEl.textContent = String(result.skillDensity || 0);
+      } else {
+        teamDensityPill.style.display = 'none';
       }
     }
 
