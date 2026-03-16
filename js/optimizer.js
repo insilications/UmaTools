@@ -246,6 +246,7 @@
   const teamTrialsTierById = new Map();
   const teamTrialsTierByName = new Map();
   let cachedRawSkillsList = null;
+  let loadedFullSkillData = false;
 
   function normalizeCostKey(str) {
     return normalize(str)
@@ -424,7 +425,10 @@
   }
 
   async function loadSkillCostsJSON() {
-    const candidates = ['/assets/skills_all.json', './assets/skills_all.json'];
+    const candidates = [
+      '/assets/skills_core.json', './assets/skills_core.json',
+      '/assets/skills_all.json', './assets/skills_all.json',
+    ];
     for (const url of candidates) {
       try {
         // Use default caching - Vercel headers control TTL
@@ -433,6 +437,8 @@
         const list = await res.json();
         if (!Array.isArray(list) || !list.length) continue;
         cachedRawSkillsList = list;
+        const isFullData = url.includes('skills_all');
+        loadedFullSkillData = isFullData;
         const nextOfficialEnglishNames = new Set();
         externalAliasLookup.clear();
         const collectNames = (source) => {
@@ -533,7 +539,7 @@
         officialEnglishNameSet = nextOfficialEnglishNames;
         officialEnglishNameMap = nextOfficialNameMap;
         if (typeof window.buildJPSkillNameMap === 'function') window.buildJPSkillNameMap(list);
-        if (window.TeamTrialsOptimizer?.buildEnglishSkillIndex) {
+        if (isFullData && window.TeamTrialsOptimizer?.buildEnglishSkillIndex) {
           const teamIndex = window.TeamTrialsOptimizer.buildEnglishSkillIndex(list);
           teamTrialsSkillMetaById.clear();
           teamTrialsSkillMetaByName.clear();
@@ -585,7 +591,7 @@
   }
 
   async function loadTeamTrialsScoring() {
-    if (!window.SkillScorer || !cachedRawSkillsList) return false;
+    if (!window.SkillScorer || !cachedRawSkillsList || !loadedFullSkillData) return false;
     const weights = getScoringWeights();
     const lookup = window.SkillScorer.scoreAllSkills(cachedRawSkillsList, weights);
     teamTrialsTierById.clear();
@@ -6009,20 +6015,65 @@
     initTutorial();
   }
 
+  async function backgroundHydrateFullData() {
+    if (loadedFullSkillData) {
+      // Already loaded full data (core file was missing, fell back to full)
+      // Just run team trials scoring
+      try {
+        await loadTeamTrialsScoring();
+      } catch (err) {
+        console.warn('Team Trials scoring failed', err);
+      }
+      return;
+    }
+    const candidates = ['/assets/skills_all.json', './assets/skills_all.json'];
+    for (const url of candidates) {
+      try {
+        const res = await fetch(url, { cache: 'force-cache' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const list = await res.json();
+        if (!Array.isArray(list) || !list.length) continue;
+        cachedRawSkillsList = list;
+        loadedFullSkillData = true;
+        window.__skillsAllData = list;
+        if (typeof window.buildJPSkillNameMap === 'function') {
+          window.buildJPSkillNameMap(list);
+        }
+        if (window.TeamTrialsOptimizer?.buildEnglishSkillIndex) {
+          const teamIndex = window.TeamTrialsOptimizer.buildEnglishSkillIndex(list);
+          teamTrialsSkillMetaById.clear();
+          teamTrialsSkillMetaByName.clear();
+          if (teamIndex?.byId?.forEach) {
+            teamIndex.byId.forEach((v, k) => teamTrialsSkillMetaById.set(String(k), v));
+          }
+          if (teamIndex?.byName?.forEach) {
+            teamIndex.byName.forEach((v, k) => teamTrialsSkillMetaByName.set(String(k), v));
+          }
+        }
+        await loadTeamTrialsScoring();
+        // If user is already in Team Trials mode, re-run optimization with full scoring data
+        if (optimizeModeSelect?.value === TEAM_TRIALS_MODE) {
+          autoOptimizeDebounced();
+        }
+        console.log(`Background hydration complete from ${url}`);
+        return;
+      } catch (err) {
+        console.warn('Background hydration failed for', url, err);
+      }
+    }
+  }
+
   applyLanguageFromURLParams(getURLParams());
 
-  // Init: prefer CSV by default
+  // Init: load core JSON first (CSV depends on officialEnglishNameSet from JSON),
+  // then CSV, then defer full data + team trials to background
   loadSkillCostsJSON()
     .catch((err) => {
       console.warn('Skill cost JSON load failed', err);
     })
-    .then(() =>
-      loadTeamTrialsScoring().catch((err) => {
-        console.warn('Team Trials scoring load failed', err);
-      })
-    )
     .then(() => loadSkillsCSV())
     .then(() => finishInit())
+    .then(() => backgroundHydrateFullData())
     .catch((err) => {
       console.error('Initialization failed', err);
       finishInit();

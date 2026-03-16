@@ -6,30 +6,25 @@
 /cards
 /wiki
 
-# Auto Claude data directory
 .auto-claude/
 
-# Auto Claude generated files
 .auto-claude-security.json
 .auto-claude-status
 .claude_settings.json
 .worktrees/
 .security-key
 logs/security/
+/docs/superpowers
 /node_modules
 /scripts/__pycache__
 .claude/settings.local.json
 /reference
-test-ocr.html
-MEMORY_TEST_GUIDE.md
-MEMORY_TEST_CHECKLIST.md
-BROWSER_COMPATIBILITY_TEST_RESULTS.md
-BROWSER_COMPATIBILITY_GUIDE.md
-BROWSER_COMPATIBILITY_CODE_REVIEW.md
-BROWSER_COMPATIBILITY_CHECKLIST.md
 /api/__pycache__
 /tests
 /badges
 /docs/plans
 assets/skills_all.json
+assets/skills_core.json
 assets/support_card.json
+assets/uma_data.json
+assets/support_hints.json
