@@ -5,7 +5,7 @@ reference/
 tests/
 badges/
 docs/
-scripts/
+scripts/__pycache__/
 logs/
 .git/
 nul
