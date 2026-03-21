@@ -3623,6 +3623,10 @@ html.dark input#query,
   }
 }
 
+.running {
+  animation-play-state: running;
+}
+
 @media (max-width: 900px) {
   .container {
     width: 94%;

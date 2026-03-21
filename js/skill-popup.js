@@ -656,8 +656,9 @@
   function init() {
     document.addEventListener('click', handleClick, true);
     document.addEventListener('keydown', handleKeydown);
-    // Preload skill data immediately so JP name map is available for all pages
-    loadData();
+    // Skill data is loaded on-demand when a popup is opened (openPopup → loadData).
+    // The JP name map is built by optimizer's backgroundHydrateFullData() or by
+    // loadData() on first popup click — no need to eagerly fetch 3.4MB here.
   }
 
   if (document.readyState === 'loading') {

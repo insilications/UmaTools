@@ -252,6 +252,10 @@
       'optimizer.remaining': 'Remaining:',
       'optimizer.consistency': 'Consistency:',
       'optimizer.expectedValue': 'Expected Value:',
+      'optimizer.totalSV': 'Total SV:',
+      'optimizer.expectedActivations': 'Expected Activations:',
+      'optimizer.svPerSP': 'SV per SP:',
+      'optimizer.skillDensity': 'Skill Density:',
       'optimizer.aptitudeTestScore': 'Aptitude Test Score:',
       'optimizer.explainTeamTrials': 'Explain Team Trials Build',
       'optimizer.consistencyStrengths': 'Consistency Strengths',
@@ -674,6 +678,7 @@
       'teamTrials.multipleGroups': 'Multiple activation groups increase fallback reliability.',
       'teamTrials.inconsistent': 'Scored as inconsistent activation.',
       'teamTrials.core': 'Scored as Team Trials core skill.',
+      'teamTrials.strategyMatch': 'Running style match bonus.',
       'teamTrials.greenDownweighted':
         'Green skill is downweighted in Team Trials due to variable race conditions.',
       'teamTrials.consistentGoldPrioritized':
@@ -974,6 +979,10 @@
       'optimizer.remaining': '残りポイント:',
       'optimizer.consistency': '安定度:',
       'optimizer.expectedValue': '期待値:',
+      'optimizer.totalSV': '合計SV:',
+      'optimizer.expectedActivations': '期待発動数:',
+      'optimizer.svPerSP': 'SP当たりSV:',
+      'optimizer.skillDensity': 'スキル密度:',
       'optimizer.aptitudeTestScore': '技能試験スコア:',
       'optimizer.explainTeamTrials': 'チームレースビルドの説明',
       'optimizer.consistencyStrengths': '安定度の強み',
@@ -1392,6 +1401,7 @@
       'teamTrials.multipleGroups': '複数の発動グループでフォールバック信頼性向上。',
       'teamTrials.inconsistent': '不安定な発動と評価。',
       'teamTrials.core': 'チームレースコアスキルと評価。',
+      'teamTrials.strategyMatch': '脚質適性ボーナス。',
       'teamTrials.greenDownweighted': '緑スキルはレース条件の変動によりチームレースで低評価。',
       'teamTrials.consistentGoldPrioritized':
         '安定した金スキルがチームレースのレーティング価値で優先。',

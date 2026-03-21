@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v53';
+const CACHE_VERSION = 'v55';
 const STATIC_CACHE = `umatools-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `umatools-runtime-${CACHE_VERSION}`;
 
@@ -67,6 +67,7 @@ const STATIC_ASSETS = [
   '/assets/icon-512.png',
   '/assets/og-default.png',
   '/assets/Rank_tex.png',
+  '/assets/skills_core.json',
 ];
 
 self.addEventListener('install', (event) => {

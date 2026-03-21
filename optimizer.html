@@ -58,7 +58,7 @@
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
         rel="stylesheet"
     /></noscript>
-    <link rel="preload" href="/assets/skills_all.json" as="fetch" crossorigin />
+    <link rel="preload" href="/assets/skills_core.json" as="fetch" crossorigin />
     <link rel="stylesheet" href="/css/base.css" />
     <link rel="stylesheet" href="/css/theme-d.build.css" />
     <link rel="stylesheet" href="/css/rating.css" />
@@ -968,6 +968,22 @@
               <b data-i18n="optimizer.expectedValue">Expected Value:</b>
               <span id="team-expected">0.00</span>
             </div>
+            <div class="pill team-trials-pill" id="team-sv-pill" style="display: none">
+              <b data-i18n="optimizer.totalSV">Total SV:</b>
+              <span id="team-sv">0</span>
+            </div>
+            <div class="pill team-trials-pill" id="team-activations-pill" style="display: none">
+              <b data-i18n="optimizer.expectedActivations">Expected Activations:</b>
+              <span id="team-activations">0.0</span>
+            </div>
+            <div class="pill team-trials-pill" id="team-sv-per-sp-pill" style="display: none">
+              <b data-i18n="optimizer.svPerSP">SV per SP:</b>
+              <span id="team-sv-per-sp">0.000</span>
+            </div>
+            <div class="pill team-trials-pill" id="team-density-pill" style="display: none">
+              <b data-i18n="optimizer.skillDensity">Skill Density:</b>
+              <span id="team-density">0</span>
+            </div>
             <div class="pill aptitude-test-pill" id="aptitude-score-pill" style="display: none">
               <b data-i18n="optimizer.aptitudeTestScore">Aptitude Test Score:</b>
               <span id="aptitude-score">0</span>
@@ -981,15 +997,6 @@
           >
             <summary data-i18n="optimizer.explainTeamTrials">Explain Team Trials Build</summary>
             <div class="team-explain-body">
-              <p class="team-explain-reference">
-                <span data-i18n="optimizer.reference">Reference:</span>
-                <a
-                  href="https://docs.google.com/spreadsheets/d/1oB3eTvKqREtJDWJL0q80O_VjBcpOmRl5xE0z5fZKgFY"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  >Uma Musume Skill Sheet</a
-                >
-              </p>
               <div>
                 <h4 data-i18n="optimizer.consistencyStrengths">Consistency Strengths</h4>
                 <ul id="team-explain-strengths" class="team-explain-list"></ul>

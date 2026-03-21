@@ -32,6 +32,14 @@
   const teamConsistencyEl = document.getElementById('team-consistency');
   const teamExpectedPill = document.getElementById('team-expected-pill');
   const teamExpectedEl = document.getElementById('team-expected');
+  const teamSVPill = document.getElementById('team-sv-pill');
+  const teamSVEl = document.getElementById('team-sv');
+  const teamActivationsPill = document.getElementById('team-activations-pill');
+  const teamActivationsEl = document.getElementById('team-activations');
+  const teamSVPerSPPill = document.getElementById('team-sv-per-sp-pill');
+  const teamSVPerSPEl = document.getElementById('team-sv-per-sp');
+  const teamDensityPill = document.getElementById('team-density-pill');
+  const teamDensityEl = document.getElementById('team-density');
   const teamExplainPanel = document.getElementById('team-explain-panel');
   const teamExplainStrengthsEl = document.getElementById('team-explain-strengths');
   const teamExplainRisksEl = document.getElementById('team-explain-risks');
@@ -246,6 +254,7 @@
   const teamTrialsTierById = new Map();
   const teamTrialsTierByName = new Map();
   let cachedRawSkillsList = null;
+  let loadedFullSkillData = false;
 
   function normalizeCostKey(str) {
     return normalize(str)
@@ -424,7 +433,10 @@
   }
 
   async function loadSkillCostsJSON() {
-    const candidates = ['/assets/skills_all.json', './assets/skills_all.json'];
+    const candidates = [
+      '/assets/skills_core.json', './assets/skills_core.json',
+      '/assets/skills_all.json', './assets/skills_all.json',
+    ];
     for (const url of candidates) {
       try {
         // Use default caching - Vercel headers control TTL
@@ -433,6 +445,8 @@
         const list = await res.json();
         if (!Array.isArray(list) || !list.length) continue;
         cachedRawSkillsList = list;
+        const isFullData = url.includes('skills_all');
+        loadedFullSkillData = isFullData;
         const nextOfficialEnglishNames = new Set();
         externalAliasLookup.clear();
         const collectNames = (source) => {
@@ -533,7 +547,7 @@
         officialEnglishNameSet = nextOfficialEnglishNames;
         officialEnglishNameMap = nextOfficialNameMap;
         if (typeof window.buildJPSkillNameMap === 'function') window.buildJPSkillNameMap(list);
-        if (window.TeamTrialsOptimizer?.buildEnglishSkillIndex) {
+        if (isFullData && window.TeamTrialsOptimizer?.buildEnglishSkillIndex) {
           const teamIndex = window.TeamTrialsOptimizer.buildEnglishSkillIndex(list);
           teamTrialsSkillMetaById.clear();
           teamTrialsSkillMetaByName.clear();
@@ -585,7 +599,7 @@
   }
 
   async function loadTeamTrialsScoring() {
-    if (!window.SkillScorer || !cachedRawSkillsList) return false;
+    if (!window.SkillScorer || !cachedRawSkillsList || !loadedFullSkillData) return false;
     const weights = getScoringWeights();
     const lookup = window.SkillScorer.scoreAllSkills(cachedRawSkillsList, weights);
     teamTrialsTierById.clear();
@@ -1631,6 +1645,10 @@
     if (aptitudeScorePill) aptitudeScorePill.style.display = 'none';
     if (teamConsistencyPill) teamConsistencyPill.style.display = 'none';
     if (teamExpectedPill) teamExpectedPill.style.display = 'none';
+    if (teamSVPill) teamSVPill.style.display = 'none';
+    if (teamActivationsPill) teamActivationsPill.style.display = 'none';
+    if (teamSVPerSPPill) teamSVPerSPPill.style.display = 'none';
+    if (teamDensityPill) teamDensityPill.style.display = 'none';
     if (teamExplainPanel) teamExplainPanel.style.display = 'none';
     lastSkillScore = 0;
     ratingEngine.updateRatingDisplay(0);
@@ -4273,6 +4291,38 @@
         teamExpectedPill.style.display = 'none';
       }
     }
+    if (teamSVPill && teamSVEl) {
+      if (mode === TEAM_TRIALS_MODE) {
+        teamSVPill.style.display = '';
+        teamSVEl.textContent = String(result.totalSV || 0);
+      } else {
+        teamSVPill.style.display = 'none';
+      }
+    }
+    if (teamActivationsPill && teamActivationsEl) {
+      if (mode === TEAM_TRIALS_MODE) {
+        teamActivationsPill.style.display = '';
+        teamActivationsEl.textContent = String(result.expectedActivations || '0.0');
+      } else {
+        teamActivationsPill.style.display = 'none';
+      }
+    }
+    if (teamSVPerSPPill && teamSVPerSPEl) {
+      if (mode === TEAM_TRIALS_MODE) {
+        teamSVPerSPPill.style.display = '';
+        teamSVPerSPEl.textContent = (result.svPerSP || 0).toFixed(3);
+      } else {
+        teamSVPerSPPill.style.display = 'none';
+      }
+    }
+    if (teamDensityPill && teamDensityEl) {
+      if (mode === TEAM_TRIALS_MODE) {
+        teamDensityPill.style.display = '';
+        teamDensityEl.textContent = String(result.skillDensity || 0);
+      } else {
+        teamDensityPill.style.display = 'none';
+      }
+    }
 
     if (teamExplainPanel && teamExplainStrengthsEl && teamExplainRisksEl && teamWarningsEl) {
       if (mode === TEAM_TRIALS_MODE) {
@@ -5752,6 +5802,11 @@
       if (weightsPanel) {
         weightsPanel.style.display = optimizeModeSelect.value === TEAM_TRIALS_MODE ? '' : 'none';
       }
+      // On-demand hydration: if user switches to Team Trials on a low-memory device
+      // where background hydration was skipped, load full data now
+      if (optimizeModeSelect.value === TEAM_TRIALS_MODE && hydrationDeferred) {
+        doHydrateFullData().catch(() => {});
+      }
       saveState();
       autoOptimizeDebounced();
     });
@@ -6009,20 +6064,94 @@
     initTutorial();
   }
 
+  function isLowMemoryDevice() {
+    // navigator.deviceMemory: Chrome/Edge/Opera/Samsung Internet (GB of RAM)
+    // Low-memory: <= 2 GB (common on budget tablets/phones)
+    if (typeof navigator !== 'undefined' && navigator.deviceMemory != null) {
+      return navigator.deviceMemory <= 2;
+    }
+    // Fallback heuristic: mobile devices with limited hardware concurrency
+    // Most budget Android devices: 4 cores + no deviceMemory API = likely low-memory
+    if (typeof navigator !== 'undefined' && /Mobi|Android|Tablet/i.test(navigator.userAgent)) {
+      const cores = navigator.hardwareConcurrency || 0;
+      if (cores > 0 && cores <= 4) return true;
+    }
+    return false;
+  }
+
+  let hydrationDeferred = false;
+
+  async function backgroundHydrateFullData() {
+    if (loadedFullSkillData) {
+      // Already loaded full data (core file was missing, fell back to full)
+      // Just run team trials scoring
+      try {
+        await loadTeamTrialsScoring();
+      } catch (err) {
+        console.warn('Team Trials scoring failed', err);
+      }
+      return;
+    }
+    // On low-memory devices, skip eager background hydration to prevent OOM crashes.
+    // Full data will load on-demand when user switches to Team Trials mode or opens a skill popup.
+    if (isLowMemoryDevice()) {
+      hydrationDeferred = true;
+      console.log('Background hydration skipped: low-memory device detected');
+      return;
+    }
+    await doHydrateFullData();
+  }
+
+  async function doHydrateFullData() {
+    const candidates = ['/assets/skills_all.json', './assets/skills_all.json'];
+    for (const url of candidates) {
+      try {
+        const res = await fetch(url, { cache: 'force-cache' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const list = await res.json();
+        if (!Array.isArray(list) || !list.length) continue;
+        cachedRawSkillsList = list;
+        loadedFullSkillData = true;
+        hydrationDeferred = false;
+        window.__skillsAllData = list;
+        if (typeof window.buildJPSkillNameMap === 'function') {
+          window.buildJPSkillNameMap(list);
+        }
+        if (window.TeamTrialsOptimizer?.buildEnglishSkillIndex) {
+          const teamIndex = window.TeamTrialsOptimizer.buildEnglishSkillIndex(list);
+          teamTrialsSkillMetaById.clear();
+          teamTrialsSkillMetaByName.clear();
+          if (teamIndex?.byId?.forEach) {
+            teamIndex.byId.forEach((v, k) => teamTrialsSkillMetaById.set(String(k), v));
+          }
+          if (teamIndex?.byName?.forEach) {
+            teamIndex.byName.forEach((v, k) => teamTrialsSkillMetaByName.set(String(k), v));
+          }
+        }
+        await loadTeamTrialsScoring();
+        // If user is already in Team Trials mode, re-run optimization with full scoring data
+        if (optimizeModeSelect?.value === TEAM_TRIALS_MODE) {
+          autoOptimizeDebounced();
+        }
+        console.log(`Background hydration complete from ${url}`);
+        return;
+      } catch (err) {
+        console.warn('Background hydration failed for', url, err);
+      }
+    }
+  }
+
   applyLanguageFromURLParams(getURLParams());
 
-  // Init: prefer CSV by default
+  // Init: load core JSON first (CSV depends on officialEnglishNameSet from JSON),
+  // then CSV, then defer full data + team trials to background
   loadSkillCostsJSON()
     .catch((err) => {
       console.warn('Skill cost JSON load failed', err);
     })
-    .then(() =>
-      loadTeamTrialsScoring().catch((err) => {
-        console.warn('Team Trials scoring load failed', err);
-      })
-    )
     .then(() => loadSkillsCSV())
     .then(() => finishInit())
+    .then(() => backgroundHydrateFullData())
     .catch((err) => {
       console.error('Initialization failed', err);
       finishInit();
