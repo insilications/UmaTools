@@ -89,7 +89,6 @@
       raritySubUnique: 'Sub-Unique',
       rarityUnique: 'Unique',
       rarityEvolution: 'Evolution',
-      linkCopied: 'Link copied!',
     },
     ja: {
       title: '\u6709\u52b9\u52a0\u901f\u30c1\u30a7\u30c3\u30ab\u30fc',
@@ -179,7 +178,6 @@
       raritySubUnique: '\u7d99\u627f\u56fa\u6709',
       rarityUnique: '\u56fa\u6709',
       rarityEvolution: '\u9032\u5316',
-      linkCopied: '\u30ea\u30f3\u30af\u3092\u30b3\u30d4\u30fc\u3057\u307e\u3057\u305f\uff01',
     },
   };
 
@@ -317,7 +315,6 @@
     addDnBtn: document.getElementById('addDnBtn'),
     searchBtn: document.getElementById('searchBtn'),
     resetBtn: document.getElementById('resetBtn'),
-    shareLinkBtn: document.getElementById('shareLinkBtn'),
     formError: document.getElementById('formError'),
     resCnt: document.getElementById('resCnt'),
     resTot: document.getElementById('resTot'),
@@ -1606,244 +1603,6 @@
     }
   }
 
-  // =====================================================================
-  // URL Sharing
-  // =====================================================================
-
-  function getURLParams() {
-    const hash = (location.hash || '').replace(/^#/, '');
-    return new URLSearchParams(hash || location.search);
-  }
-
-  function getActiveSlopeRows() {
-    const up = [];
-    const dn = [];
-    if (el.upRows) {
-      el.upRows.querySelectorAll('.slope-row').forEach((row) => {
-        const start = row.querySelector('input[data-field="start"]')?.value?.trim();
-        const end = row.querySelector('input[data-field="end"]')?.value?.trim();
-        if (start && end) up.push([start, end]);
-      });
-    }
-    if (el.dnRows) {
-      el.dnRows.querySelectorAll('.slope-row').forEach((row) => {
-        const start = row.querySelector('input[data-field="start"]')?.value?.trim();
-        const end = row.querySelector('input[data-field="end"]')?.value?.trim();
-        if (start && end) dn.push([start, end]);
-      });
-    }
-    return { up, dn };
-  }
-
-  function getActiveRarityFilter() {
-    if (!el.rarityFilters) return '';
-    const active = el.rarityFilters.querySelector('.accel-rarity-btn.active');
-    if (!active) return '';
-    const rarity = active.dataset.rarity;
-    return rarity === 'all' ? '' : rarity;
-  }
-
-  function updateMetaTagsFromState() {
-    if (!window.MetaTags) return;
-
-    try {
-      const distance = el.distSel?.value ? parseInt(el.distSel.value, 10) : 0;
-      const venueId = el.venueSel?.value || '';
-
-      if (distance === 0 || !venueId) {
-        // No meaningful data to share
-        return;
-      }
-
-      // Get venue name from the select option
-      let racetrack = 'custom course';
-      if (el.venueSel) {
-        const selectedOption = el.venueSel.options[el.venueSel.selectedIndex];
-        if (selectedOption && selectedOption.textContent) {
-          racetrack = selectedOption.textContent.trim();
-        }
-      }
-
-      const metaConfig = window.MetaTags.generateAccelMeta({
-        racetrack,
-        distance,
-      });
-
-      window.MetaTags.updateShareMetaTags(metaConfig);
-    } catch (err) {
-      console.warn('Failed to update meta tags', err);
-    }
-  }
-
-  function writeToURL() {
-    const p = new URLSearchParams();
-
-    // Race setup
-    if (el.presetSel?.value) p.set('preset', el.presetSel.value);
-    if (el.distSel?.value) p.set('dist', el.distSel.value);
-    if (el.gtSel?.value) p.set('track', el.gtSel.value);
-    if (el.gcSel?.value) p.set('cond', el.gcSel.value);
-    if (el.venueSel?.value) p.set('venue', el.venueSel.value);
-    if (el.mvSel?.value) p.set('mood', el.mvSel.value);
-
-    // Skill filter
-    if (el.skillSearch?.value?.trim()) {
-      p.set('skill', encodeURIComponent(el.skillSearch.value.trim()));
-    }
-
-    // Rarity filter
-    const rarity = getActiveRarityFilter();
-    if (rarity) p.set('rarity', rarity);
-
-    // Manual course details
-    if (el.manLS?.value?.trim()) p.set('ls', el.manLS.value.trim());
-    if (el.manFC?.value?.trim()) p.set('fc', el.manFC.value.trim());
-    if (el.manFS?.value?.trim()) p.set('fs', el.manFS.value.trim());
-
-    // Slope sections
-    const slopes = getActiveSlopeRows();
-    if (slopes.up.length > 0) {
-      p.set('up', slopes.up.map((s) => s.join('-')).join(','));
-    }
-    if (slopes.dn.length > 0) {
-      p.set('dn', slopes.dn.map((s) => s.join('-')).join(','));
-    }
-
-    const newURL = `${window.location.pathname}#${p.toString()}`;
-    history.replaceState(null, '', newURL);
-  }
-
-  function readFromURL() {
-    const p = getURLParams();
-    const hasAnyParam =
-      p.get('preset') ||
-      p.get('dist') ||
-      p.get('track') ||
-      p.get('cond') ||
-      p.get('venue') ||
-      p.get('mood') ||
-      p.get('skill') ||
-      p.get('rarity') ||
-      p.get('ls') ||
-      p.get('fc') ||
-      p.get('fs') ||
-      p.get('up') ||
-      p.get('dn');
-
-    if (!hasAnyParam) return false;
-
-    try {
-      // Load race setup
-      if (p.get('preset') && el.presetSel) el.presetSel.value = p.get('preset');
-      if (p.get('dist') && el.distSel) el.distSel.value = p.get('dist');
-      if (p.get('track') && el.gtSel) el.gtSel.value = p.get('track');
-      if (p.get('cond') && el.gcSel) el.gcSel.value = p.get('cond');
-      if (p.get('venue') && el.venueSel) el.venueSel.value = p.get('venue');
-      if (p.get('mood') && el.mvSel) el.mvSel.value = p.get('mood');
-
-      // Load skill filter
-      const skillParam = p.get('skill');
-      if (skillParam && el.skillSearch) {
-        try {
-          el.skillSearch.value = decodeURIComponent(skillParam);
-        } catch {
-          el.skillSearch.value = skillParam;
-        }
-      }
-
-      // Load rarity filter
-      const rarityParam = p.get('rarity');
-      if (rarityParam && el.rarityFilters) {
-        el.rarityFilters.querySelectorAll('.accel-rarity-btn').forEach((btn) => {
-          const isActive = btn.dataset.rarity === rarityParam;
-          btn.classList.toggle('active', isActive);
-          btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-        });
-      }
-
-      // Load manual course details
-      if (p.get('ls') && el.manLS) el.manLS.value = p.get('ls');
-      if (p.get('fc') && el.manFC) el.manFC.value = p.get('fc');
-      if (p.get('fs') && el.manFS) el.manFS.value = p.get('fs');
-
-      // Load slope sections
-      const upParam = p.get('up');
-      if (upParam && el.upRows) {
-        const sections = upParam.split(',').filter(Boolean);
-        sections.forEach((s) => {
-          const [start, end] = s.split('-');
-          if (start && end) {
-            addSlopeRow('up');
-            const rows = el.upRows.querySelectorAll('.slope-row');
-            const lastRow = rows[rows.length - 1];
-            if (lastRow) {
-              const startInput = lastRow.querySelector('input[data-field="start"]');
-              const endInput = lastRow.querySelector('input[data-field="end"]');
-              if (startInput) startInput.value = start;
-              if (endInput) endInput.value = end;
-            }
-          }
-        });
-      }
-
-      const dnParam = p.get('dn');
-      if (dnParam && el.dnRows) {
-        const sections = dnParam.split(',').filter(Boolean);
-        sections.forEach((s) => {
-          const [start, end] = s.split('-');
-          if (start && end) {
-            addSlopeRow('dn');
-            const rows = el.dnRows.querySelectorAll('.slope-row');
-            const lastRow = rows[rows.length - 1];
-            if (lastRow) {
-              const startInput = lastRow.querySelector('input[data-field="start"]');
-              const endInput = lastRow.querySelector('input[data-field="end"]');
-              if (startInput) startInput.value = start;
-              if (endInput) endInput.value = end;
-            }
-          }
-        });
-      }
-
-      // Apply preset after loading values (if preset was specified)
-      if (p.get('preset')) {
-        applyPreset();
-      }
-
-      return true;
-    } catch (err) {
-      console.error('Failed to load state from URL', err);
-      return false;
-    }
-  }
-
-  async function tryWriteClipboard(text) {
-    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') return false;
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  function copyViaFallback(text) {
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    textarea.style.cssText = 'position:fixed;left:-999px;top:-999px;opacity:0;';
-    document.body.appendChild(textarea);
-    try {
-      textarea.select();
-      document.execCommand('copy');
-    } finally {
-      document.body.removeChild(textarea);
-    }
-  }
-
-  // =====================================================================
-  // Event Handlers
-  // =====================================================================
-
   function wireEvents() {
     el.presetSel.addEventListener('change', () => applyPreset());
     el.distSel.addEventListener('change', () => onDistanceChange());
@@ -1901,34 +1660,6 @@
     window.addEventListener('i18n:changed', () => {
       refreshForLanguageOrServerChange();
     });
-
-    // Share link button
-    if (el.shareLinkBtn) {
-      el.shareLinkBtn.addEventListener('click', async () => {
-        try {
-          writeToURL();
-          updateMetaTagsFromState();
-          const shareURL = location.href;
-          let copied = false;
-          try {
-            copied = await tryWriteClipboard(shareURL);
-          } catch (err) {
-            console.warn('Clipboard API write failed', err);
-          }
-          if (!copied) {
-            copyViaFallback(shareURL);
-          }
-          // Show feedback
-          const originalText = el.shareLinkBtn.textContent;
-          el.shareLinkBtn.textContent = t('linkCopied');
-          setTimeout(() => {
-            el.shareLinkBtn.textContent = originalText;
-          }, 2000);
-        } catch (err) {
-          console.error('Failed to copy share link', err);
-        }
-      });
-    }
   }
 
   async function init() {
@@ -1938,10 +1669,6 @@
     rerenderStaticSelectors();
     setActiveRarity('all');
     wireEvents();
-
-    // Load state from URL if present
-    const hadURL = readFromURL();
-
     renderEmptyState();
     if (!racesLoaded) showFormError(t('raceDataMissingError'));
 
@@ -1950,40 +1677,6 @@
     if (!metaLoaded && getServerMode() === 'en') showFormError(t('skillMetaMissingError'));
     if (!skillsLoaded) showFormError(t('skillDataMissingError'));
     updateServerAndDbInfo();
-
-    // Update meta tags if loading shared state from URL
-    if (hadURL) {
-      updateMetaTagsFromState();
-    }
-
-    // If URL had parameters and data is loaded, run search
-    if (hadURL && skillsLoaded) {
-      // Optionally auto-run search if there are enough parameters
-      const hasRequiredFields =
-        el.distSel?.value && el.gtSel?.value && el.gcSel?.value && el.venueSel?.value;
-      if (hasRequiredFields) {
-        doSearch({ silent: true });
-      }
-    }
-  }
-
-  // Export Image Button
-  const exportImageBtn = document.getElementById('exportImageBtn');
-  if (exportImageBtn) {
-    exportImageBtn.addEventListener('click', () => {
-      const exportElement = document.querySelector('.accel-results');
-      if (!exportElement) {
-        console.error('Accel results element not found');
-        return;
-      }
-
-      if (typeof window.ExportImage === 'undefined') {
-        console.error('ExportImage utility not loaded');
-        return;
-      }
-
-      window.ExportImage.exportWithFeedback(exportElement, 'accel', exportImageBtn);
-    });
   }
 
   if (document.readyState === 'loading') {

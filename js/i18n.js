@@ -187,10 +187,6 @@
       'calculator.tutStep4Text':
         'Check the final projected rating and skill score in the summary section.',
       'calculator.floatProjected': 'Projected',
-      'calculator.copyShareLink': 'Copy Share Link',
-      'calculator.linkCopied': 'Shareable link copied to clipboard!',
-      'calculator.shareFailed': 'Failed to copy share link.',
-      'calculator.exportImage': 'Export as Image',
 
       // ── Optimizer ──
       'optimizer.title': 'Skill Optimizer & Rating Calculator',
@@ -273,7 +269,6 @@
       'optimizer.saveBuild': 'Save Build',
       'optimizer.viewSavedBuilds': 'View Saved Builds',
       'optimizer.shareBuild': 'Share Build',
-      'optimizer.exportImage': 'Export as Image',
       'optimizer.clearAllSkills': 'Clear All Skills',
       'optimizer.browseSkills': 'Browse Skills',
       'optimizer.searchSkills': 'Search skills...',
@@ -404,12 +399,6 @@
       'stamina.awful': 'Awful',
       'stamina.moodGood': 'Good',
       'stamina.distanceBucketHint': 'Distance bucket: {category}',
-      'stamina.copyShareLink': 'Copy Share Link',
-      'stamina.exportImage': 'Export as Image',
-
-      // ── Accel ──
-      'accel.copyShareLink': 'Copy Share Link',
-      'accel.exportImage': 'Export as Image',
 
       // ── Events ──
       'events.title': 'Uma Event Helper',
@@ -928,10 +917,6 @@
       'calculator.tutStep4Text':
         'サマリーセクションで最終的な予想レーティングとスキルスコアを確認します。',
       'calculator.floatProjected': '予想',
-      'calculator.copyShareLink': '共有リンクをコピー',
-      'calculator.linkCopied': '共有リンクをクリップボードにコピーしました！',
-      'calculator.shareFailed': '共有リンクのコピーに失敗しました。',
-      'calculator.exportImage': '画像としてエクスポート',
 
       // ── Optimizer ──
       'optimizer.title': 'スキルオプティマイザー & レーティング計算機',
@@ -1011,7 +996,6 @@
       'optimizer.saveBuild': 'ビルド保存',
       'optimizer.viewSavedBuilds': '保存済みビルド一覧',
       'optimizer.shareBuild': 'ビルド共有',
-      'optimizer.exportImage': '画像としてエクスポート',
       'optimizer.clearAllSkills': '全スキルクリア',
       'optimizer.browseSkills': 'スキル一覧',
       'optimizer.searchSkills': 'スキルを検索...',
@@ -1141,12 +1125,6 @@
       'stamina.awful': '絶不調',
       'stamina.moodGood': '好調',
       'stamina.distanceBucketHint': '距離区分: {category}',
-      'stamina.copyShareLink': '共有リンクをコピー',
-      'stamina.exportImage': '画像としてエクスポート',
-
-      // ── Accel ──
-      'accel.copyShareLink': '共有リンクをコピー',
-      'accel.exportImage': '画像としてエクスポート',
 
       // ── Events ──
       'events.title': 'ウマ イベントヘルパー',
