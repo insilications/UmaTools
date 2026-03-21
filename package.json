@@ -27,6 +27,9 @@
     "test": "npm run test:team-trials && npm run test:rating-shared",
     "check": "npm run lint && npm run test"
   },
+  "dependencies": {
+    "html2canvas": "^1.4.1"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@tailwindcss/aspect-ratio": "^0.4.2",

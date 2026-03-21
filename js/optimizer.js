@@ -1652,6 +1652,21 @@
     if (teamExplainPanel) teamExplainPanel.style.display = 'none';
     lastSkillScore = 0;
     ratingEngine.updateRatingDisplay(0);
+
+    // Reset meta tags to defaults
+    if (window.MetaTags && typeof window.MetaTags.resetMetaTags === 'function') {
+      try {
+        const defaultMeta = {
+          title: 'UmaTools - Skill Optimizer & Rating Calculator',
+          description:
+            'Optimize Uma Musume skill builds and ratings with budgets, race targets, and shareable builds.',
+          url: `${window.location.origin}${window.location.pathname}`,
+        };
+        window.MetaTags.resetMetaTags(defaultMeta);
+      } catch (err) {
+        console.warn('Failed to reset meta tags', err);
+      }
+    }
   }
 
   // ---------- Live optimize helpers ----------
@@ -4558,6 +4573,21 @@
     });
     // Always use the rating score for the rating display
     ratingEngine.updateRatingDisplay(totalRatingScore);
+
+    // Update meta tags for social sharing
+    if (window.MetaTags && typeof window.MetaTags.generateOptimizerMeta === 'function') {
+      try {
+        const buildData = {
+          skillCount: chosen.length,
+          totalCost: result.used || 0,
+          mode: getOptimizeModeLabel(mode),
+        };
+        const metaConfig = window.MetaTags.generateOptimizerMeta(buildData);
+        window.MetaTags.updateShareMetaTags(metaConfig);
+      } catch (err) {
+        console.warn('Failed to update meta tags', err);
+      }
+    }
   }
 
   // persistence
@@ -6345,6 +6375,25 @@
     ocrResultsCloseBtn.addEventListener('click', () => {
       const panel = document.getElementById('ocr-results-panel');
       if (panel) panel.style.display = 'none';
+    });
+  }
+
+  // Export Image Button
+  const exportImageBtn = document.getElementById('exportImageBtn');
+  if (exportImageBtn) {
+    exportImageBtn.addEventListener('click', () => {
+      const exportElement = document.getElementById('results');
+      if (!exportElement) {
+        console.error('Results element not found');
+        return;
+      }
+
+      if (typeof window.ExportImage === 'undefined') {
+        console.error('ExportImage utility not loaded');
+        return;
+      }
+
+      window.ExportImage.exportWithFeedback(exportElement, 'optimizer', exportImageBtn);
     });
   }
 })();

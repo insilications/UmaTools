@@ -2003,6 +2003,12 @@ html.dark .badge.badge-R {
   color: var(--primary-foreground);
 }
 
+.site-nav .nav-link.\!active {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
 .site-nav .menu-btn {
   width: 44px;
   height: 44px;
@@ -3198,6 +3204,12 @@ html.dark .delay-btn.destructive,
   background: var(--primary);
   border-color: var(--primary);
   color: var(--primary-foreground);
+}
+
+.delay-btn.\!active {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
 }
 
 .delay-btn:hover,

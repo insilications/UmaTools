@@ -778,6 +778,106 @@
     persistState();
   }
 
+  function buildShareUrl() {
+    const params = new URLSearchParams();
+
+    // Serialize all input/select values
+    document.querySelectorAll('input, select').forEach((el) => {
+      if (!el.id) return;
+      if (el.type === 'checkbox') {
+        if (el.checked) params.set(el.id, '1');
+      } else if (el.value) {
+        params.set(el.id, el.value);
+      }
+    });
+
+    // Serialize unique skill selections
+    if (uniqueSelections.length > 0) {
+      const encoded = uniqueSelections
+        .map((item) => `${item.id}:${item.level}`)
+        .join(',');
+      params.set('uniques', encoded);
+    }
+
+    const url = new URL(window.location.href);
+    url.search = params.toString();
+    return url.toString();
+  }
+
+  function updateMetaTagsFromState() {
+    if (!window.MetaTags) return;
+
+    try {
+      const distance = num(els.distance?.value, 0);
+      const surface = els.surface?.value || '';
+
+      if (distance === 0 || !surface) {
+        // No meaningful data to share
+        return;
+      }
+
+      const courseType = surface.toLowerCase();
+
+      const metaConfig = window.MetaTags.generateStaminaMeta({
+        courseType,
+        distance,
+      });
+
+      window.MetaTags.updateShareMetaTags(metaConfig);
+    } catch (err) {
+      console.warn('Failed to update meta tags', err);
+    }
+  }
+
+  function loadFromUrl() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (!params.toString()) return false;
+
+      let loaded = false;
+
+      // Restore all input/select values
+      document.querySelectorAll('input, select').forEach((el) => {
+        if (!el.id) return;
+        const value = params.get(el.id);
+        if (value !== null) {
+          if (el.type === 'checkbox') {
+            el.checked = value === '1';
+          } else {
+            el.value = value;
+          }
+          loaded = true;
+        }
+      });
+
+      // Restore unique skill selections
+      const uniquesParam = params.get('uniques');
+      if (uniquesParam) {
+        uniqueSelections.length = 0;
+        const entries = uniquesParam.split(',').filter(Boolean);
+        entries.forEach((entry) => {
+          const [id, levelStr] = entry.split(':');
+          if (!id) return;
+          const skill = UNIQUE_RECOVERY_SKILLS.find((s) => s.id === id);
+          if (!skill) return;
+          const level = clamp(Math.round(num(levelStr, 1)), 1, 6);
+          uniqueSelections.push({
+            key: `${skill.id}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            id: skill.id,
+            name: skill.name,
+            base: skill.base,
+            level,
+          });
+        });
+        loaded = true;
+      }
+
+      return loaded;
+    } catch (err) {
+      return false;
+    }
+  }
+
   function wireEvents() {
     const inputs = document.querySelectorAll('input, select');
     inputs.forEach((el) => {
@@ -787,6 +887,24 @@
 
     if (els.uniqueAdd) {
       els.uniqueAdd.addEventListener('click', addUniqueSkill);
+    }
+
+    const shareLinkBtn = document.getElementById('shareLinkBtn');
+    if (shareLinkBtn) {
+      shareLinkBtn.addEventListener('click', async () => {
+        updateMetaTagsFromState();
+        const url = buildShareUrl();
+        try {
+          await navigator.clipboard.writeText(url);
+          const original = shareLinkBtn.textContent;
+          shareLinkBtn.textContent = t('common.copied');
+          setTimeout(() => {
+            shareLinkBtn.textContent = original;
+          }, 2000);
+        } catch (err) {
+          alert(t('common.copyFailed') + '\n\n' + url);
+        }
+      });
     }
   }
 
@@ -798,7 +916,18 @@
   function init() {
     populateAptSelects();
     populateUniqueSelect();
-    applyStoredState();
+
+    // Load from URL first (takes precedence), then fall back to localStorage
+    const loadedFromUrl = loadFromUrl();
+    if (!loadedFromUrl) {
+      applyStoredState();
+    }
+
+    // Update meta tags if loading shared state from URL
+    if (loadedFromUrl) {
+      updateMetaTagsFromState();
+    }
+
     renderUniqueList();
     wireEvents();
     refreshSelectStyles();
@@ -808,6 +937,25 @@
       populateUniqueSelect();
       renderUniqueList();
       update();
+    });
+  }
+
+  // Export Image Button
+  const exportImageBtn = document.getElementById('exportImageBtn');
+  if (exportImageBtn) {
+    exportImageBtn.addEventListener('click', () => {
+      const exportElement = document.getElementById('stamina-results');
+      if (!exportElement) {
+        console.error('Stamina results element not found');
+        return;
+      }
+
+      if (typeof window.ExportImage === 'undefined') {
+        console.error('ExportImage utility not loaded');
+        return;
+      }
+
+      window.ExportImage.exportWithFeedback(exportElement, 'stamina', exportImageBtn);
     });
   }
 

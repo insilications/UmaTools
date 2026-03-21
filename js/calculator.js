@@ -9,6 +9,7 @@
 
   const rowsEl = document.getElementById('rows');
   const clearAllBtn = document.getElementById('clear-all');
+  const shareLinkBtn = document.getElementById('shareLinkBtn');
   const officialEnglishToggle = document.getElementById('official-en-only');
   const libStatus = document.getElementById('lib-status');
   if (libStatus)
@@ -1198,6 +1199,656 @@
     return row;
   }
 
+  // --- URL state serialization ---
+  function encodeBuildToURL(buildString) {
+    try {
+      if (typeof LZString !== 'undefined' && LZString.compressToEncodedURIComponent) {
+        return LZString.compressToEncodedURIComponent(buildString);
+      }
+      const encoded = btoa(unescape(encodeURIComponent(buildString)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+      return encoded;
+    } catch (err) {
+      console.error('Failed to encode build', err);
+      return '';
+    }
+  }
+
+  function decodeBuildFromURL(encoded) {
+    try {
+      if (typeof LZString !== 'undefined' && LZString.decompressFromEncodedURIComponent) {
+        const decoded = LZString.decompressFromEncodedURIComponent(encoded);
+        if (decoded) return decoded;
+      }
+      const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+      const padding = '='.repeat((4 - (base64.length % 4)) % 4);
+      const decoded = decodeURIComponent(escape(atob(base64 + padding)));
+      return decoded;
+    } catch (err) {
+      console.error('Failed to decode build', err);
+      return '';
+    }
+  }
+
+  // Minimal LZ-String (compressToEncodedURIComponent + decompressFromEncodedURIComponent)
+  // Keeps share URLs much shorter without a backend.
+  const LZString = (function () {
+    const f = String.fromCharCode;
+    const keyStrUriSafe = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-$';
+    const baseReverseDic = {};
+
+    function getBaseValue(alphabet, character) {
+      if (!baseReverseDic[alphabet]) {
+        baseReverseDic[alphabet] = {};
+        for (let i = 0; i < alphabet.length; i++) {
+          baseReverseDic[alphabet][alphabet.charAt(i)] = i;
+        }
+      }
+      return baseReverseDic[alphabet][character];
+    }
+
+    function compressToEncodedURIComponent(input) {
+      if (input == null) return '';
+      return _compress(input, 6, function (a) {
+        return keyStrUriSafe.charAt(a);
+      });
+    }
+
+    function decompressFromEncodedURIComponent(input) {
+      if (input == null) return '';
+      if (input == '') return null;
+      input = input.replace(/ /g, '+');
+      return _decompress(input.length, 32, function (index) {
+        return getBaseValue(keyStrUriSafe, input.charAt(index));
+      });
+    }
+
+    function _compress(uncompressed, bitsPerChar, getCharFromInt) {
+      if (uncompressed == null) return '';
+      let i,
+        value,
+        context_dictionary = {},
+        context_dictionaryToCreate = {},
+        context_c = '',
+        context_wc = '',
+        context_w = '',
+        context_enlargeIn = 2,
+        context_dictSize = 3,
+        context_numBits = 2,
+        context_data = [],
+        context_data_val = 0,
+        context_data_position = 0,
+        ii;
+
+      for (ii = 0; ii < uncompressed.length; ii += 1) {
+        context_c = uncompressed.charAt(ii);
+        if (!Object.prototype.hasOwnProperty.call(context_dictionary, context_c)) {
+          context_dictionary[context_c] = context_dictSize++;
+          context_dictionaryToCreate[context_c] = true;
+        }
+
+        context_wc = context_w + context_c;
+
+        if (Object.prototype.hasOwnProperty.call(context_dictionary, context_wc)) {
+          context_w = context_wc;
+        } else {
+          if (Object.prototype.hasOwnProperty.call(context_dictionaryToCreate, context_w)) {
+            if (context_w.charCodeAt(0) < 256) {
+              for (i = 0; i < context_numBits; i++) {
+                context_data_val = context_data_val << 1;
+                if (context_data_position == bitsPerChar - 1) {
+                  context_data_position = 0;
+                  context_data.push(getCharFromInt(context_data_val));
+                  context_data_val = 0;
+                } else {
+                  context_data_position++;
+                }
+              }
+              value = context_w.charCodeAt(0);
+              for (i = 0; i < 8; i++) {
+                context_data_val = (context_data_val << 1) | (value & 1);
+                if (context_data_position == bitsPerChar - 1) {
+                  context_data_position = 0;
+                  context_data.push(getCharFromInt(context_data_val));
+                  context_data_val = 0;
+                } else {
+                  context_data_position++;
+                }
+                value = value >> 1;
+              }
+            } else {
+              value = 1;
+              for (i = 0; i < context_numBits; i++) {
+                context_data_val = (context_data_val << 1) | value;
+                if (context_data_position == bitsPerChar - 1) {
+                  context_data_position = 0;
+                  context_data.push(getCharFromInt(context_data_val));
+                  context_data_val = 0;
+                } else {
+                  context_data_position++;
+                }
+                value = 0;
+              }
+              value = context_w.charCodeAt(0);
+              for (i = 0; i < 16; i++) {
+                context_data_val = (context_data_val << 1) | (value & 1);
+                if (context_data_position == bitsPerChar - 1) {
+                  context_data_position = 0;
+                  context_data.push(getCharFromInt(context_data_val));
+                  context_data_val = 0;
+                } else {
+                  context_data_position++;
+                }
+                value = value >> 1;
+              }
+            }
+            context_enlargeIn--;
+            if (context_enlargeIn == 0) {
+              context_enlargeIn = Math.pow(2, context_numBits);
+              context_numBits++;
+            }
+            delete context_dictionaryToCreate[context_w];
+          } else {
+            value = context_dictionary[context_w];
+            for (i = 0; i < context_numBits; i++) {
+              context_data_val = (context_data_val << 1) | (value & 1);
+              if (context_data_position == bitsPerChar - 1) {
+                context_data_position = 0;
+                context_data.push(getCharFromInt(context_data_val));
+                context_data_val = 0;
+              } else {
+                context_data_position++;
+              }
+              value = value >> 1;
+            }
+          }
+          context_enlargeIn--;
+          if (context_enlargeIn == 0) {
+            context_enlargeIn = Math.pow(2, context_numBits);
+            context_numBits++;
+          }
+          context_dictionary[context_wc] = context_dictSize++;
+          context_w = String(context_c);
+        }
+      }
+
+      if (context_w !== '') {
+        if (Object.prototype.hasOwnProperty.call(context_dictionaryToCreate, context_w)) {
+          if (context_w.charCodeAt(0) < 256) {
+            for (i = 0; i < context_numBits; i++) {
+              context_data_val = context_data_val << 1;
+              if (context_data_position == bitsPerChar - 1) {
+                context_data_position = 0;
+                context_data.push(getCharFromInt(context_data_val));
+                context_data_val = 0;
+              } else {
+                context_data_position++;
+              }
+            }
+            value = context_w.charCodeAt(0);
+            for (i = 0; i < 8; i++) {
+              context_data_val = (context_data_val << 1) | (value & 1);
+              if (context_data_position == bitsPerChar - 1) {
+                context_data_position = 0;
+                context_data.push(getCharFromInt(context_data_val));
+                context_data_val = 0;
+              } else {
+                context_data_position++;
+              }
+              value = value >> 1;
+            }
+          } else {
+            value = 1;
+            for (i = 0; i < context_numBits; i++) {
+              context_data_val = (context_data_val << 1) | value;
+              if (context_data_position == bitsPerChar - 1) {
+                context_data_position = 0;
+                context_data.push(getCharFromInt(context_data_val));
+                context_data_val = 0;
+              } else {
+                context_data_position++;
+              }
+              value = 0;
+            }
+            value = context_w.charCodeAt(0);
+            for (i = 0; i < 16; i++) {
+              context_data_val = (context_data_val << 1) | (value & 1);
+              if (context_data_position == bitsPerChar - 1) {
+                context_data_position = 0;
+                context_data.push(getCharFromInt(context_data_val));
+                context_data_val = 0;
+              } else {
+                context_data_position++;
+              }
+              value = value >> 1;
+            }
+          }
+          context_enlargeIn--;
+          if (context_enlargeIn == 0) {
+            context_enlargeIn = Math.pow(2, context_numBits);
+            context_numBits++;
+          }
+          delete context_dictionaryToCreate[context_w];
+        } else {
+          value = context_dictionary[context_w];
+          for (i = 0; i < context_numBits; i++) {
+            context_data_val = (context_data_val << 1) | (value & 1);
+            if (context_data_position == bitsPerChar - 1) {
+              context_data_position = 0;
+              context_data.push(getCharFromInt(context_data_val));
+              context_data_val = 0;
+            } else {
+              context_data_position++;
+            }
+            value = value >> 1;
+          }
+        }
+        context_enlargeIn--;
+        if (context_enlargeIn == 0) {
+          context_enlargeIn = Math.pow(2, context_numBits);
+          context_numBits++;
+        }
+      }
+
+      value = 2;
+      for (i = 0; i < context_numBits; i++) {
+        context_data_val = (context_data_val << 1) | (value & 1);
+        if (context_data_position == bitsPerChar - 1) {
+          context_data_position = 0;
+          context_data.push(getCharFromInt(context_data_val));
+          context_data_val = 0;
+        } else {
+          context_data_position++;
+        }
+        value = value >> 1;
+      }
+
+      while (true) {
+        context_data_val = context_data_val << 1;
+        if (context_data_position == bitsPerChar - 1) {
+          context_data.push(getCharFromInt(context_data_val));
+          break;
+        } else context_data_position++;
+      }
+      return context_data.join('');
+    }
+
+    function _decompress(length, resetValue, getNextValue) {
+      let dictionary = [],
+        enlargeIn = 4,
+        dictSize = 4,
+        numBits = 3,
+        entry = '',
+        result = [],
+        i,
+        w,
+        bits,
+        resb,
+        maxpower,
+        power,
+        c,
+        data = { val: getNextValue(0), position: resetValue, index: 1 };
+
+      for (i = 0; i < 3; i += 1) {
+        dictionary[i] = i;
+      }
+
+      bits = 0;
+      maxpower = Math.pow(2, 2);
+      power = 1;
+      while (power != maxpower) {
+        resb = data.val & data.position;
+        data.position >>= 1;
+        if (data.position == 0) {
+          data.position = resetValue;
+          data.val = getNextValue(data.index++);
+        }
+        bits |= (resb > 0 ? 1 : 0) * power;
+        power <<= 1;
+      }
+
+      switch ((c = bits)) {
+        case 0:
+          bits = 0;
+          maxpower = Math.pow(2, 8);
+          power = 1;
+          while (power != maxpower) {
+            resb = data.val & data.position;
+            data.position >>= 1;
+            if (data.position == 0) {
+              data.position = resetValue;
+              data.val = getNextValue(data.index++);
+            }
+            bits |= (resb > 0 ? 1 : 0) * power;
+            power <<= 1;
+          }
+          c = f(bits);
+          break;
+        case 1:
+          bits = 0;
+          maxpower = Math.pow(2, 16);
+          power = 1;
+          while (power != maxpower) {
+            resb = data.val & data.position;
+            data.position >>= 1;
+            if (data.position == 0) {
+              data.position = resetValue;
+              data.val = getNextValue(data.index++);
+            }
+            bits |= (resb > 0 ? 1 : 0) * power;
+            power <<= 1;
+          }
+          c = f(bits);
+          break;
+        case 2:
+          return '';
+      }
+      dictionary[3] = c;
+      w = c;
+      result.push(c);
+      while (true) {
+        if (data.index > length) {
+          return '';
+        }
+
+        bits = 0;
+        maxpower = Math.pow(2, numBits);
+        power = 1;
+        while (power != maxpower) {
+          resb = data.val & data.position;
+          data.position >>= 1;
+          if (data.position == 0) {
+            data.position = resetValue;
+            data.val = getNextValue(data.index++);
+          }
+          bits |= (resb > 0 ? 1 : 0) * power;
+          power <<= 1;
+        }
+
+        switch ((c = bits)) {
+          case 0:
+            bits = 0;
+            maxpower = Math.pow(2, 8);
+            power = 1;
+            while (power != maxpower) {
+              resb = data.val & data.position;
+              data.position >>= 1;
+              if (data.position == 0) {
+                data.position = resetValue;
+                data.val = getNextValue(data.index++);
+              }
+              bits |= (resb > 0 ? 1 : 0) * power;
+              power <<= 1;
+            }
+
+            dictionary[dictSize++] = f(bits);
+            c = dictSize - 1;
+            enlargeIn--;
+            break;
+          case 1:
+            bits = 0;
+            maxpower = Math.pow(2, 16);
+            power = 1;
+            while (power != maxpower) {
+              resb = data.val & data.position;
+              data.position >>= 1;
+              if (data.position == 0) {
+                data.position = resetValue;
+                data.val = getNextValue(data.index++);
+              }
+              bits |= (resb > 0 ? 1 : 0) * power;
+              power <<= 1;
+            }
+            dictionary[dictSize++] = f(bits);
+            c = dictSize - 1;
+            enlargeIn--;
+            break;
+          case 2:
+            return result.join('');
+        }
+
+        if (enlargeIn == 0) {
+          enlargeIn = Math.pow(2, numBits);
+          numBits++;
+        }
+
+        if (dictionary[c]) {
+          entry = dictionary[c];
+        } else {
+          if (c === dictSize) {
+            entry = w + w.charAt(0);
+          } else {
+            return null;
+          }
+        }
+        result.push(entry);
+
+        dictionary[dictSize++] = w + entry.charAt(0);
+        enlargeIn--;
+
+        w = entry;
+
+        if (enlargeIn == 0) {
+          enlargeIn = Math.pow(2, numBits);
+          numBits++;
+        }
+      }
+    }
+
+    return { compressToEncodedURIComponent, decompressFromEncodedURIComponent };
+  })();
+
+  function getURLParams() {
+    const hash = (location.hash || '').replace(/^#/, '');
+    return new URLSearchParams(hash || location.search);
+  }
+
+  function serializeRows() {
+    const rows = [];
+    rowsEl.querySelectorAll('.calculator-row').forEach((row) => {
+      const name = row.querySelector('.skill-name')?.value?.trim();
+      if (name) rows.push(name);
+    });
+    return rows.join('\n');
+  }
+
+  function loadRowsFromString(str) {
+    const normalized = (str || '').replace(/\r\n?/g, '\n');
+    const entries = normalized
+      .split(/\n+/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    if (!entries.length) return;
+
+    try {
+      Array.from(rowsEl.querySelectorAll('.calculator-row')).forEach((n) => n.remove());
+      entries.forEach((skillName) => {
+        const row = makeRow();
+        rowsEl.appendChild(row);
+        const nameInput = row.querySelector('.skill-name');
+        if (nameInput) nameInput.value = skillName;
+        if (typeof row.syncSkillCategory === 'function') {
+          row.syncSkillCategory({ triggerUpdate: false });
+        }
+      });
+      ensureOneEmptyRow();
+      updateSelectedSkillsDisplay();
+    } catch (err) {
+      console.error('Failed to load rows from string', err);
+    }
+  }
+
+  function readFromURL() {
+    const p = getURLParams();
+    const buildParam = p.get('b') || p.get('build');
+    const hasAnyParam =
+      buildParam ||
+      p.get('r') ||
+      p.get('rc') ||
+      p.get('sl') ||
+      p.get('oe');
+    if (!hasAnyParam) return false;
+
+    try {
+      // Apply language from URL
+      const langParam = p.get('sl') || p.get('lang');
+      if (langParam) {
+        const lang = langParam.toString().trim().toLowerCase() === 'jp' ? 'jp' : 'en';
+        try {
+          localStorage.setItem(SERVER_PREF_KEY, lang);
+        } catch {}
+      }
+
+      // Apply official English filter
+      const oeParam = p.get('oe');
+      if (oeParam && officialEnglishToggle) {
+        officialEnglishToggle.checked = oeParam === '1' || oeParam === 'true';
+        try {
+          localStorage.setItem(OFFICIAL_EN_PREF_KEY, officialEnglishToggle.checked ? '1' : '0');
+        } catch {}
+      }
+
+      updateOfficialEnglishToggleState();
+      rebuildSkillLibraryFromCache();
+
+      // Load rating data
+      const ratingParam = p.get('r') || p.get('rating');
+      if (ratingParam) {
+        try {
+          const ratingData = JSON.parse(decodeURIComponent(ratingParam));
+          ratingEngine.applyRatingState(ratingData);
+        } catch (err) {
+          console.warn('Failed to parse rating data from URL', err);
+        }
+      }
+
+      // Load race config
+      const rcParam = p.get('rc');
+      if (rcParam) {
+        try {
+          const raceConfig = JSON.parse(decodeURIComponent(rcParam));
+          Object.entries(raceConfig).forEach(([key, val]) => {
+            if (cfg[key]) cfg[key].value = val;
+          });
+          updateAffinityStyles();
+        } catch (err) {
+          console.warn('Failed to parse race config from URL', err);
+        }
+      }
+
+      // Load skills
+      if (buildParam) {
+        const decoded = decodeBuildFromURL(buildParam);
+        if (decoded) loadRowsFromString(decoded);
+      }
+
+      return true;
+    } catch (err) {
+      console.error('Failed to load state from URL', err);
+      return false;
+    }
+  }
+
+  function writeToURL() {
+    const buildString = serializeRows();
+
+    const p = new URLSearchParams();
+    if (buildString) {
+      const encoded = encodeBuildToURL(buildString);
+      if (encoded) p.set('b', encoded);
+    }
+
+    // Add rating data
+    const ratingData = ratingEngine.readRatingState();
+    if (
+      ratingData &&
+      (ratingData.speed ||
+        ratingData.stamina ||
+        ratingData.power ||
+        ratingData.guts ||
+        ratingData.wisdom ||
+        ratingData.star ||
+        ratingData.unique)
+    ) {
+      p.set('r', encodeURIComponent(JSON.stringify(ratingData)));
+    }
+
+    // Add race config
+    const raceConfig = {};
+    Object.entries(cfg).forEach(([key, sel]) => {
+      if (sel) raceConfig[key] = sel.value;
+    });
+    if (Object.keys(raceConfig).length) {
+      p.set('rc', encodeURIComponent(JSON.stringify(raceConfig)));
+    }
+
+    // Add skill language
+    const skillLang = getSkillLanguage();
+    if (skillLang === 'jp') {
+      p.set('sl', 'jp');
+    }
+
+    // Add official English filter
+    if (officialEnglishToggle && !officialEnglishToggle.checked) {
+      p.set('oe', '0');
+    }
+
+    const newURL = `${window.location.pathname}#${p.toString()}`;
+    history.replaceState(null, '', newURL);
+  }
+
+  function updateMetaTagsFromState() {
+    if (!window.MetaTags) return;
+
+    try {
+      const totalRating = ratingEngine.calculateTotalRating() || 0;
+      const skillCount = Array.from(rowsEl.querySelectorAll('.calculator-row')).filter((row) => {
+        const name = row.querySelector('.skill-name')?.value?.trim();
+        return name && name.length > 0;
+      }).length;
+
+      if (skillCount === 0 && totalRating === 0) {
+        // No meaningful data to share, don't update meta tags
+        return;
+      }
+
+      const metaConfig = window.MetaTags.generateCalculatorMeta({
+        totalRating,
+        skillCount,
+      });
+
+      window.MetaTags.updateShareMetaTags(metaConfig);
+    } catch (err) {
+      console.warn('Failed to update meta tags', err);
+    }
+  }
+
+  async function tryWriteClipboard(text) {
+    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') return false;
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async function copyViaFallback(text) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+    } finally {
+      document.body.removeChild(textarea);
+    }
+  }
+
   // State persistence
   const STORAGE_KEY = 'umatools-calculator';
 
@@ -1421,8 +2072,16 @@
     // Clear skeleton loaders
     if (rowsEl) rowsEl.querySelectorAll('[aria-hidden]').forEach((el) => el.remove());
 
-    // Load saved state
-    loadState();
+    // Load state from URL first, fallback to localStorage
+    const hadURL = readFromURL();
+    if (!hadURL) {
+      loadState();
+    }
+
+    // Update meta tags if loading shared state from URL
+    if (hadURL) {
+      updateMetaTagsFromState();
+    }
 
     // Ensure at least one row
     if (!rowsEl.querySelector('.calculator-row')) {
@@ -1439,6 +2098,39 @@
     if (clearAllBtn) {
       clearAllBtn.addEventListener('click', clearAllRows);
     }
+
+    // Share link button
+    if (shareLinkBtn) {
+      shareLinkBtn.addEventListener('click', async () => {
+        try {
+          writeToURL();
+          updateMetaTagsFromState();
+          const shareURL = location.href;
+          let copied = false;
+          try {
+            copied = await tryWriteClipboard(shareURL);
+          } catch (err) {
+            console.warn('Clipboard API write failed', err);
+          }
+          if (!copied) {
+            await copyViaFallback(shareURL);
+          }
+          if (libStatus) {
+            const originalText = libStatus.textContent;
+            libStatus.textContent = t('calculator.linkCopied');
+            setTimeout(() => {
+              libStatus.textContent = originalText;
+            }, 2000);
+          }
+        } catch (err) {
+          console.error('Failed to share link', err);
+          if (libStatus) {
+            libStatus.textContent = t('calculator.shareFailed');
+          }
+        }
+      });
+    }
+
     if (officialEnglishToggle) {
       officialEnglishToggle.addEventListener('change', () => {
         try {
@@ -1475,6 +2167,25 @@
     rebuildSkillCaches();
     updateSelectedSkillsDisplay();
   });
+
+  // Export Image Button
+  const exportImageBtn = document.getElementById('exportImageBtn');
+  if (exportImageBtn) {
+    exportImageBtn.addEventListener('click', () => {
+      const exportElement = document.getElementById('results');
+      if (!exportElement) {
+        console.error('Results element not found');
+        return;
+      }
+
+      if (typeof window.ExportImage === 'undefined') {
+        console.error('ExportImage utility not loaded');
+        return;
+      }
+
+      window.ExportImage.exportWithFeedback(exportElement, 'calculator', exportImageBtn);
+    });
+  }
 
   init();
 })();
