@@ -463,11 +463,17 @@
           });
           return names;
         };
-        const registerAliasNames = (names) => {
+        // Map each name → skill ID so alias enrichment stays within the same skill
+        const nameToSkillId = new Map(); // normalized name -> skill ID
+        const registerAliasNames = (names, skillId) => {
           if (!Array.isArray(names) || !names.length) return;
           names.forEach((name) => {
             const key = normalize(name);
             if (!key) return;
+            // Only register aliases within the same skill; don't merge across skills
+            const existingOwner = nameToSkillId.get(key);
+            if (existingOwner != null && existingOwner !== skillId) return;
+            nameToSkillId.set(key, skillId);
             if (!externalAliasLookup.has(key)) externalAliasLookup.set(key, new Set());
             const bucket = externalAliasLookup.get(key);
             names.forEach((candidate) => {
@@ -499,8 +505,10 @@
               if (k) nextOfficialNameMap.set(k, geneOfficialName);
             });
           }
-          registerAliasNames(names);
-          registerAliasNames(geneNames);
+          const entryId = entry?.id != null ? entry.id : null;
+          const geneId = entry?.gene_version?.id != null ? entry.gene_version.id : entryId;
+          registerAliasNames(names, entryId);
+          registerAliasNames(geneNames, geneId);
           const indexNames = names.length ? names : [];
           const geneIndexNames = geneNames.length ? geneNames : [];
           const allIndexNames = Array.from(new Set(indexNames.concat(geneIndexNames)));
@@ -2941,6 +2949,55 @@
         return;
       }
       if (!allowCreate || currentLinkedId) return;
+      // Guard: before creating a new lower row, check if one already exists in the DOM
+      // (e.g., restored from saved state but link wasn't fully re-established)
+      const rowId = row.dataset.rowId || id;
+      let existingLower =
+        rowsEl.querySelector(`.optimizer-row[data-parent-gold-id="${CSS.escape(rowId)}"]`) ||
+        (rowId !== id
+          ? rowsEl.querySelector(`.optimizer-row[data-parent-gold-id="${CSS.escape(id)}"]`)
+          : null);
+      // Also check by skill ID: find an unlinked row whose skill matches the expected lower
+      if (!existingLower && skillInput) {
+        const goldSkill = findSkillByName(skillInput.value);
+        if (goldSkill) {
+          const candidateIds = [];
+          if (goldSkill.lowerSkillId) candidateIds.push(String(goldSkill.lowerSkillId));
+          if (Array.isArray(goldSkill.parentIds)) {
+            goldSkill.parentIds.forEach((pid) => candidateIds.push(String(pid)));
+          }
+          if (candidateIds.length) {
+            const allRows = Array.from(rowsEl.querySelectorAll('.optimizer-row'));
+            for (const candidate of allRows) {
+              if (candidate === row || candidate.dataset.parentGoldId) continue;
+              const cName = (candidate.querySelector('.skill-name')?.value || '').trim();
+              if (!cName) continue;
+              const cSkill = findSkillByName(cName);
+              if (cSkill?.skillId && candidateIds.includes(String(cSkill.skillId))) {
+                existingLower = candidate;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (existingLower) {
+        const lid = existingLower.dataset.rowId || '';
+        row.dataset.lowerRowId = lid;
+        existingLower.dataset.parentGoldId = rowId;
+        existingLower.classList.add('linked-lower');
+        const linkedInput = existingLower.querySelector('.skill-name');
+        if (linkedInput) linkedInput.placeholder = t('optimizer.lowerSkill');
+        const linkedRemove = existingLower.querySelector('.remove');
+        if (linkedRemove) {
+          linkedRemove.disabled = true;
+          linkedRemove.title = t('optimizer.removeGoldToUnlink');
+          linkedRemove.style.pointerEvents = 'none';
+          linkedRemove.style.opacity = '0.4';
+        }
+        autofillLinkedLower(existingLower);
+        return;
+      }
       const linked = makeRow();
       linked.classList.add('linked-lower');
       linked.dataset.parentGoldId = id;
@@ -4600,7 +4657,7 @@
         hintLevel: parseInt(hintEl?.value, 10) || 0,
         required: !!requiredEl?.checked,
         baseCost: row.dataset.baseCost || '',
-        parentGoldId: row.dataset.parentGoldId || '',
+        parentGoldId: row.dataset.parentGoldId || row.dataset.parentSkillLink || '',
         lowerRowId: row.dataset.lowerRowId || '',
         checkedEvos: Array.from(row.querySelectorAll('.evo-checkbox:checked'))
           .map((cb) => cb.dataset.evoName)
@@ -4700,6 +4757,23 @@
           if (child && child.previousSibling !== parent) {
             rowsEl.removeChild(child);
             rowsEl.insertBefore(child, parent.nextSibling);
+          }
+        }
+      });
+      // Also restore lowerRowId from saved state for gold rows whose lower row
+      // may lack parentGoldId (e.g., created via ensureLinkedLowerForParent)
+      state.rows.forEach((r) => {
+        if (!r.lowerRowId || r.parentGoldId) return;
+        const row = created.get(r.id);
+        if (!row || row.dataset.lowerRowId) return;
+        if (created.has(r.lowerRowId)) {
+          row.dataset.lowerRowId = r.lowerRowId;
+          const child = created.get(r.lowerRowId);
+          if (child && !child.dataset.parentGoldId) {
+            child.dataset.parentGoldId = r.id;
+            child.classList.add('linked-lower');
+            const linkedInput = child.querySelector('.skill-name');
+            if (linkedInput) linkedInput.placeholder = t('optimizer.lowerSkill');
           }
         }
       });

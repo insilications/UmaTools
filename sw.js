@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v55';
+const CACHE_VERSION = 'v54';
 const STATIC_CACHE = `umatools-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `umatools-runtime-${CACHE_VERSION}`;
 
@@ -48,11 +48,22 @@ const STATIC_ASSETS = [
   '/js/skill-popup.js',
   '/js/scroll-nav.js',
   '/js/i18n.js',
+  '/js/i18n-core.js',
+  '/js/i18n-pages.js',
   '/js/ocr.js',
   '/js/skill-scorer.js',
   '/js/team-trials-optimizer.js',
   '/js/changelog.js',
   '/js/theme-toggle.js',
+  '/js/lib/virtual-scroll.js',
+  '/js/lib/lazy-loader.js',
+  '/js/bundle/i18n-core.js',
+  '/js/bundle/i18n-pages.js',
+  '/js/bundle/skills.js',
+  '/js/bundle/hints.js',
+  '/js/bundle/optimizer.js',
+  '/js/bundle/calculator.js',
+  '/js/bundle/deck.js',
   '/css/deck.css',
   '/css/skills.css',
   '/css/skill-popup.css',
@@ -67,7 +78,6 @@ const STATIC_ASSETS = [
   '/assets/icon-512.png',
   '/assets/og-default.png',
   '/assets/Rank_tex.png',
-  '/assets/skills_core.json',
 ];
 
 self.addEventListener('install', (event) => {

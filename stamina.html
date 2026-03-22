@@ -45,23 +45,23 @@
     <link
       rel="preload"
       as="style"
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=optional"
     />
     <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=optional"
       rel="stylesheet"
       media="print"
       onload="this.media = 'all'"
     />
     <noscript
       ><link
-        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=optional"
         rel="stylesheet"
     /></noscript>
     <link rel="stylesheet" href="/css/base.css" />
     <link rel="stylesheet" href="/css/theme-d.build.css" />
     <link rel="stylesheet" href="/css/stamina.css" />
-    <link rel="stylesheet" href="/css/scroll-nav.css" />
+    <link rel="stylesheet" href="/css/scroll-nav.css" media="print" onload="this.media='all'" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -581,7 +581,8 @@
       </section>
     </main>
 
-    <script src="/js/i18n.js" defer></script>
+    <script src="/js/i18n-core.js" defer></script>
+    <script src="/js/i18n-pages.js" defer></script>
     <script src="/js/stamina.js" defer></script>
 
     <script src="/js/scroll-nav.js" defer></script>

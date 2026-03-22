@@ -684,9 +684,11 @@ function parseTrainingEventsByEntity(rawEntries, teNamesEn, teNamesJa, evrew, sk
 
 /**
  * Parse a card's effects array into readable format with level breakpoints.
- * Each effect entry: [type_id, val_lv1, val_lv2, ..., val_lv11]
- * -1 means "same as previous non-(-1) value" — fill forward.
+ * Each effect entry: [type_id, val_lv1, val_lv5, val_lv10, ..., val_lv50]
+ * -1 means "interpolate between surrounding defined values".
  */
+const EFFECT_LEVELS = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+
 function parseCardEffects(effectsArr, effectTypeLookup) {
   if (!Array.isArray(effectsArr) || !effectsArr.length) return [];
 
@@ -696,15 +698,34 @@ function parseCardEffects(effectsArr, effectTypeLookup) {
     const typeId = row[0];
     const rawValues = row.slice(1); // up to 11 level values
 
-    // Fill forward -1 values
-    const values = [];
-    let lastVal = 0;
-    for (const v of rawValues) {
-      if (v === -1) {
-        values.push(lastVal);
+    // Collect defined breakpoints (non -1 values)
+    const breakpoints = [];
+    for (let i = 0; i < rawValues.length; i++) {
+      if (rawValues[i] !== -1) breakpoints.push({ i, v: rawValues[i] });
+    }
+
+    // Interpolate -1 values between defined breakpoints
+    const values = new Array(rawValues.length).fill(0);
+    for (let i = 0; i < rawValues.length; i++) {
+      if (rawValues[i] !== -1) {
+        values[i] = rawValues[i];
+        continue;
+      }
+      let prev = null, next = null;
+      for (const bp of breakpoints) {
+        if (bp.i <= i) prev = bp;
+        if (bp.i > i && !next) next = bp;
+      }
+      if (!prev) {
+        values[i] = 0; // before first defined value
+      } else if (!next) {
+        values[i] = prev.v; // after last defined value
       } else {
-        values.push(v);
-        lastVal = v;
+        // linear interpolation between surrounding breakpoints
+        const prevLv = EFFECT_LEVELS[prev.i];
+        const nextLv = EFFECT_LEVELS[next.i];
+        const curLv = EFFECT_LEVELS[i];
+        values[i] = Math.floor(prev.v + (next.v - prev.v) * (curLv - prevLv) / (nextLv - prevLv));
       }
     }
 

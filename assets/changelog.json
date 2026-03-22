@@ -1,13 +1,18 @@
 {
-  "version": "2026-03b",
+  "version": "2026-03d",
   "summary": {
-    "en": "New Valid Accel Checker, duplicate skill name fixes, and data updates",
-    "ja": "新VAC判定チェッカー、スキル名重複修正、データ更新"
+    "en": "Deck Builder LB fix, Team Trials improvements, performance optimizations",
+    "ja": "デッキビルダーLB修正、チーム競技場改善、パフォーマンス最適化"
   },
   "entries": [
-    { "en": "New Valid Accel Checker page \u2014 check valid acceleration skills for a race setup with VAC timing logic", "ja": "新VAC判定チェッカー \u2014 レース設定に対する有効な加速スキルをVACタイミングロジックで確認" },
-    { "en": "Fixed duplicate English skill names (e.g. Steadfast) causing wrong skill matches on EN server", "ja": "英語スキル名の重複（例：Steadfast）によるENサーバーでのスキル誤マッチを修正" },
-    { "en": "Fan-only skills that share a name with an officially translated skill are now hidden on EN server", "ja": "公式翻訳スキルと同名のファン翻訳スキルがENサーバーで非表示に" },
-    { "en": "Skill popups now use skill IDs for accurate lookup when names collide", "ja": "スキルポップアップが名前衝突時にスキルIDで正確に検索" }
+    { "en": "Fixed Deck Builder showing wrong support card effects at intermediate limit break levels (LB0\u2013LB3)", "ja": "デッキビルダーで凸段階（0凸\u20133凸）のサポカ効果が正しく表示されない不具合を修正" },
+    { "en": "Deck Builder effects panel now shows unique effects with lock/unlock status per LB level", "ja": "デッキビルダーの効果パネルで固有ボーナスのロック/アンロック状態を凸段階ごとに表示" },
+    { "en": "Improved Team Trials optimizer", "ja": "チーム競技場オプティマイザーを改善" },
+    { "en": "Fixed Gold and Circle skills not working properly in optimizer", "ja": "オプティマイザーで金スキルと◎/○スキルが正しく動作しない不具合を修正" },
+    { "en": "Fixed lower skill duplication on reload", "ja": "リロード時の下位スキル重複を修正" },
+    { "en": "Fixed skill name collisions (Fighter, Steadfast, Pressure, etc.) causing duplicate entries in optimizer", "ja": "スキル名の衝突（Fighter、Steadfastなど）によるオプティマイザーでの重複エントリを修正" },
+    { "en": "Skill Library now uses virtual scroll and lazy loading for faster page loads", "ja": "スキルライブラリに仮想スクロールと遅延読み込みを導入し高速化" },
+    { "en": "Support Hints page now loads progressively for better performance", "ja": "サポートヒントページをプログレッシブ読み込みに変更しパフォーマンス向上" },
+    { "en": "Mobile performance improvements across all pages", "ja": "全ページでモバイルパフォーマンスを改善" }
   ]
 }
