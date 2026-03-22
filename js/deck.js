@@ -170,6 +170,7 @@
   // Effects panel state
   let effectsCard = null;
   let effectsLbStop = 4; // 0=LB0 .. 4=MLB
+  let effectsSlotIdx = -1; // index into selectedSupports, -1 if none
 
   // Support swap state: index of slot being replaced, or -1 for "add new"
   let pendingReplaceIdx = -1;
@@ -1616,10 +1617,11 @@
   // Effects Panel
   // =====================================================================
 
-  function openEffectsPanel(card, lbStop) {
+  function openEffectsPanel(card, lbStop, slotIdx) {
     if (!card) return;
     effectsCard = card;
     effectsLbStop = lbStop ?? 4;
+    effectsSlotIdx = typeof slotIdx === 'number' ? slotIdx : -1;
     effectsLevelSlider.max = 4;
     effectsLevelSlider.value = effectsLbStop;
     effectsPanelTitle.textContent = cleanCardName(getLocalizedSupportName(card));
@@ -1630,6 +1632,7 @@
   function closeEffectsPanel() {
     effectsPanel.hidden = true;
     effectsCard = null;
+    effectsSlotIdx = -1;
   }
 
   function renderEffects() {
@@ -1639,7 +1642,7 @@
     const idx = lbToEffectIndex(effectsLbStop, rarity);
 
     const effects = effectsCard.SupportEffects || [];
-    if (effects.length === 0) {
+    if (effects.length === 0 && !effectsCard.SupportUnique) {
       effectsPanelBody.innerHTML = `<div class="modal-card-empty">${t('deck.noEffectData')}</div>`;
       return;
     }
@@ -1654,6 +1657,24 @@
         <span class="${cls}">${val}${symbol}</span>
       </div>`;
     }
+
+    // Show unique effects with locked/unlocked state based on LB level
+    if (effectsCard.SupportUnique) {
+      const unlocked = uniqueActiveAtLb(effectsCard, effectsLbStop);
+      const unlockLv = effectsCard.SupportUnique.level || 0;
+      const lockLabel = unlocked ? '' : ` (Lv${unlockLv})`;
+      html += `<div class="effect-unique-header${unlocked ? '' : ' locked'}">${t('deck.uniqueEffect') || 'Unique Effect'}${escHtml(lockLabel)}</div>`;
+      for (const u of effectsCard.SupportUnique.effects) {
+        const symbol = u.symbol === 'percent' ? '%' : '';
+        const cls = unlocked ? 'effect-value' : 'effect-value zero';
+        const val = unlocked ? u.value : 0;
+        html += `<div class="effect-row${unlocked ? '' : ' locked'}">
+          <span class="effect-name">${escHtml(localizeEffectName(u.name))}</span>
+          <span class="${cls}">${val}${symbol}</span>
+        </div>`;
+      }
+    }
+
     effectsPanelBody.innerHTML = html;
   }
 
@@ -1664,6 +1685,13 @@
 
   effectsLevelSlider.addEventListener('input', () => {
     effectsLbStop = parseInt(effectsLevelSlider.value, 10);
+    // Sync slider change back to the card's actual LB stop
+    if (effectsSlotIdx >= 0 && effectsSlotIdx < supportLbStops.length) {
+      supportLbStops[effectsSlotIdx] = effectsLbStop;
+      saveDeck();
+      renderSupportSlots();
+      renderSummary();
+    }
     renderEffects();
   });
 
@@ -1883,7 +1911,7 @@
     if (filledSlot) {
       const idx = parseInt(filledSlot.dataset.idx, 10);
       const card = selectedSupports[idx];
-      if (card) openEffectsPanel(card, supportLbStops[idx] ?? 4);
+      if (card) openEffectsPanel(card, supportLbStops[idx] ?? 4, idx);
       return;
     }
 

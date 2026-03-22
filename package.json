@@ -4,10 +4,11 @@
   "version": "0.0.0",
   "scripts": {
     "build:site": "tailwindcss -i ./css/theme-d.css -o ./css/theme-d.build.css",
-    "generate:core": "node scripts/generate-skills-core.js",
     "minify:json": "node scripts/minify-json.js",
-    "build": "npm run build:site && npm run generate:core && npm run minify:json",
+    "bundle": "node scripts/bundle.js",
+    "build": "npm run build:site && npm run minify:json && npm run convert:images",
     "watch:site": "tailwindcss -i ./css/theme-d.css -o ./css/theme-d.build.css --watch",
+    "convert:images": "node scripts/convert-images-webp.js",
     "sync:skills-all": "node scripts/gametora.js --what skills --out-skills assets/skills_all.json",
     "sync:uma": "node scripts/gametora.js --what uma --server global --out-uma assets/uma_data.json --char-thumb-dir assets/character_thumbs",
     "sync:supports": "node scripts/gametora.js --what supports --server global --out-supports assets/support_card.json --out-support-hints assets/support_hints.json --support-thumb-dir assets/support_thumbs",
@@ -33,12 +34,16 @@
     "@tailwindcss/forms": "^0.5.7",
     "@tailwindcss/typography": "^0.5.10",
     "autoprefixer": "^10.4.17",
+    "chrome-launcher": "^1.2.1",
+    "esbuild": "^0.20.0",
     "eslint": "^10.0.0",
     "globals": "^17.3.0",
+    "lighthouse": "^12.8.2",
     "postcss": "^8.4.35",
     "prettier": "^3.8.1",
     "sharp": "^0.34.5",
     "tailwindcss": "^3.4.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "tslib": "^2.8.1"
   }
 }

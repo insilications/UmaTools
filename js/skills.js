@@ -44,12 +44,21 @@
   var skillLowerIdById = new Map(); // skill ID string -> lower skill ID string (versions[0])
   var skillMetaByName = new Map(); // normalized name -> { cost, id, lowerId }
 
+  // ── Lazy Loading State ──
+  var rawCSVText = null; // Store raw CSV for lazy parsing
+  var loadedCategories = new Set(); // Track which categories have been parsed
+  var skillsByCategory = new Map(); // category -> skills array
+
   // ── DOM refs ──
   var searchInput = null;
   var filtersEl = null;
   var countEl = null;
   var tableWrap = null;
   var loadingEl = null;
+
+  // ── Virtual Scroll ──
+  var virtualScroll = null;
+  var ROW_HEIGHT = 48;
 
   // ── Helpers ──
   function normalize(str) {
@@ -250,12 +259,201 @@
         var res = await fetch(candidates[c], { cache: 'force-cache' });
         if (!res.ok) continue;
         var text = await res.text();
-        if (loadFromCSV(text)) return true;
+        rawCSVText = text;
+        // Parse header and collect categories without loading all data
+        if (initializeCategories(text)) return true;
       } catch (_) {
         /* try next */
       }
     }
     return false;
+  }
+
+  // ── Initialize categories from CSV without loading all skills ──
+  function initializeCategories(csvText) {
+    var rows = parseCSV(csvText);
+    if (!rows.length) return false;
+    var header = rows[0].map(function (h) {
+      return (h || '').toString().trim().toLowerCase();
+    });
+    var idx = {
+      type: header.indexOf('skill_type'),
+      name: header.indexOf('name'),
+    };
+    if (idx.name === -1) return false;
+
+    var catSet = new Set();
+    // Scan through rows to collect categories
+    for (var r = 1; r < rows.length; r++) {
+      var cols = rows[r];
+      if (!cols || !cols.length) continue;
+      var type = idx.type !== -1 ? (cols[idx.type] || '').trim().toLowerCase() : 'misc';
+      catSet.add(type);
+    }
+
+    categories = Array.from(catSet).sort(function (a, b) {
+      var ia = PREFERRED_ORDER.indexOf(a),
+        ib = PREFERRED_ORDER.indexOf(b);
+      if (ia !== -1 || ib !== -1) return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+      return a.localeCompare(b);
+    });
+
+    return true;
+  }
+
+  // ── Load skills for specific category ──
+  async function loadCategorySkills(category) {
+    // If already loaded, skip
+    if (category !== 'all' && loadedCategories.has(category)) {
+      return true;
+    }
+
+    if (!rawCSVText) return false;
+
+    // Show loading indicator
+    if (loadingEl) {
+      loadingEl.style.display = '';
+      loadingEl.textContent = t('skills.loadingCategory') || 'Loading category...';
+    }
+
+    // Parse category skills (with small delay to show loading state)
+    await new Promise(function (resolve) {
+      setTimeout(resolve, 10);
+    });
+
+    var rows = parseCSV(rawCSVText);
+    if (!rows.length) return false;
+
+    var header = rows[0].map(function (h) {
+      return (h || '').toString().trim().toLowerCase();
+    });
+    var idx = {
+      type: header.indexOf('skill_type'),
+      name: header.indexOf('name'),
+      alias: header.indexOf('alias_name'),
+      localized: header.indexOf('localized_name'),
+      base: header.indexOf('base_value'),
+      baseCost: header.indexOf('base'),
+      sa: header.indexOf('s_a'),
+      apt1: header.indexOf('apt_1'),
+      check: header.indexOf('affinity_role'),
+    };
+    if (idx.name === -1) return false;
+
+    var filterByOfficialEN = getSkillLanguage() === 'en' && officialEnglishNameSet.size > 0;
+    var categorySkills = [];
+
+    for (var r = 1; r < rows.length; r++) {
+      var cols = rows[r];
+      if (!cols || !cols.length) continue;
+
+      var type = idx.type !== -1 ? (cols[idx.type] || '').trim().toLowerCase() : 'misc';
+
+      // Skip if not matching requested category (unless loading 'all')
+      if (category !== 'all' && type !== category) continue;
+
+      var rawName = (cols[idx.name] || '').trim();
+      var localizedName = idx.localized !== -1 ? (cols[idx.localized] || '').trim() : '';
+      var isJPCSV = getSkillLanguage() === 'jp';
+      var aliasFirst = idx.alias !== -1 ? (cols[idx.alias] || '').split('|')[0].trim() : '';
+      var jpSwapName = isJPCSV ? localizedName || aliasFirst || '' : '';
+      var name = jpSwapName || rawName;
+      if (!name) continue;
+
+      if (filterByOfficialEN) {
+        var jpAlias = idx.alias !== -1 ? (cols[idx.alias] || '').trim() : '';
+        if (jpAlias) {
+          var resolvedId = jpNameToId.get(normalize(jpAlias));
+          if (!resolvedId || !officialSkillIds.has(resolvedId)) continue;
+        } else {
+          if (!officialEnglishNameSet.has(normalizeOfficialName(name))) continue;
+        }
+      }
+
+      var baseCostCSV = idx.baseCost !== -1 ? parseInt(cols[idx.baseCost] || '', 10) : NaN;
+      var baseValue = idx.base !== -1 ? parseInt(cols[idx.base] || '', 10) : NaN;
+      var sa = idx.sa !== -1 ? parseInt(cols[idx.sa] || '', 10) : NaN;
+      var apt1 = idx.apt1 !== -1 ? parseInt(cols[idx.apt1] || '', 10) : NaN;
+
+      var baseBucket = !isNaN(baseValue) ? baseValue : !isNaN(baseCostCSV) ? baseCostCSV : NaN;
+      var score = !isNaN(sa) ? sa : !isNaN(apt1) ? apt1 : baseBucket;
+      if (isNaN(score)) score = 0;
+
+      var isUnique = type === 'ius' || type.indexOf('ius') !== -1;
+      var isGold = type === 'golden' || type === 'gold';
+
+      var cost;
+      if (isUnique) {
+        cost = 180;
+      } else {
+        var costFromJSON = costMap.get(normalize(name)) || costMap.get(normalizeCostKey(name));
+        if (!costFromJSON && idx.alias !== -1) {
+          var aliases = (cols[idx.alias] || '').split('|');
+          for (var a = 0; a < aliases.length && !costFromJSON; a++) {
+            var al = aliases[a].trim();
+            if (al) costFromJSON = costMap.get(normalize(al)) || costMap.get(normalizeCostKey(al));
+          }
+        }
+        if (!costFromJSON && idx.localized !== -1) {
+          var loc = (cols[idx.localized] || '').trim();
+          if (loc) costFromJSON = costMap.get(normalize(loc)) || costMap.get(normalizeCostKey(loc));
+        }
+        if (!costFromJSON && rawName !== name) {
+          costFromJSON = costMap.get(normalize(rawName)) || costMap.get(normalizeCostKey(rawName));
+        }
+        cost = costFromJSON || (!isNaN(baseCostCSV) ? baseCostCSV : undefined);
+      }
+
+      if (isGold && cost != null) {
+        var goldMeta = resolveSkillMeta(name, cols, idx);
+        if (goldMeta && goldMeta.lowerId) {
+          var lc = skillCostById.get(goldMeta.lowerId);
+          if (typeof lc === 'number') cost += lc;
+        }
+      }
+
+      var isCircleUpgrade = name.indexOf(' \u25ce') !== -1 || name.indexOf('\u25ce') !== -1;
+      if (isCircleUpgrade && cost != null) {
+        var circleMeta = resolveSkillMeta(name, cols, idx);
+        if (circleMeta && circleMeta.lowerId) {
+          var clc = skillCostById.get(circleMeta.lowerId);
+          if (typeof clc === 'number') cost += clc;
+        }
+      }
+
+      var checkType = idx.check !== -1 ? (cols[idx.check] || '').trim() : '';
+
+      var skill = {
+        name: name,
+        category: type,
+        cost: cost,
+        score: score,
+        efficiency: cost && cost > 0 ? score / cost : 0,
+        checkType: checkType,
+      };
+
+      categorySkills.push(skill);
+    }
+
+    // Store category skills
+    if (category === 'all') {
+      allSkills = categorySkills;
+    } else {
+      skillsByCategory.set(category, categorySkills);
+      loadedCategories.add(category);
+
+      // Merge into allSkills (remove old category data, add new)
+      allSkills = allSkills.filter(function (s) {
+        return s.category !== category;
+      });
+      allSkills = allSkills.concat(categorySkills);
+    }
+
+    // Rebuild derived fields for loaded skills
+    rebuildDerivedSkillFields();
+
+    if (loadingEl) loadingEl.style.display = 'none';
+    return true;
   }
 
   // Look up skill meta using name, alias, and localized_name from CSV
@@ -277,136 +475,6 @@
     return meta || null;
   }
 
-  function loadFromCSV(csvText) {
-    var rows = parseCSV(csvText);
-    if (!rows.length) return false;
-    var header = rows[0].map(function (h) {
-      return (h || '').toString().trim().toLowerCase();
-    });
-    var idx = {
-      type: header.indexOf('skill_type'),
-      name: header.indexOf('name'),
-      alias: header.indexOf('alias_name'),
-      localized: header.indexOf('localized_name'),
-      base: header.indexOf('base_value'),
-      baseCost: header.indexOf('base'),
-      sa: header.indexOf('s_a'),
-      apt1: header.indexOf('apt_1'),
-      check: header.indexOf('affinity_role'),
-    };
-    if (idx.name === -1) return false;
-
-    // When server is EN, filter to official English names only
-    var filterByOfficialEN = getSkillLanguage() === 'en' && officialEnglishNameSet.size > 0;
-
-    var skills = [];
-    var catSet = new Set();
-
-    for (var r = 1; r < rows.length; r++) {
-      var cols = rows[r];
-      if (!cols || !cols.length) continue;
-      var rawName = (cols[idx.name] || '').trim();
-      var localizedName = idx.localized !== -1 ? (cols[idx.localized] || '').trim() : '';
-      // JP CSV: use localized_name (official EN) as primary, then first alias
-      var isJPCSV = getSkillLanguage() === 'jp';
-      var aliasFirst = idx.alias !== -1 ? (cols[idx.alias] || '').split('|')[0].trim() : '';
-      var jpSwapName = isJPCSV ? localizedName || aliasFirst || '' : '';
-      var name = jpSwapName || rawName;
-      if (!name) continue;
-
-      // Filter to officially translated skills when server=EN
-      if (filterByOfficialEN) {
-        var jpAlias = idx.alias !== -1 ? (cols[idx.alias] || '').trim() : '';
-        if (jpAlias) {
-          // Use JP name to identify the exact skill and check if it's officially translated
-          var resolvedId = jpNameToId.get(normalize(jpAlias));
-          if (!resolvedId || !officialSkillIds.has(resolvedId)) continue;
-        } else {
-          // No JP alias available, fall back to name-based check
-          if (!officialEnglishNameSet.has(normalizeOfficialName(name))) continue;
-        }
-      }
-
-      var type = idx.type !== -1 ? (cols[idx.type] || '').trim().toLowerCase() : 'misc';
-      var baseCostCSV = idx.baseCost !== -1 ? parseInt(cols[idx.baseCost] || '', 10) : NaN;
-      var baseValue = idx.base !== -1 ? parseInt(cols[idx.base] || '', 10) : NaN;
-      var sa = idx.sa !== -1 ? parseInt(cols[idx.sa] || '', 10) : NaN;
-      var apt1 = idx.apt1 !== -1 ? parseInt(cols[idx.apt1] || '', 10) : NaN;
-
-      // Resolve score: prefer S_A (best affinity), fallback to base_value, then apt_1
-      var baseBucket = !isNaN(baseValue) ? baseValue : !isNaN(baseCostCSV) ? baseCostCSV : NaN;
-      var score = !isNaN(sa) ? sa : !isNaN(apt1) ? apt1 : baseBucket;
-      if (isNaN(score)) score = 0;
-
-      var isUnique = type === 'ius' || type.indexOf('ius') !== -1;
-      var isGold = type === 'golden' || type === 'gold';
-
-      // Unique skills always cost 180
-      var cost;
-      if (isUnique) {
-        cost = 180;
-      } else {
-        // Resolve cost: JSON lookup first, then CSV base column
-        var costFromJSON = costMap.get(normalize(name)) || costMap.get(normalizeCostKey(name));
-        if (!costFromJSON && idx.alias !== -1) {
-          var aliases = (cols[idx.alias] || '').split('|');
-          for (var a = 0; a < aliases.length && !costFromJSON; a++) {
-            var al = aliases[a].trim();
-            if (al) costFromJSON = costMap.get(normalize(al)) || costMap.get(normalizeCostKey(al));
-          }
-        }
-        if (!costFromJSON && idx.localized !== -1) {
-          var loc = (cols[idx.localized] || '').trim();
-          if (loc) costFromJSON = costMap.get(normalize(loc)) || costMap.get(normalizeCostKey(loc));
-        }
-        if (!costFromJSON && rawName !== name) {
-          costFromJSON = costMap.get(normalize(rawName)) || costMap.get(normalizeCostKey(rawName));
-        }
-        cost = costFromJSON || (!isNaN(baseCostCSV) ? baseCostCSV : undefined);
-      }
-
-      // Gold skills: add prerequisite lower skill cost for true total cost
-      if (isGold && cost != null) {
-        var goldMeta = resolveSkillMeta(name, cols, idx);
-        if (goldMeta && goldMeta.lowerId) {
-          var lc = skillCostById.get(goldMeta.lowerId);
-          if (typeof lc === 'number') cost += lc;
-        }
-      }
-
-      // Circle ◎ skills: add ○ base skill cost for true total cost
-      var isCircleUpgrade = name.indexOf(' \u25ce') !== -1 || name.indexOf('\u25ce') !== -1;
-      if (isCircleUpgrade && cost != null) {
-        var circleMeta = resolveSkillMeta(name, cols, idx);
-        if (circleMeta && circleMeta.lowerId) {
-          var clc = skillCostById.get(circleMeta.lowerId);
-          if (typeof clc === 'number') cost += clc;
-        }
-      }
-
-      var checkType = idx.check !== -1 ? (cols[idx.check] || '').trim() : '';
-
-      catSet.add(type);
-      skills.push({
-        name: name,
-        category: type,
-        cost: cost,
-        score: score,
-        efficiency: cost && cost > 0 ? score / cost : 0,
-        checkType: checkType,
-      });
-    }
-
-    allSkills = skills;
-    categories = Array.from(catSet).sort(function (a, b) {
-      var ia = PREFERRED_ORDER.indexOf(a),
-        ib = PREFERRED_ORDER.indexOf(b);
-      if (ia !== -1 || ib !== -1) return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
-      return a.localeCompare(b);
-    });
-    rebuildDerivedSkillFields();
-    return true;
-  }
 
   // ── Filter & Sort ──
   function applyFilterAndSort() {
@@ -492,6 +560,45 @@
     filtersEl.innerHTML = html;
   }
 
+  function renderSkillRow(skill, index) {
+    var wrapper = document.createElement('div');
+    wrapper.className = 'virtual-row';
+
+    var catCls = CATEGORY_CSS[skill.category] || '';
+    var catLabel = CATEGORY_LABELS[skill.category] || skill.category;
+    var costStr = skill.cost != null ? String(skill.cost) : '\u2014';
+    var effStr = skill.efficiency > 0 ? skill.efficiency.toFixed(2) : '\u2014';
+    var effCls =
+      skill.efficiency >= 2 ? 'eff-high' : skill.efficiency >= 1 ? 'eff-mid' : 'eff-low';
+
+    wrapper.innerHTML =
+      '<div class="virtual-row-inner">' +
+      '<div class="col-name"><span data-skill-name="' +
+      escapeAttr(skill.name) +
+      '" tabindex="0" role="button">' +
+      escapeHtml(skill._displayName || skill.name) +
+      '</span></div>' +
+      '<div class="col-type"><span class="skill-cat-pill ' +
+      catCls +
+      '">' +
+      escapeHtml(catLabel) +
+      '</span></div>' +
+      '<div class="col-cost">' +
+      costStr +
+      '</div>' +
+      '<div class="col-score">' +
+      skill.score +
+      '</div>' +
+      '<div class="col-eff ' +
+      effCls +
+      '">' +
+      effStr +
+      '</div>' +
+      '</div>';
+
+    return wrapper;
+  }
+
   function renderTable() {
     if (!tableWrap) return;
     if (loadingEl) loadingEl.style.display = 'none';
@@ -505,63 +612,63 @@
     ];
 
     if (!filteredSkills.length) {
+      if (virtualScroll) {
+        virtualScroll.destroy();
+        virtualScroll = null;
+      }
       tableWrap.innerHTML = '<div class="skills-empty">' + t('skills.noResults') + '</div>';
       if (countEl) countEl.textContent = t('skills.skillCount', { count: 0 });
       return;
     }
 
-    var html = '<table class="skills-table"><thead><tr>';
+    // Build table header
+    var html = '<div class="skills-table-container"><div class="skills-table-header"><div class="header-row">';
     cols.forEach(function (col) {
       var sortCls = '';
       if (sortCol === col.key) sortCls = sortDir === 'asc' ? ' sorted-asc' : ' sorted-desc';
       html +=
-        '<th class="' +
+        '<div class="' +
         col.cls +
         sortCls +
         '" data-sort="' +
         col.key +
         '">' +
         escapeHtml(col.label) +
-        '</th>';
+        '</div>';
     });
-    html += '</tr></thead><tbody>';
+    html += '</div></div><div class="skills-table-body" id="skillTableBody"></div></div>';
 
-    filteredSkills.forEach(function (skill) {
-      var catCls = CATEGORY_CSS[skill.category] || '';
-      var catLabel = CATEGORY_LABELS[skill.category] || skill.category;
-      var costStr = skill.cost != null ? String(skill.cost) : '\u2014';
-      var effStr = skill.efficiency > 0 ? skill.efficiency.toFixed(2) : '\u2014';
-      var effCls =
-        skill.efficiency >= 2 ? 'eff-high' : skill.efficiency >= 1 ? 'eff-mid' : 'eff-low';
-
-      html +=
-        '<tr>' +
-        '<td class="col-name"><span data-skill-name="' +
-        escapeAttr(skill.name) +
-        '" tabindex="0" role="button">' +
-        escapeHtml(skill._displayName || skill.name) +
-        '</span></td>' +
-        '<td class="col-type"><span class="skill-cat-pill ' +
-        catCls +
-        '">' +
-        escapeHtml(catLabel) +
-        '</span></td>' +
-        '<td class="col-cost">' +
-        costStr +
-        '</td>' +
-        '<td class="col-score">' +
-        skill.score +
-        '</td>' +
-        '<td class="col-eff ' +
-        effCls +
-        '">' +
-        effStr +
-        '</td>' +
-        '</tr>';
-    });
-
-    html += '</tbody></table>';
     tableWrap.innerHTML = html;
+
+    // Initialize virtual scroll
+    var bodyEl = document.getElementById('skillTableBody');
+    if (!bodyEl) return;
+
+    // Destroy existing virtual scroll if any
+    if (virtualScroll) {
+      virtualScroll.destroy();
+      virtualScroll = null;
+    }
+
+    // Use VirtualScroll only for large lists (>50 items)
+    if (filteredSkills.length > 50 && typeof VirtualScroll === 'function') {
+      virtualScroll = new VirtualScroll({
+        container: bodyEl,
+        items: filteredSkills,
+        renderItem: renderSkillRow,
+        itemHeight: ROW_HEIGHT,
+        bufferSize: 5,
+      });
+    } else {
+      // For small lists, render all items directly
+      bodyEl.style.position = 'relative';
+      filteredSkills.forEach(function (skill, idx) {
+        var row = renderSkillRow(skill, idx);
+        row.style.position = 'relative';
+        row.style.top = 'auto';
+        bodyEl.appendChild(row);
+      });
+    }
 
     if (countEl) countEl.textContent = t('skills.skillCount', { count: filteredSkills.length });
   }
@@ -572,23 +679,53 @@
   }
 
   // ── Event Handlers ──
-  function onSearch() {
+  async function onSearch() {
     searchQuery = searchInput ? searchInput.value : '';
+
+    // If searching across all categories, ensure all are loaded
+    if (searchQuery && activeCategory === 'all') {
+      for (var i = 0; i < categories.length; i++) {
+        if (!loadedCategories.has(categories[i])) {
+          await loadCategorySkills(categories[i]);
+        }
+      }
+    }
+
     refresh();
   }
 
-  function onFilterClick(e) {
+  async function onFilterClick(e) {
     var btn = e.target.closest('.skills-filter-btn');
     if (!btn) return;
-    activeCategory = btn.getAttribute('data-cat') || 'all';
+    var newCategory = btn.getAttribute('data-cat') || 'all';
+
+    // Don't reload if already on this category
+    if (newCategory === activeCategory) return;
+
+    activeCategory = newCategory;
     renderFilters();
+
+    // Load category data if not already loaded
+    if (activeCategory === 'all') {
+      // Load all categories
+      for (var i = 0; i < categories.length; i++) {
+        if (!loadedCategories.has(categories[i])) {
+          await loadCategorySkills(categories[i]);
+        }
+      }
+    } else if (!loadedCategories.has(activeCategory)) {
+      await loadCategorySkills(activeCategory);
+    }
+
     refresh();
   }
 
   function onHeaderClick(e) {
     var th = e.target.closest('th[data-sort]');
-    if (!th) return;
-    var col = th.getAttribute('data-sort');
+    var headerDiv = e.target.closest('[data-sort]');
+    var target = th || headerDiv;
+    if (!target) return;
+    var col = target.getAttribute('data-sort');
     if (sortCol === col) {
       sortDir = sortDir === 'asc' ? 'desc' : 'asc';
     } else {
@@ -623,10 +760,20 @@
     renderFilters();
     sortCol = 'efficiency';
     sortDir = 'desc';
+
+    // Load initial category (first category or 'all')
+    var initialCategory = categories.length > 0 ? categories[0] : 'all';
+    activeCategory = initialCategory;
+    await loadCategorySkills(activeCategory);
+    renderFilters();
     refresh();
 
     // React to server changes
     window.addEventListener('umatools:server-change', async function () {
+      if (virtualScroll) {
+        virtualScroll.destroy();
+        virtualScroll = null;
+      }
       costMap.clear();
       skillCostById.clear();
       skillLowerIdById.clear();
@@ -636,6 +783,9 @@
       officialSkillIds = new Set();
       allSkills = [];
       categories = [];
+      loadedCategories.clear();
+      skillsByCategory.clear();
+      rawCSVText = null;
       if (loadingEl) {
         loadingEl.style.display = '';
         tableWrap.innerHTML = '';
@@ -643,6 +793,9 @@
       }
       await loadCostJSON();
       await loadSkillsCSV();
+      var newInitialCategory = categories.length > 0 ? categories[0] : 'all';
+      activeCategory = newInitialCategory;
+      await loadCategorySkills(activeCategory);
       renderFilters();
       refresh();
     });

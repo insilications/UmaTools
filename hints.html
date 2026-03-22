@@ -45,24 +45,65 @@
     <link
       rel="preload"
       as="style"
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=optional"
     />
     <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=optional"
       rel="stylesheet"
       media="print"
       onload="this.media = 'all'"
     />
     <noscript
       ><link
-        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=optional"
         rel="stylesheet"
     /></noscript>
     <link rel="preload" href="/assets/support_hints.json" as="fetch" crossorigin />
     <link rel="stylesheet" href="/css/base.css" />
     <link rel="stylesheet" href="/css/theme-d.build.css" />
     <link rel="stylesheet" href="/css/hints.css" />
-    <link rel="stylesheet" href="/css/skill-popup.css" />
+    <link rel="stylesheet" href="/css/skill-popup.css" media="print" onload="this.media='all'" />
+    <script>
+      // Image optimization helper - creates picture elements with WebP and fallback
+      (function() {
+        'use strict';
+
+        /**
+         * Creates a picture element HTML string with WebP source and fallback
+         * @param {string} src - Original image source (PNG/JPG)
+         * @param {string} alt - Alt text for the image
+         * @param {string} className - CSS class name(s) for the img element
+         * @param {Object} attrs - Additional attributes (loading, decoding, fetchpriority, etc.)
+         * @returns {string} HTML string for picture element
+         */
+        window.createPictureHTML = function(src, alt, className, attrs) {
+          if (!src) return '';
+
+          attrs = attrs || {};
+          var loading = attrs.loading || 'lazy';
+          var decoding = attrs.decoding || 'async';
+          var fetchpriority = attrs.fetchpriority || '';
+
+          // Convert .png or .jpg to .webp
+          var webpSrc = src.replace(/\.(png|jpg|jpeg)$/i, '.webp');
+
+          // Build attributes string
+          var attrStr = className ? ` class="${className}"` : '';
+          attrStr += ` alt="${alt || ''}"`;
+          attrStr += ` loading="${loading}"`;
+          attrStr += ` decoding="${decoding}"`;
+          if (fetchpriority) {
+            attrStr += ` fetchpriority="${fetchpriority}"`;
+          }
+
+          // Return picture element with WebP source and fallback
+          return `<picture>` +
+            `<source srcset="${webpSrc}" type="image/webp">` +
+            `<img src="${src}"${attrStr}>` +
+            `</picture>`;
+        };
+      })();
+    </script>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -322,7 +363,8 @@
         </div>
       </div>
     </main>
-    <script src="/js/i18n.js" defer></script>
+    <script src="/js/i18n-core.js" defer></script>
+    <script src="/js/i18n-pages.js" defer></script>
     <script src="/js/skill-popup.js" defer></script>
     <script src="/js/hints.js" defer></script>
 

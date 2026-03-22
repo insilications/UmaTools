@@ -788,7 +788,7 @@ body.dark .option-score {
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
   gap: 12px;
 }
 .card {
@@ -1718,6 +1718,9 @@ body.dark .badge.badge-R {
   font-weight: 700;
   color: #4b5563;
 }
+.card-support .card-thumb picture {
+  display: contents;
+}
 .card-support .card-thumb img {
   width: 100%;
   height: 100%;
@@ -2272,6 +2275,9 @@ body.dark .case-pointer::before {
   place-items: center;
   border: 1px solid var(--border);
   background: var(--paper-2, #f6f8fb);
+}
+.card-support .card-thumb picture {
+  display: contents;
 }
 .card-support .card-thumb img {
   width: 100%;

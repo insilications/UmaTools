@@ -16,6 +16,15 @@
   const counts = document.getElementById('counts');
   const hintList = document.getElementById('hintList');
 
+  // Virtual Scroll removed — grid layout is incompatible with absolute positioning
+
+  // Pagination state
+  const CHUNK_SIZE = 100;
+  let rawData = [];
+  let processedChunks = 0;
+  let totalChunks = 0;
+  let isProcessing = false;
+
   if (counts)
     counts.innerHTML = `<span class="loading-indicator">${t('hints.loadingHints')}</span>`;
 
@@ -23,7 +32,8 @@
   try {
     const res = await fetch(DATA_URL);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    data = await res.json();
+    rawData = await res.json();
+    totalChunks = Math.ceil(rawData.length / CHUNK_SIZE);
   } catch (err) {
     console.error('Failed to load support hints', err);
     if (counts) counts.textContent = t('hints.loadFailed');
@@ -89,8 +99,8 @@
     return card.server === 'global'; // EN shows only global cards
   }
 
-  // Parse raw data
-  const cards = (data ?? []).map((c) => {
+  // Parse a single card
+  function parseCard(c) {
     const rawName = c?.SupportName ?? '';
     const name = cleanCardName(rawName);
     const rarity = (
@@ -114,16 +124,64 @@
     const nameJP = cleanCardName(SupportNameJP);
 
     return { name, rawName, rarity, hints, img, slug, id, server, SupportNameJP, nameJP };
-  });
+  }
 
-  const allHints = Array.from(new Set(cards.flatMap((c) => c.hints))).sort((a, b) =>
-    a.localeCompare(b)
-  );
+  // Process data in chunks to avoid blocking UI
+  let cards = [];
+
+  function processNextChunk() {
+    if (processedChunks >= totalChunks || isProcessing) return;
+
+    isProcessing = true;
+    const start = processedChunks * CHUNK_SIZE;
+    const end = Math.min(start + CHUNK_SIZE, rawData.length);
+    const chunk = rawData.slice(start, end);
+
+    // Use requestIdleCallback if available, otherwise setTimeout
+    const scheduleWork = window.requestIdleCallback || ((cb) => setTimeout(cb, 0));
+
+    scheduleWork(() => {
+      const newCards = chunk.map(parseCard);
+      cards = cards.concat(newCards);
+      processedChunks++;
+      isProcessing = false;
+
+      // Update UI after first chunk to show initial results quickly
+      if (processedChunks === 1) {
+        buildHintDatalist();
+        update();
+      } else if (processedChunks === totalChunks) {
+        // Final update after all chunks processed
+        buildHintDatalist();
+        update();
+      } else {
+        // Update counts during progressive loading to show progress
+        const matched = cards.filter(matchCard).sort((a, b) => localizedCardName(a).localeCompare(localizedCardName(b)));
+        updateCounts(matched);
+      }
+
+      // Process next chunk
+      if (processedChunks < totalChunks) {
+        processNextChunk();
+      }
+    });
+  }
+
+  // Start processing first chunk
+  processNextChunk();
+
+  // Compute allHints dynamically based on currently loaded cards
+  function getAllHints() {
+    return Array.from(new Set(cards.flatMap((c) => c.hints))).sort((a, b) =>
+      a.localeCompare(b)
+    );
+  }
 
   // Fill datalist — when JP, use JP names as values so they display in dropdown;
   // build reverse map so we can convert JP input back to English for matching.
   let jpToEnHintMap = new Map();
   function buildHintDatalist() {
+    const allHints = getAllHints();
     jpToEnHintMap = new Map();
     hintList.innerHTML = allHints.map((h) => {
       var jp = typeof window.getLocalizedSkillName === 'function' ? window.getLocalizedSkillName(h) : h;
@@ -134,7 +192,6 @@
       return `<option value="${h}"></option>`;
     }).join('');
   }
-  buildHintDatalist();
 
   let selected = [];
 
@@ -221,10 +278,19 @@
   const renderBadge = (rarity) => `<span class="badge badge-${rarity}">${rarity}</span>`;
 
   function renderResults(list) {
+    if (!list.length) {
+      results.innerHTML = '';
+      results.className = 'grid';
+      return;
+    }
+
+    results.className = 'grid';
     results.innerHTML = list
       .map((card) => {
         const displayName = localizedCardName(card);
-        const thumb = card.img
+        const thumb = card.img && typeof window.createPictureHTML === 'function'
+          ? window.createPictureHTML(card.img, displayName, '', { loading: 'lazy', decoding: 'async', fetchpriority: 'low' })
+          : card.img
           ? `<img src="${card.img}" alt="${displayName}" loading="lazy" decoding="async" fetchpriority="low">`
           : `<span>${initialsOf(displayName)}</span>`;
         return `
@@ -245,11 +311,21 @@
 
   function updateCounts(list) {
     const serverCards = cards.filter(matchesServer);
-    counts.textContent = t('hints.counts', {
+    const allHints = getAllHints();
+
+    let countText = t('hints.counts', {
       matched: list.length,
       total: serverCards.length,
       hints: allHints.length,
     });
+
+    // Show loading indicator if still processing
+    if (processedChunks < totalChunks) {
+      const percent = Math.round((processedChunks / totalChunks) * 100);
+      countText += ` <span class="loading-indicator">(Loading ${percent}%...)</span>`;
+    }
+
+    counts.innerHTML = countText;
   }
 
   function update() {
@@ -357,7 +433,6 @@
     update();
   });
 
-  // Init
+  // Init - readFromURL to load filters, update will be called after first chunk loads
   readFromURL();
-  update();
 })();

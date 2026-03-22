@@ -463,11 +463,17 @@
           });
           return names;
         };
-        const registerAliasNames = (names) => {
+        // Map each name → skill ID so alias enrichment stays within the same skill
+        const nameToSkillId = new Map(); // normalized name -> skill ID
+        const registerAliasNames = (names, skillId) => {
           if (!Array.isArray(names) || !names.length) return;
           names.forEach((name) => {
             const key = normalize(name);
             if (!key) return;
+            // Only register aliases within the same skill; don't merge across skills
+            const existingOwner = nameToSkillId.get(key);
+            if (existingOwner != null && existingOwner !== skillId) return;
+            nameToSkillId.set(key, skillId);
             if (!externalAliasLookup.has(key)) externalAliasLookup.set(key, new Set());
             const bucket = externalAliasLookup.get(key);
             names.forEach((candidate) => {
@@ -499,8 +505,10 @@
               if (k) nextOfficialNameMap.set(k, geneOfficialName);
             });
           }
-          registerAliasNames(names);
-          registerAliasNames(geneNames);
+          const entryId = entry?.id != null ? entry.id : null;
+          const geneId = entry?.gene_version?.id != null ? entry.gene_version.id : entryId;
+          registerAliasNames(names, entryId);
+          registerAliasNames(geneNames, geneId);
           const indexNames = names.length ? names : [];
           const geneIndexNames = geneNames.length ? geneNames : [];
           const allIndexNames = Array.from(new Set(indexNames.concat(geneIndexNames)));
