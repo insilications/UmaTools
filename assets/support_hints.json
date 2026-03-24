@@ -27223,7 +27223,7 @@
       },
       {
         "SkillId": "204222",
-        "Name": "もう一踏ん張り",
+        "Name": "One More Push",
         "HintLevel": null
       },
       {
@@ -37781,7 +37781,7 @@
     "SupportName": "Curren Chan (SR)",
     "SupportNameJP": "カレンチャン (SR)",
     "SupportRarity": "SR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Speed",
     "SupportEffects": [
       {
@@ -69711,7 +69711,7 @@
     "SupportName": "Marvelous Sunday (SSR)",
     "SupportNameJP": "マーベラスサンデー (SSR)",
     "SupportRarity": "SSR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Guts",
     "SupportEffects": [
       {
@@ -120913,7 +120913,7 @@
       },
       {
         "SkillId": "204222",
-        "Name": "もう一踏ん張り",
+        "Name": "One More Push",
         "HintLevel": null
       },
       {
