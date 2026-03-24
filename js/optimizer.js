@@ -850,11 +850,14 @@
       });
       // Recreate circle upgrade and evo sub-rows for non-gold rows
       // (the gold linking pass above only handles gold rows; circle skills need allowLinking too)
+      // Also include gold's lower rows (parentGoldId) so their ◎ circle sub-rows are recreated
+      // (circle sub-rows are auto-generated, not saved to state)
       Array.from(rowsEl.querySelectorAll('.optimizer-row')).forEach((row) => {
-        if (row.dataset.parentGoldId || row.dataset.parentCircleId || row.dataset.parentEvoId)
+        if (row.dataset.parentCircleId || row.dataset.parentEvoId)
           return;
         // Skip rows already handled by the gold linking pass (those with lowerRowId set)
-        if (row.dataset.lowerRowId) return;
+        // but NOT gold's lower rows which need circle linking
+        if (row.dataset.lowerRowId && !row.dataset.parentGoldId) return;
         const name = (row.querySelector('.skill-name')?.value || '').trim();
         if (!name) return;
         const skill = findSkillByName(name);
@@ -2750,7 +2753,20 @@
         if (linked) {
           const linkedCostEl = linked.querySelector('.cost');
           const linkedCostVal = parseInt(linkedCostEl?.value || '', 10);
-          if (!isNaN(linkedCostVal)) return linkedCostVal;
+          if (!isNaN(linkedCostVal)) {
+            // Include the ◎ circle upgrade cost if the lower has a linked ◎ sub-row
+            let circleCost = 0;
+            if (linked.dataset.circleRowId) {
+              const circleRow = rowsEl.querySelector(
+                `.optimizer-row[data-row-id="${linked.dataset.circleRowId}"]`
+              );
+              if (circleRow) {
+                const cVal = parseInt(circleRow.querySelector('.cost')?.value || '', 10);
+                if (!isNaN(cVal)) circleCost = cVal;
+              }
+            }
+            return linkedCostVal + circleCost;
+          }
           const hintEl = linked.querySelector('.hint-level');
           const hintVal = parseInt(hintEl?.value || '0', 10);
           lowerHintLevel = isNaN(hintVal) ? 0 : hintVal;
@@ -3795,10 +3811,10 @@
               aptitudeScore: circleItem.aptitudeScore || 0,
               items: [j, k],
             });
-            // Gold combo: it.cost includes gold + ○, add ◎ as prerequisite
+            // Gold combo: it.cost already includes gold + ○ + ◎ (via getLowerDiscountedCost)
             goldOptions.push({
               combo: [j, k, i],
-              cost: it.cost + circleItem.cost,
+              cost: it.cost,
               score: it.score,
               ratingScore: it.ratingScore || 0,
               aptitudeScore: it.aptitudeScore || 0,
@@ -3822,7 +3838,7 @@
             if (evoIdx !== undefined && !used[evoIdx]) {
               const evoItem = items[evoIdx];
               const evoItems = circleItem ? [j, k, i, evoIdx] : [j, i, evoIdx];
-              const evoCost = circleItem ? it.cost + circleItem.cost : it.cost;
+              const evoCost = it.cost; // already includes ◎ if present
               goldOptions.push({
                 combo: evoItems,
                 cost: evoCost,
@@ -5012,22 +5028,35 @@
 
         // Resolve lower skill for gold skills
         let lowerSkill = null;
+        let circleUpgradeSkill = null; // ◎ upgrade of the lower, if lower is a ○
         if (isGold) {
           const lowerId = skill.lowerSkillId ||
             (Array.isArray(skill.parentIds) && skill.parentIds.length ? skill.parentIds[0] : '');
           if (lowerId) lowerSkill = skillIdIndex.get(String(lowerId)) || null;
+          // If the resolved lower is a ◎ (upgrade), find the ○ (base) counterpart
+          // so we include both ○ + ◎ costs in the gold total
+          if (lowerSkill?.circleUpgradeOf) {
+            circleUpgradeSkill = lowerSkill; // keep ◎ reference
+            const singleSkill = findSkillByName(lowerSkill.circleUpgradeOf);
+            if (singleSkill) lowerSkill = singleSkill; // replace with ○
+          } else if (lowerSkill?.circleUpgrade) {
+            // Lower is a ○ with a ◎ upgrade
+            circleUpgradeSkill = findSkillByName(lowerSkill.circleUpgrade) || null;
+          }
         }
 
         const goldCost = typeof skill.baseCost === 'number' ? skill.baseCost : NaN;
         const lowerCost = lowerSkill && typeof lowerSkill.baseCost === 'number' ? lowerSkill.baseCost : NaN;
+        const circleCost = circleUpgradeSkill && typeof circleUpgradeSkill.baseCost === 'number' ? circleUpgradeSkill.baseCost : NaN;
         const typeText = skill.checkType
           ? skill.checkType.charAt(0).toUpperCase() + skill.checkType.slice(1)
           : '';
 
-        // Cost text
+        // Cost text (gold total = gold + ○ lower + ◎ upgrade if present)
         let costText;
+        const totalCircleCost = !isNaN(circleCost) ? circleCost : 0;
         if (isGold && !isNaN(goldCost) && !isNaN(lowerCost)) {
-          costText = `${goldCost + lowerCost} pt`;
+          costText = `${goldCost + lowerCost + totalCircleCost} pt`;
         } else if (!isNaN(goldCost)) {
           costText = `${goldCost} pt`;
         } else {
@@ -5067,8 +5096,9 @@
         function updateCostDisplay() {
           const discGold = !isNaN(goldCost) ? calculateDiscountedCost(goldCost, hintLevel) : NaN;
           const discLower = !isNaN(lowerCost) ? calculateDiscountedCost(lowerCost, lowerHintLevel) : NaN;
+          const discCircle = !isNaN(circleCost) ? calculateDiscountedCost(circleCost, lowerHintLevel) : 0;
           if (isGold && !isNaN(discGold) && !isNaN(discLower)) {
-            costEl.textContent = `${discGold + discLower} pt`;
+            costEl.textContent = `${discGold + discLower + discCircle} pt`;
           } else if (!isNaN(discGold)) {
             costEl.textContent = `${discGold} pt`;
           }
