@@ -8,11 +8,7 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  var CORE_MASK_ACCEL = 1;
-  var CORE_MASK_SPEED = 2;
   var DEFAULT_WEIGHTS = {
-    coreAccelBonus: 0.28,
-    coreSpeedBonus: 0.2,
     consistentGoldMinConsistency: 0.58,
     consistentGoldConsistencyBonus: 0.06,
     consistentGoldExpectedBonus: 0.14,
@@ -278,46 +274,6 @@
       /_random|blocked_|is_overtake|change_order|temptation|popularity|post_number/.test(t);
     return det && !hasVolatileRaceReq && !situational;
   }
-  function effectBuckets(skill) {
-    var d = lower(skill && skill.desc),
-      types = new Set();
-    (Array.isArray(skill && skill.conditionGroups) ? skill.conditionGroups : []).forEach(
-      function (g) {
-        (Array.isArray(g && g.effects) ? g.effects : []).forEach(function (e) {
-          if (e && e.type != null) types.add(String(e.type));
-        });
-      }
-    );
-    return {
-      accel: /accelerat/.test(d) || types.has('31') || types.has('28') || types.has('8'),
-      speed:
-        /\bspeed\b|target speed/.test(d) ||
-        types.has('27') ||
-        types.has('22') ||
-        types.has('21') ||
-        types.has('1') ||
-        types.has('3'),
-      recovery:
-        /recover|recovery|stamina/.test(d) ||
-        types.has('9') ||
-        types.has('2') ||
-        types.has('5') ||
-        types.has('4'),
-    };
-  }
-  function isLateWindow(skill) {
-    var gs = Array.isArray(skill && skill.conditionGroups) ? skill.conditionGroups : [];
-    for (var i = 0; i < gs.length; i += 1) {
-      var t = condText(gs[i]);
-      if (!t) continue;
-      if (/is_lastspurt|is_finalcorner|is_last_straight/.test(t)) return true;
-      var ge = t.match(/distance_rate\s*>=\s*(\d+)/);
-      if (ge && parseInt(ge[1], 10) >= 65) return true;
-      if (/phase_laterhalf_random/.test(t) && /distance_rate\s*>=\s*60/.test(t)) return true;
-    }
-    return false;
-  }
-
   function scoreSkillConsistency(skill, raceConfig, tier) {
     var gs = Array.isArray(skill && skill.conditionGroups) ? skill.conditionGroups : [];
     var gScores = [],
@@ -407,8 +363,6 @@
       }
     }
     c = clamp(c, 0.05, 0.99);
-    var eff = effectBuckets(skill || {}),
-      late = isLateWindow(skill);
     return {
       score: Number(c.toFixed(4)),
       breakdown: {
@@ -420,12 +374,6 @@
       tierBonus: Number(tierBonus.toFixed(4)),
       tierTags: tierTags,
       tierNote: tierNote,
-      hasAccel: !!eff.accel,
-      hasSpeed: !!eff.speed,
-      hasRecovery: !!eff.recovery,
-      isLateWindow: !!late,
-      reliableLateAccel: !!(eff.accel && late && c >= 0.58),
-      reliableLateSpeed: !!(eff.speed && late && c >= 0.58),
       hasVolatileRaceCondition: volatileRaceDependent,
       isRisky: c < 0.42,
     };
@@ -691,25 +639,15 @@
         scoreReasons.unshift(window.t('teamTrials.consistentGoldPrioritized'));
       }
       // SV-based expected value for Team Trials
+      // In TT, skills score purely on activation: Gold=1200pts (SV 12), White=500pts (SV 5)
+      // Expected value = SV * consistency² (absolute expected points, not per-SP)
+      // Cost is already handled by the knapsack budget constraint
       var skillSV = isGold(it.category) ? 12 : 5;
-      var safeCost = Math.max(cost, 1);
-      var expected = (skillSV / safeCost) * (consistencyScore * consistencyScore);
-      // Cost bracket multipliers
-      if (cost <= 120) expected *= 1.20;
-      else if (cost <= 160) expected *= 1.10;
-      if (cost >= 360) expected *= 0.75;
-      else if (cost >= 300) expected *= 0.85;
-      // Expensive gold penalty
-      if (isGold(it.category) && cost > 300) expected *= 0.85;
+      var expected = skillSV * (consistencyScore * consistencyScore);
       // Apply green/volatile penalties
       expected *= clamp(expectedMul, 0.2, 1);
-      // Existing bonuses
+      // Consistent gold bonus
       if (getsGoldPriority) expected += Math.max(0, num(weights.consistentGoldExpectedBonus, 0));
-      if (c.reliableLateAccel) expected += weights.coreAccelBonus;
-      if (c.reliableLateSpeed) expected += weights.coreSpeedBonus;
-      var coreMask = 0;
-      if (c.reliableLateAccel) coreMask |= CORE_MASK_ACCEL;
-      if (c.reliableLateSpeed) coreMask |= CORE_MASK_SPEED;
       return Object.assign({}, it, {
         consistencyScore: consistencyScore,
         consistencyReasons: Array.from(new Set(scoreReasons)),
@@ -725,11 +663,8 @@
         consistencyInt: Math.round(consistencyScore * 1000),
         consistentGoldPriority: !!getsGoldPriority,
         consistentGoldInt: getsGoldPriority ? 1 : 0,
-        coreMask: coreMask,
         isRisky: !!c.isRisky || consistencyScore < 0.42,
         normalizedSkill: skill || null,
-        hasAccel: !!c.hasAccel,
-        hasSpeed: !!c.hasSpeed,
       });
     });
     return { items: out, missingMeta: missMeta };
@@ -800,7 +735,6 @@
               consistency: 0,
               rating: 0,
               sv: 0,
-              coreMask: 0,
               items: [],
             },
             {
@@ -810,7 +744,6 @@
               consistency: linkedLower.consistencyInt,
               rating: linkedLower.ratingScore || 0,
               sv: linkedLower.svInt || 0,
-              coreMask: linkedLower.coreMask || 0,
               items: [linkedLowerIdx],
             },
             {
@@ -820,7 +753,6 @@
               consistency: it.consistencyInt,
               rating: it.ratingScore || 0,
               sv: (it.svInt || 0) + (linkedLower.svInt || 0),
-              coreMask: it.coreMask || 0,
               items: [linkedLowerIdx, i],
             },
           ]);
@@ -840,7 +772,6 @@
               consistency: 0,
               rating: 0,
               sv: 0,
-              coreMask: 0,
               items: [],
             },
             {
@@ -850,7 +781,6 @@
               consistency: it.consistencyInt,
               rating: it.ratingScore || 0,
               sv: it.svInt || 0,
-              coreMask: it.coreMask || 0,
               items: [i],
             },
             {
@@ -860,7 +790,6 @@
               consistency: up.consistencyInt,
               rating: up.ratingScore || 0,
               sv: (up.svInt || 0) + (it.svInt || 0),
-              coreMask: up.coreMask || 0,
               items: [i, circleIdx],
             },
           ]);
@@ -893,7 +822,6 @@
               consistency: 0,
               rating: 0,
               sv: 0,
-              coreMask: 0,
               items: [],
             },
             {
@@ -903,7 +831,6 @@
               consistency: p.consistencyInt,
               rating: p.ratingScore || 0,
               sv: p.svInt || 0,
-              coreMask: p.coreMask || 0,
               items: [j],
             },
             {
@@ -913,7 +840,6 @@
               consistency: it.consistencyInt,
               rating: it.ratingScore || 0,
               sv: (it.svInt || 0) + (p.svInt || 0),
-              coreMask: it.coreMask || 0,
               items: [j, i],
             },
           ]);
@@ -930,7 +856,6 @@
           consistency: 0,
           rating: 0,
           sv: 0,
-          coreMask: 0,
           items: [],
         },
         {
@@ -940,7 +865,6 @@
           consistency: it.consistencyInt,
           rating: it.ratingScore || 0,
           sv: it.svInt || 0,
-          coreMask: it.coreMask || 0,
           items: [i],
         },
       ]);
@@ -1040,117 +964,86 @@
       }
     });
     var reqCost = 0,
-      reqExpected = 0,
-      reqCore = 0;
+      reqExpected = 0;
     reqItems.forEach(function (it) {
       if (lowerIncluded.has(it.id)) return;
       reqCost += Math.max(0, Math.floor(num(it.cost, 0)));
       reqExpected += Math.max(0, Math.floor(num(it.expectedValueInt, 0)));
-      reqCore |= it.coreMask || 0;
     });
     return {
       requiredIds: reqIds,
       requiredItems: reqItems,
       requiredCost: reqCost,
       requiredExpected: reqExpected,
-      requiredCoreMask: reqCore,
     };
   }
 
   function better(cand, curr) {
     // Team Trials priority:
-    // 1) Highest expected activations (sum of consistency)
-    // 2) Highest total SV (skill value points)
-    // 3) Highest expected value (SV-based EV)
+    // 1) Highest expected value (SV/cost * consistency² -- captures both gold premium and reliability)
+    // 2) Highest total SV (gold=12, white=5 -- rewards gold activation points)
+    // 3) Highest expected activations (consistency sum)
     // 4) Highest rating (tiebreaker)
-    if (cand.activations !== curr.activations) return cand.activations > curr.activations;
-    if (cand.sv !== curr.sv) return cand.sv > curr.sv;
     if (cand.value !== curr.value) return cand.value > curr.value;
+    if (cand.sv !== curr.sv) return cand.sv > curr.sv;
+    if (cand.activations !== curr.activations) return cand.activations > curr.activations;
     if (cand.rating !== curr.rating) return cand.rating > curr.rating;
     return cand.tie < curr.tie;
   }
 
-  function optimizeGroups(groups, items, budget, reqMask) {
+  function optimizeGroups(groups, items, budget) {
     var B = Math.max(0, Math.floor(num(budget, 0))),
       G = groups.length,
       NEG = -1e15;
-    var vPrev = Array.from({ length: 4 }, function () {
-      return new Array(B + 1).fill(NEG);
-    });
-    var cPrev = Array.from({ length: 4 }, function () {
-      return new Array(B + 1).fill(NEG);
-    });
-    var sPrev = Array.from({ length: 4 }, function () {
-      return new Array(B + 1).fill(NEG);
-    });
-    var rPrev = Array.from({ length: 4 }, function () {
-      return new Array(B + 1).fill(NEG);
-    });
+    // Simplified DP: no core mask tracking (skill effects don't matter for TT scoring)
+    var vPrev = new Array(B + 1).fill(NEG);
+    var cPrev = new Array(B + 1).fill(NEG);
+    var sPrev = new Array(B + 1).fill(NEG);
+    var rPrev = new Array(B + 1).fill(NEG);
     for (var b = 0; b <= B; b += 1) {
-      vPrev[0][b] = 0;
-      cPrev[0][b] = 0;
-      sPrev[0][b] = 0;
-      rPrev[0][b] = 0;
+      vPrev[b] = 0;
+      cPrev[b] = 0;
+      sPrev[b] = 0;
+      rPrev[b] = 0;
     }
     var choiceK = Array.from({ length: G + 1 }, function () {
-      return Array.from({ length: 4 }, function () {
-        var a = new Int16Array(B + 1);
-        a.fill(-1);
-        return a;
-      });
-    });
-    var choiceMask = Array.from({ length: G + 1 }, function () {
-      return Array.from({ length: 4 }, function () {
-        var a = new Int8Array(B + 1);
-        a.fill(-1);
-        return a;
-      });
+      var a = new Int16Array(B + 1);
+      a.fill(-1);
+      return a;
     });
     for (var g = 1; g <= G; g += 1) {
       var opts = groups[g - 1];
-      var vCur = Array.from({ length: 4 }, function () {
-        return new Array(B + 1).fill(NEG);
-      });
-      var cCur = Array.from({ length: 4 }, function () {
-        return new Array(B + 1).fill(NEG);
-      });
-      var sCur = Array.from({ length: 4 }, function () {
-        return new Array(B + 1).fill(NEG);
-      });
-      var rCur = Array.from({ length: 4 }, function () {
-        return new Array(B + 1).fill(NEG);
-      });
-      for (var pm = 0; pm < 4; pm += 1) {
-        for (var pb = 0; pb <= B; pb += 1) {
-          if (vPrev[pm][pb] <= NEG / 2) continue;
-          for (var k = 0; k < opts.length; k += 1) {
-            var o = opts[k],
-              w = Math.max(0, Math.floor(num(o.cost, 0))),
-              nb = pb + w;
-            if (nb > B) continue;
-            var nm = pm | (o.coreMask || 0);
-            var cand = {
-              value: vPrev[pm][pb] + Math.max(0, Math.floor(num(o.value, 0))),
-              activations: cPrev[pm][pb] + Math.max(0, Math.floor(num(o.consistency, 0))),
-              sv: sPrev[pm][pb] + Math.max(0, Math.floor(num(o.sv, 0))),
-              rating: rPrev[pm][pb] + Math.max(0, Math.floor(num(o.rating, 0))),
-              tie: k,
-            };
-            var curr = {
-              value: vCur[nm][nb],
-              activations: cCur[nm][nb],
-              sv: sCur[nm][nb],
-              rating: rCur[nm][nb],
-              tie: choiceK[g][nm][nb] === -1 ? 999 : choiceK[g][nm][nb],
-            };
-            if (better(cand, curr)) {
-              vCur[nm][nb] = cand.value;
-              cCur[nm][nb] = cand.activations;
-              sCur[nm][nb] = cand.sv;
-              rCur[nm][nb] = cand.rating;
-              choiceK[g][nm][nb] = k;
-              choiceMask[g][nm][nb] = pm;
-            }
+      var vCur = new Array(B + 1).fill(NEG);
+      var cCur = new Array(B + 1).fill(NEG);
+      var sCur = new Array(B + 1).fill(NEG);
+      var rCur = new Array(B + 1).fill(NEG);
+      for (var pb = 0; pb <= B; pb += 1) {
+        if (vPrev[pb] <= NEG / 2) continue;
+        for (var k = 0; k < opts.length; k += 1) {
+          var o = opts[k],
+            w = Math.max(0, Math.floor(num(o.cost, 0))),
+            nb = pb + w;
+          if (nb > B) continue;
+          var cand = {
+            value: vPrev[pb] + Math.max(0, Math.floor(num(o.value, 0))),
+            activations: cPrev[pb] + Math.max(0, Math.floor(num(o.consistency, 0))),
+            sv: sPrev[pb] + Math.max(0, Math.floor(num(o.sv, 0))),
+            rating: rPrev[pb] + Math.max(0, Math.floor(num(o.rating, 0))),
+            tie: k,
+          };
+          var curr = {
+            value: vCur[nb],
+            activations: cCur[nb],
+            sv: sCur[nb],
+            rating: rCur[nb],
+            tie: choiceK[g][nb] === -1 ? 999 : choiceK[g][nb],
+          };
+          if (better(cand, curr)) {
+            vCur[nb] = cand.value;
+            cCur[nb] = cand.activations;
+            sCur[nb] = cand.sv;
+            rCur[nb] = cand.rating;
+            choiceK[g][nb] = k;
           }
         }
       }
@@ -1159,59 +1052,38 @@
       sPrev = sCur;
       rPrev = rCur;
     }
-    function bestState(maskNeed) {
-      var best = null;
-      for (var m = 0; m < 4; m += 1) {
-        if ((m & maskNeed) !== maskNeed) continue;
-        for (var bb = 0; bb <= B; bb += 1) {
-          if (vPrev[m][bb] <= NEG / 2) continue;
-          var cand = {
-            m: m,
-            b: bb,
-            v: vPrev[m][bb],
-            c: cPrev[m][bb],
-            s: sPrev[m][bb],
-            r: rPrev[m][bb],
-          };
-          if (
-            !best ||
-            cand.c > best.c ||
-            (cand.c === best.c && cand.s > best.s) ||
-            (cand.c === best.c && cand.s === best.s && cand.v > best.v) ||
-            (cand.c === best.c && cand.s === best.s && cand.v === best.v && cand.r > best.r) ||
-            (cand.c === best.c &&
-              cand.s === best.s &&
-              cand.v === best.v &&
-              cand.r === best.r &&
-              cand.b < best.b)
-          ) {
-            best = cand;
-          }
-        }
+    // Find best state
+    var best = null;
+    for (var bb = 0; bb <= B; bb += 1) {
+      if (vPrev[bb] <= NEG / 2) continue;
+      var cand2 = { b: bb, v: vPrev[bb], c: cPrev[bb], s: sPrev[bb], r: rPrev[bb] };
+      if (
+        !best ||
+        cand2.v > best.v ||
+        (cand2.v === best.v && cand2.s > best.s) ||
+        (cand2.v === best.v && cand2.s === best.s && cand2.c > best.c) ||
+        (cand2.v === best.v && cand2.s === best.s && cand2.c === best.c && cand2.r > best.r) ||
+        (cand2.v === best.v &&
+          cand2.s === best.s &&
+          cand2.c === best.c &&
+          cand2.r === best.r &&
+          cand2.b < best.b)
+      ) {
+        best = cand2;
       }
-      return best;
     }
-    var full = bestState(reqMask || 0),
-      met = true;
-    if (!full && (reqMask || 0) !== 0) {
-      full = bestState(0);
-      met = false;
-    }
-    if (!full)
+    if (!best)
       return {
         error: 'required_unreachable',
         chosen: [],
         used: 0,
         value: 0,
         sv: 0,
-        mask: 0,
-        metRequiredMask: false,
       };
     var chosen = [],
-      cm = full.m,
-      cb = full.b;
+      cb = best.b;
     for (var gb = G; gb >= 1; gb -= 1) {
-      var kk = choiceK[gb][cm][cb];
+      var kk = choiceK[gb][cb];
       if (kk < 0) continue;
       var opt = groups[gb - 1][kk];
       if (opt && opt.combo) {
@@ -1252,20 +1124,15 @@
         var p = items[opt.pick];
         if (p) chosen.push(Object.assign({}, p));
       }
-      var pm2 = choiceMask[gb][cm][cb];
-      if (pm2 < 0) pm2 = 0;
       cb = Math.max(0, cb - Math.max(0, Math.floor(num(opt && opt.cost, 0))));
-      cm = pm2;
     }
     chosen.reverse();
     return {
       error: null,
       chosen: chosen,
-      used: full.b,
-      value: full.v,
-      sv: full.s,
-      mask: full.m,
-      metRequiredMask: met,
+      used: best.b,
+      value: best.v,
+      sv: best.s,
     };
   }
 
@@ -1355,25 +1222,25 @@
     var lowerInGold = collectLowerPrereqIdsInGoldCombos(chosen);
     var strengths = [],
       risks = [],
-      accel = false,
-      speed = false,
       high = 0,
       risky = [];
     (Array.isArray(chosen) ? chosen : []).forEach(function (it) {
       if (!it || it.comboComponent || lowerInGold.has(it.id)) return;
-      if ((it.coreMask || 0) & CORE_MASK_ACCEL) accel = true;
-      if ((it.coreMask || 0) & CORE_MASK_SPEED) speed = true;
       if (num(it.consistencyScore, 0) >= 0.65) high += 1;
       if (it.isRisky) risky.push(it.name);
     });
-    if (accel) strengths.push(window.t('teamTrials.reliableAccel'));
-    if (speed) strengths.push(window.t('teamTrials.reliableSpeed'));
     if (high >= 3) strengths.push(window.t('teamTrials.multipleHighProc'));
     if (num(total && total.consistentGoldCount, 0) > 0)
       strengths.push(window.t('teamTrials.prioritizesConsistent'));
     strengths.push(
       window.t('teamTrials.averageConsistency', {
         score: Math.round(clamp(total.consistency, 0, 1) * 100),
+      })
+    );
+    strengths.push(
+      window.t('teamTrials.totalSVReport', {
+        sv: total.totalSV || 0,
+        cost: total.totalCost || 0,
       })
     );
     risky.forEach(function (n) {
@@ -1460,16 +1327,10 @@
     var optional = items.filter(function (it) {
       return !req.requiredIds.has(it.id);
     });
-    var availableMask = 0;
-    items.forEach(function (it) {
-      availableMask |= it.coreMask || 0;
-    });
-    var neededMask = availableMask & ~req.requiredCoreMask & (CORE_MASK_ACCEL | CORE_MASK_SPEED);
     var groupResult = optimizeGroups(
       buildGroups(optional),
       optional,
-      budget - req.requiredCost,
-      neededMask
+      budget - req.requiredCost
     );
     if (groupResult.error) {
       return {
@@ -1486,10 +1347,6 @@
           risks: [window.t('teamTrials.noFeasibleSolution')],
         },
       };
-    }
-    if (!groupResult.metRequiredMask && neededMask !== 0) {
-      if (neededMask & CORE_MASK_ACCEL) warnings.push(window.t('teamTrials.noReliableAccel'));
-      if (neededMask & CORE_MASK_SPEED) warnings.push(window.t('teamTrials.noReliableSpeed'));
     }
     var chosen = [],
       seen = new Set();
@@ -1555,20 +1412,63 @@
     };
   }
 
+  // Wisdom proc modifier: higher wisdom → higher chance skills fire when conditions are met.
+  // Piecewise linear interpolation based on community-researched proc rates.
+  // Steep early gains, diminishing returns past ~500 wit.
+  var WISDOM_BREAKPOINTS = [
+    { wit: 0,    rate: 0.05 },
+    { wit: 100,  rate: 0.15 },
+    { wit: 200,  rate: 0.55 },
+    { wit: 300,  rate: 0.70 },
+    { wit: 400,  rate: 0.78 },
+    { wit: 500,  rate: 0.82 },
+    { wit: 600,  rate: 0.85 },
+    { wit: 900,  rate: 0.90 },
+    { wit: 1200, rate: 0.93 },
+  ];
+  function wisdomProcModifier(wisdom) {
+    var w = num(wisdom, 900);
+    if (w >= 1200) return 0.93;
+    if (w <= 0) return 0.05;
+    for (var i = 1; i < WISDOM_BREAKPOINTS.length; i += 1) {
+      var lo = WISDOM_BREAKPOINTS[i - 1], hi = WISDOM_BREAKPOINTS[i];
+      if (w <= hi.wit) {
+        var t = (w - lo.wit) / (hi.wit - lo.wit);
+        return lo.rate + t * (hi.rate - lo.rate);
+      }
+    }
+    return 0.93;
+  }
+
+  // Predict the base skill activation score for Team Trials.
+  // For each chosen skill: expected_points = consistency * wisdom_modifier * activation_points
+  // Gold = 1200 pts, White = 500 pts per activation.
+  // Returns the base score BEFORE opponent rating bonus and other multipliers.
+  function predictActivationScore(chosen, wisdom) {
+    var lowerInGold = collectLowerPrereqIdsInGoldCombos(chosen);
+    var wMod = wisdomProcModifier(wisdom);
+    var total = 0;
+    (Array.isArray(chosen) ? chosen : []).forEach(function (it) {
+      if (!it || it.comboComponent || lowerInGold.has(it.id)) return;
+      var consistency = clamp(num(it.consistencyScore, 0), 0, 1);
+      var points = isGold(it.category) ? 1200 : 500;
+      total += consistency * wMod * points;
+    });
+    return Math.round(total);
+  }
+
   return {
-    CORE_MASK_ACCEL: CORE_MASK_ACCEL,
-    CORE_MASK_SPEED: CORE_MASK_SPEED,
     DEFAULT_WEIGHTS: DEFAULT_WEIGHTS,
     parseCSV: csvParse,
     normalizeSkill: normalizeSkill,
     buildEnglishSkillIndex: buildEnglishSkillIndex,
     scoreSkillConsistency: scoreSkillConsistency,
     optimizeTeamTrialsBuild: optimizeTeamTrialsBuild,
+    predictActivationScore: predictActivationScore,
+    wisdomProcModifier: wisdomProcModifier,
     timingScore: timingScore,
     breadthScore: breadthScore,
     scenarioScore: scenarioScore,
-    effectBuckets: effectBuckets,
-    isLateWindow: isLateWindow,
     condText: condText,
     nName: nName,
     clamp: clamp,

@@ -40,6 +40,8 @@
   const teamSVPerSPEl = document.getElementById('team-sv-per-sp');
   const teamDensityPill = document.getElementById('team-density-pill');
   const teamDensityEl = document.getElementById('team-density');
+  const teamPredictedScorePill = document.getElementById('team-predicted-score-pill');
+  const teamPredictedScoreEl = document.getElementById('team-predicted-score');
   const teamExplainPanel = document.getElementById('team-explain-panel');
   const teamExplainStrengthsEl = document.getElementById('team-explain-strengths');
   const teamExplainRisksEl = document.getElementById('team-explain-risks');
@@ -248,6 +250,7 @@
     filteredOut: 0,
     officialFilterApplied: false,
   };
+  let lastTTChosen = null; // store last TT result for live predicted score updates
   const TEAM_TRIALS_MODE = 'team_trials';
   const teamTrialsSkillMetaById = new Map();
   const teamTrialsSkillMetaByName = new Map();
@@ -579,30 +582,21 @@
 
   function getScoringWeights() {
     var defaults = window.SkillScorer?.DEFAULT_SCORING_WEIGHTS || {
-      effectImpact: 0.35,
-      applicability: 0.15,
-      costEfficiency: 0.2,
-      consistency: 0.2,
-      duration: 0.1,
+      consistency: 0.6,
+      costEfficiency: 0.4,
     };
     var el = function (id) {
       var inp = document.getElementById(id);
       return inp ? Number(inp.value) : null;
     };
-    var ei = el('weight-effect-impact');
-    var ap = el('weight-applicability');
     var ce = el('weight-cost-efficiency');
     var co = el('weight-consistency');
-    var du = el('weight-duration');
-    if (ei == null || ap == null || ce == null || co == null || du == null) return defaults;
-    var sum = ei + ap + ce + co + du;
+    if (ce == null || co == null) return defaults;
+    var sum = ce + co;
     if (sum <= 0) return defaults;
     return {
-      effectImpact: ei / sum,
-      applicability: ap / sum,
-      costEfficiency: ce / sum,
       consistency: co / sum,
-      duration: du / sum,
+      costEfficiency: ce / sum,
     };
   }
 
@@ -1660,6 +1654,7 @@
     if (teamActivationsPill) teamActivationsPill.style.display = 'none';
     if (teamSVPerSPPill) teamSVPerSPPill.style.display = 'none';
     if (teamDensityPill) teamDensityPill.style.display = 'none';
+    if (teamPredictedScorePill) teamPredictedScorePill.style.display = 'none';
     if (teamExplainPanel) teamExplainPanel.style.display = 'none';
     lastSkillScore = 0;
     ratingEngine.updateRatingDisplay(0);
@@ -4396,6 +4391,19 @@
         teamDensityPill.style.display = 'none';
       }
     }
+    if (teamPredictedScorePill && teamPredictedScoreEl) {
+      if (mode === TEAM_TRIALS_MODE && window.TeamTrialsOptimizer?.predictActivationScore) {
+        lastTTChosen = result.chosen || [];
+        const wisdomEl = document.getElementById('stat-wisdom');
+        const wisdom = wisdomEl ? Number(wisdomEl.value) || 900 : 900;
+        const predicted = window.TeamTrialsOptimizer.predictActivationScore(lastTTChosen, wisdom);
+        teamPredictedScorePill.style.display = '';
+        teamPredictedScoreEl.textContent = String(predicted);
+      } else {
+        lastTTChosen = null;
+        teamPredictedScorePill.style.display = 'none';
+      }
+    }
 
     if (teamExplainPanel && teamExplainStrengthsEl && teamExplainRisksEl && teamWarningsEl) {
       if (mode === TEAM_TRIALS_MODE) {
@@ -5918,11 +5926,8 @@
 
   // Scoring weight sliders — re-score tiers on change
   const scoringWeightIds = [
-    'weight-effect-impact',
-    'weight-applicability',
-    'weight-cost-efficiency',
     'weight-consistency',
-    'weight-duration',
+    'weight-cost-efficiency',
   ];
   let scoringWeightDebounce = null;
   scoringWeightIds.forEach((id) => {
@@ -5945,18 +5950,12 @@
   if (resetWeightsBtn) {
     resetWeightsBtn.addEventListener('click', () => {
       const defaults = window.SkillScorer?.DEFAULT_SCORING_WEIGHTS || {
-        effectImpact: 0.35,
-        applicability: 0.15,
-        costEfficiency: 0.2,
-        consistency: 0.2,
-        duration: 0.1,
+        consistency: 0.6,
+        costEfficiency: 0.4,
       };
       const mapping = {
-        'weight-effect-impact': defaults.effectImpact,
-        'weight-applicability': defaults.applicability,
-        'weight-cost-efficiency': defaults.costEfficiency,
         'weight-consistency': defaults.consistency,
-        'weight-duration': defaults.duration,
+        'weight-cost-efficiency': defaults.costEfficiency,
       };
       Object.entries(mapping).forEach(([id, val]) => {
         const slider = document.getElementById(id);
@@ -5971,6 +5970,18 @@
           if (optimizeModeSelect?.value === TEAM_TRIALS_MODE) autoOptimizeDebounced();
         })
         .catch(() => {});
+    });
+  }
+
+  // Wisdom stat listener — update predicted activation score live
+  const wisdomStatInput = document.getElementById('stat-wisdom');
+  if (wisdomStatInput) {
+    wisdomStatInput.addEventListener('input', () => {
+      if (!lastTTChosen || !teamPredictedScoreEl || !window.TeamTrialsOptimizer?.predictActivationScore) return;
+      const wisdom = Number(wisdomStatInput.value) || 900;
+      teamPredictedScoreEl.textContent = String(
+        window.TeamTrialsOptimizer.predictActivationScore(lastTTChosen, wisdom)
+      );
     });
   }
 
