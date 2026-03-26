@@ -60,6 +60,7 @@
       'nav.optimizer': 'Optimizer',
       'nav.calculator': 'Calculator',
       'nav.staminaCheck': 'Stamina Check',
+      'nav.raceScheduler': 'Race Scheduler',
       'nav.tools': 'Tools',
       'nav.eventOCR': 'Event OCR',
       'nav.supportHints': 'Support Hints',
@@ -124,6 +125,10 @@
       'home.umadleDesc': 'Daily guessing game with Uma Musume data.',
       'home.umadleBadge': 'Daily challenge',
       'home.openUmadle': 'Open Umadle',
+      'home.raceScheduler': 'Race Scheduler',
+      'home.raceSchedulerDesc': 'Plan and track your race schedule across campaigns.',
+      'home.raceSchedulerBadge': 'External tool',
+      'home.openRaceScheduler': 'Open Race Scheduler',
 
       // ── Rank Breakdown ──
       'rankBreakdown.title': 'Rating Rank Breakdown',
@@ -788,6 +793,7 @@
       'nav.optimizer': 'オプティマイザー',
       'nav.calculator': 'カリキュレーター',
       'nav.staminaCheck': 'スタミナ計算',
+      'nav.raceScheduler': 'レーススケジューラー',
       'nav.tools': 'ツール',
       'nav.eventOCR': 'イベントOCR',
       'nav.supportHints': 'サポートヒント',
@@ -851,6 +857,10 @@
       'home.umadleDesc': 'ウマ娘データを使った毎日の推測ゲーム。',
       'home.umadleBadge': 'デイリーチャレンジ',
       'home.openUmadle': 'ウマドルを開く',
+      'home.raceScheduler': 'レーススケジューラー',
+      'home.raceSchedulerDesc': 'キャンペーン全体のレーススケジュールを計画・管理。',
+      'home.raceSchedulerBadge': '外部ツール',
+      'home.openRaceScheduler': 'レーススケジューラーを開く',
 
       // ── Rank Breakdown ──
       'rankBreakdown.title': 'レーティングランク内訳',

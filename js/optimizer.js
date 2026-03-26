@@ -2498,6 +2498,8 @@
           candidateIndexes = datalistPrefix1Index.get(normalizedPrefix.slice(0, 1)) || [];
         }
       }
+      // Phase 1: prefix matches (fast, via index)
+      var prefixSet = new Set();
       if (candidateIndexes) {
         for (let j = 0; j < candidateIndexes.length; j++) {
           if (suggestionNames.length >= suggestionLimit) break;
@@ -2505,12 +2507,22 @@
           const normalizedName = allSkillNamesNormalized[idx];
           if (!normalizedName || !normalizedName.startsWith(normalizedPrefix)) continue;
           suggestionNames.push(allSkillNames[idx]);
+          prefixSet.add(idx);
         }
-      } else {
+      } else if (!normalizedPrefix) {
         for (let i = 0; i < allSkillNames.length; i++) {
           if (suggestionNames.length >= suggestionLimit) break;
+          suggestionNames.push(allSkillNames[i]);
+          prefixSet.add(i);
+        }
+      }
+      // Phase 2: substring matches (scan all, skip already-added prefix matches)
+      if (normalizedPrefix && suggestionNames.length < suggestionLimit) {
+        for (let i = 0; i < allSkillNamesNormalized.length; i++) {
+          if (suggestionNames.length >= suggestionLimit) break;
+          if (prefixSet.has(i)) continue;
           const normalizedName = allSkillNamesNormalized[i];
-          if (normalizedPrefix && !normalizedName.startsWith(normalizedPrefix)) continue;
+          if (!normalizedName || !normalizedName.includes(normalizedPrefix)) continue;
           suggestionNames.push(allSkillNames[i]);
         }
       }
