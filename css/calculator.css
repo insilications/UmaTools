@@ -210,6 +210,10 @@
   color: var(--muted);
 }
 
+.calculator-row .skill-score-display[data-negative='true'] {
+  color: var(--cat-purple, #a855f7);
+}
+
 .calculator-row .actions-cell {
   display: flex;
   align-items: center;

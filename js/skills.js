@@ -361,9 +361,14 @@
       if (!name) continue;
 
       if (filterByOfficialEN) {
-        var jpAlias = idx.alias !== -1 ? (cols[idx.alias] || '').trim() : '';
-        if (jpAlias) {
-          var resolvedId = jpNameToId.get(normalize(jpAlias));
+        var jpAliasRaw = idx.alias !== -1 ? (cols[idx.alias] || '').trim() : '';
+        if (jpAliasRaw) {
+          var jpAliasParts = jpAliasRaw.split('|');
+          var resolvedId = null;
+          for (var ap = 0; ap < jpAliasParts.length && !resolvedId; ap++) {
+            var part = jpAliasParts[ap].trim();
+            if (part) resolvedId = jpNameToId.get(normalize(part));
+          }
           if (!resolvedId || !officialSkillIds.has(resolvedId)) continue;
         } else {
           if (!officialEnglishNameSet.has(normalizeOfficialName(name))) continue;

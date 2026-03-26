@@ -238,7 +238,8 @@
     const rawScore = evaluateSkillScore(skill || {});
     if (!Number.isFinite(rawScore)) return 0;
     const canon = canonicalCategory(categoryOverride || skill?.category || '');
-    if (canon === 'purple') return 0;
+    // Purple debuffs have negative scores — they reduce rating
+    if (canon === 'purple') return Math.min(rawScore, 0);
     return rawScore;
   }
 
@@ -279,7 +280,8 @@
         selectedListEl.innerHTML = skills
           .map((s) => {
             const catClass = getCategoryClass(s.category);
-            return `<span class="skill-chip ${catClass}" data-skill-name="${attrEsc(s.name)}" tabindex="0" role="button">${s.displayName || s.name} <small>(+${s.score})</small></span>`;
+            const scoreLabel = s.score < 0 ? `(${s.score})` : `(+${s.score})`;
+            return `<span class="skill-chip ${catClass}" data-skill-name="${attrEsc(s.name)}" tabindex="0" role="button">${s.displayName || s.name} <small>${scoreLabel}</small></span>`;
           })
           .join(' ');
       }
@@ -1145,12 +1147,14 @@
     function updateScoreDisplay(skill) {
       if (!scoreDisplay) return;
       if (skill) {
-        const score = evaluateSkillScore(skill);
-        scoreDisplay.textContent = `+${score}`;
+        const score = getEffectiveRatingScore(skill, skill.category || '');
+        scoreDisplay.textContent = score < 0 ? `${score}` : `+${score}`;
         scoreDisplay.dataset.empty = 'false';
+        scoreDisplay.dataset.negative = score < 0 ? 'true' : 'false';
       } else {
         scoreDisplay.textContent = '-';
         scoreDisplay.dataset.empty = 'true';
+        scoreDisplay.dataset.negative = 'false';
       }
     }
 
