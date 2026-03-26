@@ -991,7 +991,7 @@
 
     function calculateRatingBreakdown(skillScoreOverride) {
       if (typeof skillScoreOverride === 'number' && !isNaN(skillScoreOverride)) {
-        lastSkillScore = Math.max(0, Math.round(skillScoreOverride));
+        lastSkillScore = Math.round(skillScoreOverride);
       }
       const stats = readRatingStats();
       const statsScore = Object.values(stats).reduce((sum, val) => sum + calcStatScore(val), 0);
