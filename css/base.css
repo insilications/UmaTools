@@ -94,6 +94,37 @@ h1 {
   text-align: center;
 }
 
+.site-banner {
+  width: 100%;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  color: #fff;
+  text-align: center;
+  padding: 6px 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.site-banner a {
+  color: #fff;
+  text-decoration: none;
+}
+.site-banner a:hover {
+  text-decoration: underline;
+}
+.site-banner .banner-dismiss {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  margin-left: 0.75rem;
+  padding: 0 4px;
+  opacity: 0.7;
+  vertical-align: middle;
+}
+.site-banner .banner-dismiss:hover {
+  opacity: 1;
+}
 .site-nav {
   position: sticky;
   top: 0;

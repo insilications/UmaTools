@@ -453,11 +453,9 @@
             <span data-i18n="optimizer.optimizeFor">Optimize For</span>
             <select id="optimize-mode">
               <option value="rating" selected data-i18n="optimizer.optRating">Rating</option>
-              <!-- TODO: Re-enable after Team Trials rework
               <option value="team_trials" data-i18n="optimizer.optTeamTrials">
                 Team Trials (Consistent)
               </option>
-              -->
               <option value="aptitude-test" data-i18n="optimizer.optAptitudeTest">
                 Trainer Aptitude Test
               </option>
@@ -649,34 +647,19 @@
                 </summary>
                 <div class="scoring-weights-grid">
                   <label style="display: flex; align-items: center; gap: 6px">
-                    <span style="min-width: 100px" data-i18n="optimizer.weightEffectImpact"
-                      >Effect Impact</span
+                    <span style="min-width: 100px" data-i18n="optimizer.weightConsistency"
+                      >Consistency</span
                     >
                     <input
                       type="range"
-                      id="weight-effect-impact"
+                      id="weight-consistency"
                       min="0"
                       max="100"
-                      value="35"
+                      value="60"
                       step="5"
                       style="flex: 1"
                     />
-                    <span class="weight-value" style="min-width: 32px; text-align: right">35%</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 6px">
-                    <span style="min-width: 100px" data-i18n="optimizer.weightApplicability"
-                      >Applicability</span
-                    >
-                    <input
-                      type="range"
-                      id="weight-applicability"
-                      min="0"
-                      max="100"
-                      value="15"
-                      step="5"
-                      style="flex: 1"
-                    />
-                    <span class="weight-value" style="min-width: 32px; text-align: right">15%</span>
+                    <span class="weight-value" style="min-width: 32px; text-align: right">60%</span>
                   </label>
                   <label style="display: flex; align-items: center; gap: 6px">
                     <span style="min-width: 100px" data-i18n="optimizer.weightCostEfficiency"
@@ -687,41 +670,11 @@
                       id="weight-cost-efficiency"
                       min="0"
                       max="100"
-                      value="20"
+                      value="40"
                       step="5"
                       style="flex: 1"
                     />
-                    <span class="weight-value" style="min-width: 32px; text-align: right">20%</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 6px">
-                    <span style="min-width: 100px" data-i18n="optimizer.weightConsistency"
-                      >Consistency</span
-                    >
-                    <input
-                      type="range"
-                      id="weight-consistency"
-                      min="0"
-                      max="100"
-                      value="20"
-                      step="5"
-                      style="flex: 1"
-                    />
-                    <span class="weight-value" style="min-width: 32px; text-align: right">20%</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 6px">
-                    <span style="min-width: 100px" data-i18n="optimizer.weightDuration"
-                      >Duration</span
-                    >
-                    <input
-                      type="range"
-                      id="weight-duration"
-                      min="0"
-                      max="100"
-                      value="10"
-                      step="5"
-                      style="flex: 1"
-                    />
-                    <span class="weight-value" style="min-width: 32px; text-align: right">10%</span>
+                    <span class="weight-value" style="min-width: 32px; text-align: right">40%</span>
                   </label>
                   <div style="display: flex; align-items: center">
                     <button
@@ -1026,6 +979,10 @@
             <div class="pill team-trials-pill" id="team-density-pill" style="display: none">
               <b data-i18n="optimizer.skillDensity">Skill Density:</b>
               <span id="team-density">0</span>
+            </div>
+            <div class="pill team-trials-pill" id="team-predicted-score-pill" style="display: none">
+              <b data-i18n="optimizer.predictedActivationScore">Est. Activation Score:</b>
+              <span id="team-predicted-score">0</span>
             </div>
             <div class="pill aptitude-test-pill" id="aptitude-score-pill" style="display: none">
               <b data-i18n="optimizer.aptitudeTestScore">Aptitude Test Score:</b>

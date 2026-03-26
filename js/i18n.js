@@ -60,6 +60,7 @@
       'nav.optimizer': 'Optimizer',
       'nav.calculator': 'Calculator',
       'nav.staminaCheck': 'Stamina Check',
+      'nav.raceScheduler': 'Race Scheduler',
       'nav.tools': 'Tools',
       'nav.eventOCR': 'Event OCR',
       'nav.supportHints': 'Support Hints',
@@ -124,6 +125,10 @@
       'home.umadleDesc': 'Daily guessing game with Uma Musume data.',
       'home.umadleBadge': 'Daily challenge',
       'home.openUmadle': 'Open Umadle',
+      'home.raceScheduler': 'Race Scheduler',
+      'home.raceSchedulerDesc': 'Plan and track your race schedule across campaigns.',
+      'home.raceSchedulerBadge': 'External tool',
+      'home.openRaceScheduler': 'Open Race Scheduler',
 
       // ── Rank Breakdown ──
       'rankBreakdown.title': 'Rating Rank Breakdown',
@@ -227,11 +232,8 @@
       'optimizer.optTeamTrials': 'Team Trials (Consistent)',
       'optimizer.optAptitudeTest': 'Trainer Aptitude Test',
       'optimizer.scoringWeights': 'Skill Scoring Weights',
-      'optimizer.weightEffectImpact': 'Effect Impact',
-      'optimizer.weightApplicability': 'Applicability',
-      'optimizer.weightCostEfficiency': 'Cost Efficiency',
+      'optimizer.weightCostEfficiency': 'Cost Efficiency (SV/SP)',
       'optimizer.weightConsistency': 'Consistency',
-      'optimizer.weightDuration': 'Duration',
       'optimizer.raceConfigHint':
         'Set your target affinities so the optimizer scores skills appropriately.',
       'optimizer.idealSkillBuilder': 'Ideal Skill Builder',
@@ -256,6 +258,7 @@
       'optimizer.expectedActivations': 'Expected Activations:',
       'optimizer.svPerSP': 'SV per SP:',
       'optimizer.skillDensity': 'Skill Density:',
+      'optimizer.predictedActivationScore': 'Est. Activation Score:',
       'optimizer.aptitudeTestScore': 'Aptitude Test Score:',
       'optimizer.explainTeamTrials': 'Explain Team Trials Build',
       'optimizer.consistencyStrengths': 'Consistency Strengths',
@@ -683,12 +686,11 @@
         'Green skill is downweighted in Team Trials due to variable race conditions.',
       'teamTrials.consistentGoldPrioritized':
         'Consistent gold skill prioritized for Team Trials rating value.',
-      'teamTrials.reliableAccel': 'Includes at least one reliable late acceleration trigger.',
-      'teamTrials.reliableSpeed': 'Includes at least one reliable late speed trigger.',
-      'teamTrials.multipleHighProc': 'Multiple picks have high proc reliability (>= 0.65).',
+      'teamTrials.multipleHighProc': 'Multiple picks have high proc reliability (>= 65%).',
       'teamTrials.prioritizesConsistent':
-        'Prioritizes consistent gold skills for Team Trials rating value.',
+        'Prioritizes consistent gold skills for activation scoring.',
       'teamTrials.averageConsistency': 'Average consistency score: {score}%.',
+      'teamTrials.totalSVReport': 'Total SV: {sv} across {cost} SP spent.',
       'teamTrials.riskyPick': 'Risky pick: {name} has lower estimated reliability.',
       'teamTrials.noCandidates': 'No candidate skills provided.',
       'teamTrials.filteredSkills':
@@ -701,9 +703,6 @@
       'teamTrials.requiredExceedBudget': 'Required skills exceed the current SP budget.',
       'teamTrials.noFeasibleSolution':
         'No feasible Team Trials solution under current budget and constraints.',
-      'teamTrials.noReliableAccel':
-        'Could not include a reliable late acceleration skill within budget.',
-      'teamTrials.noReliableSpeed': 'Could not include a reliable late speed skill within budget.',
       'teamTrials.noScoredSkills':
         'No scored skills were selected after conflict/dependency filtering.',
 
@@ -794,6 +793,7 @@
       'nav.optimizer': 'オプティマイザー',
       'nav.calculator': 'カリキュレーター',
       'nav.staminaCheck': 'スタミナ計算',
+      'nav.raceScheduler': 'レーススケジューラー',
       'nav.tools': 'ツール',
       'nav.eventOCR': 'イベントOCR',
       'nav.supportHints': 'サポートヒント',
@@ -857,6 +857,10 @@
       'home.umadleDesc': 'ウマ娘データを使った毎日の推測ゲーム。',
       'home.umadleBadge': 'デイリーチャレンジ',
       'home.openUmadle': 'ウマドルを開く',
+      'home.raceScheduler': 'レーススケジューラー',
+      'home.raceSchedulerDesc': 'キャンペーン全体のレーススケジュールを計画・管理。',
+      'home.raceSchedulerBadge': '外部ツール',
+      'home.openRaceScheduler': 'レーススケジューラーを開く',
 
       // ── Rank Breakdown ──
       'rankBreakdown.title': 'レーティングランク内訳',
@@ -956,11 +960,8 @@
       'optimizer.optTeamTrials': 'チームレース（安定型）',
       'optimizer.optAptitudeTest': 'トレーナー技能試験',
       'optimizer.scoringWeights': 'スキル評価ウェイト',
-      'optimizer.weightEffectImpact': '効果の強さ',
-      'optimizer.weightApplicability': '適用範囲',
-      'optimizer.weightCostEfficiency': 'コスト効率',
+      'optimizer.weightCostEfficiency': 'コスト効率 (SV/SP)',
       'optimizer.weightConsistency': '発動安定性',
-      'optimizer.weightDuration': '持続時間',
       'optimizer.raceConfigHint': 'ターゲット適性を設定して、スキルを適切に評価します。',
       'optimizer.idealSkillBuilder': '理想スキルビルダー',
       'optimizer.idealBuilderHint': '重視する適性を選択 \u2014 該当行がハイライトされます。',
@@ -983,6 +984,7 @@
       'optimizer.expectedActivations': '期待発動数:',
       'optimizer.svPerSP': 'SP当たりSV:',
       'optimizer.skillDensity': 'スキル密度:',
+      'optimizer.predictedActivationScore': '予測発動スコア:',
       'optimizer.aptitudeTestScore': '技能試験スコア:',
       'optimizer.explainTeamTrials': 'チームレースビルドの説明',
       'optimizer.consistencyStrengths': '安定度の強み',
@@ -1405,12 +1407,11 @@
       'teamTrials.greenDownweighted': '緑スキルはレース条件の変動によりチームレースで低評価。',
       'teamTrials.consistentGoldPrioritized':
         '安定した金スキルがチームレースのレーティング価値で優先。',
-      'teamTrials.reliableAccel': '信頼性の高い終盤加速トリガーを1つ以上含む。',
-      'teamTrials.reliableSpeed': '信頼性の高い終盤スピードトリガーを1つ以上含む。',
-      'teamTrials.multipleHighProc': '複数の選択肢が高い発動信頼性（0.65以上）。',
+      'teamTrials.multipleHighProc': '複数の選択肢が高い発動信頼性（65%以上）。',
       'teamTrials.prioritizesConsistent':
-        'チームレースのレーティング価値で安定した金スキルを優先。',
+        '発動スコアリングで安定した金スキルを優先。',
       'teamTrials.averageConsistency': '平均安定度スコア: {score}%。',
+      'teamTrials.totalSVReport': '合計SV: {sv}（{cost} SP使用）。',
       'teamTrials.riskyPick': 'リスク選択: {name} は推定信頼性が低い。',
       'teamTrials.noCandidates': '候補スキルが提供されていません。',
       'teamTrials.filteredSkills': '選択したターゲット/適性に一致しない{count}件のスキルを除外。',
@@ -1421,9 +1422,6 @@
         'ENメタデータに一致しないスキルがあり、フォールバックヒューリスティクスを使用。',
       'teamTrials.requiredExceedBudget': '必須スキルが現在のSP予算を超えています。',
       'teamTrials.noFeasibleSolution': '現在の予算と条件でチームレースの実行可能な解がありません。',
-      'teamTrials.noReliableAccel': '予算内に信頼性の高い終盤加速スキルを含められませんでした。',
-      'teamTrials.noReliableSpeed':
-        '予算内に信頼性の高い終盤スピードスキルを含められませんでした。',
       'teamTrials.noScoredSkills':
         'コンフリクト/依存関係フィルタリング後にスコア付きスキルが選択されませんでした。',
 

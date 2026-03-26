@@ -41,6 +41,11 @@
           path: '/accel',
           file: '/accel.html',
         },
+        {
+          label: 'Race Scheduler',
+          i18nKey: 'nav.raceScheduler',
+          href: 'https://race.daftuyda.moe',
+        },
       ],
     },
     {
@@ -275,6 +280,43 @@
       document.body.prepend(nav);
     }
 
+    // Announcement banner with countdown (auto-hides after giveaway ends)
+    const giveawayEnd = new Date('2026-04-10T15:00:00Z');
+    const BANNER_DISMISS_KEY = 'giveaway-banner-dismissed';
+    let bannerDismissed = false;
+    try { bannerDismissed = localStorage.getItem(BANNER_DISMISS_KEY) === '1'; } catch (e) {}
+    if (!bannerDismissed && giveawayEnd.getTime() > Date.now()) {
+      const banner = document.createElement('div');
+      banner.className = 'site-banner';
+      let bannerInterval = null;
+      function updateBannerCountdown() {
+        const now = Date.now();
+        const diff = giveawayEnd.getTime() - now;
+        if (diff <= 0) {
+          banner.remove();
+          if (bannerInterval) clearInterval(bannerInterval);
+          return;
+        }
+        const d = Math.floor(diff / 86400000);
+        const h = Math.floor((diff % 86400000) / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        const time = (d > 0 ? d + 'd ' : '') + h + 'h ' + m + 'm ' + s + 's';
+        banner.innerHTML = '<a href="https://discord.gg/hsm" target="_blank" rel="noopener">\uD83C\uDF89 10x 1st Anni Ticket Giveaway \u2014 ' + time + ' left \u2014 Join the Discord!</a><button class="banner-dismiss" aria-label="Dismiss">\u00d7</button>';
+      }
+      updateBannerCountdown();
+      bannerInterval = setInterval(updateBannerCountdown, 1000);
+      banner.addEventListener('click', function (e) {
+        if (e.target.closest('.banner-dismiss')) {
+          e.preventDefault();
+          banner.remove();
+          if (bannerInterval) clearInterval(bannerInterval);
+          try { localStorage.setItem(BANNER_DISMISS_KEY, '1'); } catch (e) {}
+        }
+      });
+      nav.insertAdjacentElement('afterend', banner);
+    }
+
     const here = location.pathname.replace(/\/+$/, '') || '/';
     const norm = (s) => (s || '').replace(/\/+$/, '') || '/';
     const allLinks = [];
@@ -311,11 +353,15 @@
           a.className = 'nav-link';
           a.textContent = child.i18nKey ? _t(child.i18nKey) : child.label;
           if (child.i18nKey) a.setAttribute('data-i18n', child.i18nKey);
-          a.href = child.path || child.file || '#';
+          a.href = child.href || child.path || child.file || '#';
           a.setAttribute('role', 'menuitem');
+          if (child.href) {
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+          }
           if (child.file) a.dataset.file = child.file;
           if (child.path) a.dataset.clean = child.path;
-          if (here === norm(child.path) || here === norm(child.file)) {
+          if ((child.path && here === norm(child.path)) || (child.file && here === norm(child.file))) {
             a.classList.add('active');
             hasActive = true;
           }
@@ -463,6 +509,239 @@
     }
     if (window.innerWidth <= 640 && settingsOpen) {
       setSettingsOpen(false);
+    }
+  });
+})();
+
+// April Fools — activates only on April 1st (or ?af=1 to test)
+(function aprilFools() {
+  var now = new Date();
+  var forceAF = /[?&]af=1/.test(location.search);
+  if (!forceAF && (now.getMonth() !== 3 || now.getDate() !== 1)) return;
+
+  // Check opt-out
+  var AF_KEY = 'umafools-off';
+  try { if (localStorage.getItem(AF_KEY) === '1' && !forceAF) return; } catch (e) {}
+
+  var active = true;
+  var afStyle = null;
+  var tipsyObs = null;
+  var clickHandler = null;
+
+  function enableAF() {
+    active = true;
+
+    // Force light mode
+    var root = document.documentElement;
+    root.classList.remove('dark');
+    root.style.colorScheme = 'light';
+    var sun = document.querySelector('.sun');
+    var moon = document.querySelector('.moon');
+    if (sun) sun.style.display = 'inline';
+    if (moon) moon.style.display = 'none';
+
+    // "UmaFools" branding
+    var brand = document.querySelector('.brand-text');
+    if (brand) brand.textContent = 'UmaFools';
+
+    // Tipsy style
+    if (!afStyle) {
+      afStyle = document.createElement('style');
+      afStyle.id = 'af-style';
+      afStyle.textContent =
+        '@keyframes af-wobble{0%{transform:rotate(var(--af-r,0deg))}50%{transform:rotate(calc(var(--af-r,0deg)*-1))}100%{transform:rotate(var(--af-r,0deg))}}' +
+        '.af-active .result-item,.af-active .pill,.af-active .btn,.af-active .nav-link,.af-active .card{--af-r:0deg;animation:af-wobble 3s ease-in-out infinite}';
+    }
+    document.head.appendChild(afStyle);
+    document.body.classList.add('af-active');
+    applyTipsy();
+
+    // Start mutation observer
+    if (!tipsyObs) {
+      tipsyObs = new MutationObserver(applyTipsy);
+    }
+    tipsyObs.observe(document.documentElement, { childList: true, subtree: true });
+
+    // Horse emoji clicks
+    if (!clickHandler) {
+      clickHandler = function (e) {
+        if (!active) return;
+        var horses = ['\uD83D\uDC0E', '\uD83C\uDFC7', '\uD83E\uDD84', '\uD83D\uDC34'];
+        var emoji = document.createElement('span');
+        emoji.textContent = horses[Math.floor(Math.random() * horses.length)];
+        emoji.setAttribute('aria-hidden', 'true');
+        emoji.style.cssText =
+          'position:fixed;pointer-events:none;font-size:24px;z-index:9999;' +
+          'left:' + e.clientX + 'px;top:' + e.clientY + 'px;' +
+          'transition:all 1s ease-out;opacity:1;';
+        document.body.appendChild(emoji);
+        requestAnimationFrame(function () {
+          emoji.style.top = (e.clientY - 60) + 'px';
+          emoji.style.opacity = '0';
+        });
+        setTimeout(function () { emoji.remove(); }, 1100);
+      };
+      document.addEventListener('click', clickHandler);
+    }
+
+    // Update toggle if it exists
+    var toggle = document.getElementById('af-toggle');
+    if (toggle) toggle.value = 'on';
+  }
+
+  function disableAF() {
+    active = false;
+    document.body.classList.remove('af-active');
+    if (afStyle && afStyle.parentNode) afStyle.parentNode.removeChild(afStyle);
+    if (tipsyObs) tipsyObs.disconnect();
+
+    // Restore branding
+    var brand = document.querySelector('.brand-text');
+    if (brand) brand.textContent = 'UmaTools';
+
+    // Remove tipsy data
+    document.querySelectorAll('[data-af-done]').forEach(function (el) {
+      el.removeAttribute('data-af-done');
+      el.style.removeProperty('--af-r');
+      el.style.removeProperty('animation-delay');
+    });
+
+    // Restore theme from localStorage
+    try {
+      var saved = localStorage.getItem('umasearch-darkmode');
+      if (saved === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.style.colorScheme = 'dark';
+        var sun = document.querySelector('.sun');
+        var moon = document.querySelector('.moon');
+        if (sun) sun.style.display = 'none';
+        if (moon) moon.style.display = 'inline';
+      }
+    } catch (e) {}
+
+    var toggle = document.getElementById('af-toggle');
+    if (toggle) toggle.value = 'off';
+  }
+
+  function applyTipsy() {
+    if (!active) return;
+    var els = document.querySelectorAll('.result-item,.pill,.btn,.nav-link,.card');
+    els.forEach(function (el) {
+      if (el.dataset.afDone) return;
+      el.dataset.afDone = '1';
+      el.style.setProperty('--af-r', (Math.random() * 2 - 1).toFixed(2) + 'deg');
+      el.style.animationDelay = (Math.random() * 2).toFixed(2) + 's';
+    });
+  }
+
+  // Add toggle to settings panel (uses select like the other settings)
+  function addToggle() {
+    var panel = document.getElementById('nav-settings-panel');
+    if (!panel || document.getElementById('af-toggle')) return;
+    var label = document.createElement('label');
+    label.className = 'nav-control';
+    label.innerHTML =
+      '<span>\uD83C\uDFC7 April Fools</span>' +
+      '<select id="af-toggle">' +
+        '<option value="on" selected>On</option>' +
+        '<option value="off">Off</option>' +
+      '</select>';
+    panel.appendChild(label);
+    var sel = document.getElementById('af-toggle');
+    sel.addEventListener('change', function () {
+      if (sel.value === 'on') {
+        try { localStorage.removeItem(AF_KEY); } catch (e) {}
+        enableAF();
+      } else {
+        try { localStorage.setItem(AF_KEY, '1'); } catch (e) {}
+        disableAF();
+      }
+    });
+  }
+
+  // Block dark mode toggle while AF is active
+  function blockDarkMode() {
+    var modeBtn = document.getElementById('modeToggleBtn');
+    if (modeBtn && !modeBtn.dataset.afBlocked) {
+      modeBtn.dataset.afBlocked = '1';
+      modeBtn.addEventListener('click', function (e) {
+        if (active) { e.stopImmediatePropagation(); e.preventDefault(); }
+      }, true);
+    }
+  }
+
+  // nav:ready fires after the nav is fully in the DOM with settings panel
+  window.addEventListener('nav:ready', function () {
+    addToggle();
+    enableAF();
+    blockDarkMode();
+  });
+})();
+
+// Easter egg: type "oguri" anywhere to make the UI chonky (Oguri Cap's appetite)
+(function oguriEgg() {
+  var seq = 'oguri';
+  var pos = 0;
+  var fat = false;
+  var eggStyle = null;
+  var oguriAudio = null;
+
+  // Preload audio on first user interaction so autoplay policy is satisfied
+  function ensureAudio() {
+    if (oguriAudio) return;
+    oguriAudio = new Audio('/assets/required.mp3');
+    oguriAudio.preload = 'auto';
+    oguriAudio.volume = 0.5;
+    oguriAudio.addEventListener('error', function () {
+      console.warn('Oguri audio failed to load', oguriAudio.currentSrc || oguriAudio.src, oguriAudio.error);
+    });
+    oguriAudio.load();
+  }
+  document.addEventListener('click', ensureAudio, { once: true });
+  document.addEventListener('keydown', ensureAudio, { once: true });
+
+  function toggleFat() {
+    fat = !fat;
+    if (fat) {
+      if (!eggStyle) {
+        eggStyle = document.createElement('style');
+        eggStyle.id = 'oguri-style';
+        eggStyle.textContent =
+          '@keyframes oguri-chomp{0%{transform:scaleX(1)}15%{transform:scaleX(1.18)}30%{transform:scaleX(1)}45%{transform:scaleX(1.12)}60%{transform:scaleX(1)}}' +
+          'body.oguri-fat{animation:oguri-chomp 0.6s ease-out;transform:scaleX(1.15);transform-origin:center top;transition:transform 0.5s cubic-bezier(.68,-0.55,.27,1.55)}' +
+          'body.oguri-fat *{letter-spacing:0.04em}' +
+          'body.oguri-fat .pill,body.oguri-fat .btn,body.oguri-fat .result-item,body.oguri-fat .card{padding-left:1.5em;padding-right:1.5em}';
+      }
+      document.head.appendChild(eggStyle);
+      document.body.classList.add('oguri-fat');
+      ensureAudio();
+      if (oguriAudio) {
+        oguriAudio.currentTime = 0;
+        var p = oguriAudio.play();
+        if (p && p.catch) {
+          p.catch(function (err) {
+            console.warn('Oguri audio playback failed', err);
+          });
+        }
+      }
+    } else {
+      document.body.classList.remove('oguri-fat');
+      if (eggStyle && eggStyle.parentNode) eggStyle.parentNode.removeChild(eggStyle);
+    }
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.altKey || e.ctrlKey || e.metaKey || e.isComposing) return;
+    var key = (e.key || '').toLowerCase();
+    if (key.length !== 1) return;
+    if (key === seq[pos]) {
+      pos++;
+      if (pos === seq.length) {
+        pos = 0;
+        toggleFat();
+      }
+    } else {
+      pos = key === seq[0] ? 1 : 0;
     }
   });
 })();

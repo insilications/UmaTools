@@ -83,6 +83,7 @@
   // Shared datalist for all skill inputs
   let sharedSkillDatalist = null;
   let officialEnglishNameSet = new Set();
+  let localizedNameSet = new Set();
   const externalAliasLookup = new Map();
   let skillsCsvCache = '';
   let loadedSkillLibraryLanguage = '';
@@ -386,12 +387,9 @@
           // JP server + EN lang: show English name only
           addSuggestionName(getPreferredSkillInputName(enriched, skill.name));
         } else {
-          // EN server + EN lang: show English with aliases
+          // EN server + EN lang: show primary EN name only
+          // (aliases still work when typed, just not shown as suggestions)
           addSuggestionName(skill.name);
-          if (Array.isArray(skill.aliasNames) && skill.aliasNames.length) {
-            skill.aliasNames.forEach((alias) => addSuggestionName(alias));
-          }
-          if (skill.localizedName) addSuggestionName(skill.localizedName);
         }
         // Always index JP names for search lookup (not in datalist)
         if (typeof window.getLocalizedSkillName === 'function') {
@@ -573,15 +571,20 @@
     let filteredOut = 0;
     let loaded = 0;
     const catMap = {};
-    // First pass: collect names that have official localized translations
+    // First pass: collect names that have official localized translations,
+    // and build a set of JP-localized English names to exclude from EN datalist
     const officiallyLocalizedNames = new Set();
+    localizedNameSet = new Set();
     if (getSkillLanguage() !== 'jp') {
       for (let r = 1; r < rows.length; r++) {
         const cols = rows[r];
         if (!cols || !cols.length) continue;
         const n = (cols[idx.name] || '').trim();
         const loc = idx.localized !== -1 ? (cols[idx.localized] || '').trim() : '';
-        if (n && loc) officiallyLocalizedNames.add(normalize(n));
+        if (n && loc) {
+          officiallyLocalizedNames.add(normalize(n));
+          localizedNameSet.add(normalize(loc));
+        }
       }
     }
     for (let r = 1; r < rows.length; r++) {
@@ -712,6 +715,8 @@
         const list = await res.json();
         if (!Array.isArray(list) || !list.length) continue;
         const nextOfficialNames = new Set();
+        const allNameEn = new Set(); // all valid EN name_en values
+        const pendingLocalizedNames = []; // JP ennames to filter, finalized after loop
         externalAliasLookup.clear();
         const collectNames = (source) => {
           if (!source || typeof source !== 'object') return [];
@@ -744,10 +749,24 @@
         list.forEach((entry) => {
           const name = (entry?.name_en || '').trim();
           const geneName = (entry?.gene_version?.name_en || '').trim();
-          if (name) nextOfficialNames.add(normalizeOfficialSkillName(name));
-          if (geneName) nextOfficialNames.add(normalizeOfficialSkillName(geneName));
+          if (name) { nextOfficialNames.add(normalizeOfficialSkillName(name)); allNameEn.add(normalize(name)); }
+          if (geneName) { nextOfficialNames.add(normalizeOfficialSkillName(geneName)); allNameEn.add(normalize(geneName)); }
+          // Collect JP-server English names (enname) that differ from EN name_en,
+          // but only if the enname isn't also a valid name_en of any skill
+          const jpEnName = (entry?.enname || '').trim();
+          const jpEnGeneName = (entry?.gene_version?.enname || '').trim();
+          if (jpEnName && name && normalize(jpEnName) !== normalize(name)) {
+            pendingLocalizedNames.push(normalize(jpEnName));
+          }
+          if (jpEnGeneName && geneName && normalize(jpEnGeneName) !== normalize(geneName)) {
+            pendingLocalizedNames.push(normalize(jpEnGeneName));
+          }
           registerAliasNames(collectNames(entry));
           registerAliasNames(collectNames(entry?.gene_version));
+        });
+        // Finalize localizedNameSet: only exclude JP ennames that aren't a valid EN name_en
+        pendingLocalizedNames.forEach(function (key) {
+          if (!allNameEn.has(key)) localizedNameSet.add(key);
         });
         officialEnglishNameSet = nextOfficialNames;
         if (typeof window.buildJPSkillNameMap === 'function') window.buildJPSkillNameMap(list);
@@ -871,9 +890,11 @@
       : MAX_SKILL_SUGGESTIONS;
     const frag = document.createDocumentFragment();
     let added = 0;
-    allSkillNames.forEach((name) => {
-      if (normalizedPrefix && !normalize(name).startsWith(normalizedPrefix)) return;
+    // Phase 1: prefix matches first
+    var prefixSet = new Set();
+    allSkillNames.forEach((name, i) => {
       if (added >= suggestionLimit) return;
+      if (normalizedPrefix && !normalize(name).startsWith(normalizedPrefix)) return;
       const opt = document.createElement('option');
       opt.value = name;
       const skill = findSkillByName(name);
@@ -884,8 +905,28 @@
         opt.textContent = display;
       }
       frag.appendChild(opt);
+      prefixSet.add(i);
       added++;
     });
+    // Phase 2: substring matches (skip already-added prefix matches)
+    if (normalizedPrefix && added < suggestionLimit) {
+      allSkillNames.forEach((name, i) => {
+        if (added >= suggestionLimit) return;
+        if (prefixSet.has(i)) return;
+        if (!normalize(name).includes(normalizedPrefix)) return;
+        const opt = document.createElement('option');
+        opt.value = name;
+        const skill = findSkillByName(name);
+        const isCanonical = !!skill && normalize(name) === normalize(skill.name);
+        const display = isCanonical ? formatSkillDisplayName(skill) : name;
+        if (display && display !== name) {
+          opt.label = display;
+          opt.textContent = display;
+        }
+        frag.appendChild(opt);
+        added++;
+      });
+    }
     sharedSkillDatalist.appendChild(frag);
   }
 
