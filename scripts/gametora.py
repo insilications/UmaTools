@@ -2206,6 +2206,14 @@ def _scrape_support_detail(d, url: str, previews: dict, thumbs_dir: str,
         if dom_hints:
             hints = _merge_support_hints(hints, dom_hints)
 
+        # Merge event_skills from JSON (skill IDs obtainable through events)
+        event_skill_ids = item_data.get("event_skills", [])
+        if isinstance(event_skill_ids, list) and event_skill_ids:
+            name_map = _load_skill_name_map()
+            event_hint_names = [name_map.get(str(sid), "") for sid in event_skill_ids]
+            event_hint_names = [n for n in event_hint_names if n]
+            hints = _merge_event_hints_into_support_hints(hints, event_hint_names)
+
         # Parse events from JSON
         events_json = _parse_events_from_json(event_data, lang="en") if event_data else []
 
