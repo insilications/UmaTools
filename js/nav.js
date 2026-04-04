@@ -31,6 +31,12 @@
         },
         { label: 'Deck Builder', i18nKey: 'nav.deckBuilder', path: '/deck', file: '/deck.html' },
         {
+          label: 'Deck Optimizer',
+          i18nKey: 'nav.deckOptimizer',
+          path: '/collection',
+          file: '/collection.html',
+        },
+        {
           label: 'Stamina Check',
           i18nKey: 'nav.staminaCheck',
           path: '/stamina',

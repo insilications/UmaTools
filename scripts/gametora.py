@@ -1223,6 +1223,39 @@ def parse_support_hints_on_page(d) -> List[Dict[str, Any]]:
     return hints
 
 
+def _extract_hint_names_from_events(events: List[Dict[str, Any]]) -> List[str]:
+    """Extract skill hint names from event option text (e.g. 'Masterful Gambit hint +1')."""
+    names: List[str] = []
+    seen: set = set()
+    for evt in events:
+        if not isinstance(evt, dict):
+            continue
+        for val in (evt.get("EventOptions") or {}).values():
+            for m in re.finditer(r"(.+?)\s+hint\s+\+\d", str(val)):
+                name = m.group(1).strip()
+                if name and name not in seen:
+                    seen.add(name)
+                    names.append(name)
+    return names
+
+
+def _merge_event_hints_into_support_hints(
+    hints: List[Dict[str, Any]], event_hint_names: List[str]
+) -> List[Dict[str, Any]]:
+    """Add event-derived hint names to the hints list (as SupportHints entries) if not already present."""
+    existing = set()
+    for h in hints:
+        if isinstance(h, dict):
+            existing.add(h.get("Name", ""))
+        elif isinstance(h, str):
+            existing.add(h)
+    for name in event_hint_names:
+        if name not in existing:
+            hints.append({"SkillId": "", "Name": name, "HintLevel": None, "Source": "event"})
+            existing.add(name)
+    return hints
+
+
 def make_support_card(event_name: str, opts: Dict[str, str]) -> Dict[str, Any]:
     return {"EventName": event_name, "EventOptions": opts}
 
@@ -1996,6 +2029,7 @@ def scrape_supports(out_events_path: str, out_hints_path: str, server: str, head
                         img_url = _save_thumb(src, thumbs_dir, slug, sup_id)
 
                     # ----- parse events (optional) -----
+                    card_events = []
                     for elist in safe_find_all(d, By.CSS_SELECTOR, 'div[class*=eventhelper_elist]'):
                         if not is_visible(d, elist):
                             continue
@@ -2009,14 +2043,20 @@ def scrape_supports(out_events_path: str, out_hints_path: str, server: str, head
                             try:
                                 rows = parse_event_from_tippy_popper(pop)
                                 for kv in rows:
+                                    evt = make_support_card(ev_name, kv)
+                                    card_events.append(evt)
                                     if append_json_item(
                                         out_events_path,
-                                        make_support_card(ev_name, kv),
+                                        evt,
                                         dedup_key=("EventName", "EventOptions")
                                     ):
                                         added += 1
                             finally:
                                 tippy_hide(d, it)
+
+                    # ----- merge event hints into support hints -----
+                    event_hint_names = _extract_hint_names_from_events(card_events)
+                    hints = _merge_event_hints_into_support_hints(hints, event_hint_names)
 
                     # ----- upsert hints (slug-keyed) -----
                     upsert_json_item(out_hints_path, "SupportSlug", slug or sname, {
@@ -2214,6 +2254,10 @@ def _scrape_support_detail(d, url: str, previews: dict, thumbs_dir: str,
             continue
         if append_json_item(events_store, evt, dedup_key=("EventName", "EventOptions")):
             added += 1
+
+    # Merge event-derived hints into SupportHints
+    event_hint_names = _extract_hint_names_from_events(events)
+    hints = _merge_event_hints_into_support_hints(hints, event_hint_names)
 
     # Upsert hints
     upsert_json_item(hints_store, "SupportSlug", slug or sname, {

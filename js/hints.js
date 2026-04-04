@@ -111,7 +111,7 @@
 
     // Filter out non-skill hints (e.g. "Initial Speed bonus")
     const hints = Array.isArray(c?.SupportHints)
-      ? c.SupportHints.filter((h) => typeof h === 'string' || h?.SkillId)
+      ? c.SupportHints.filter((h) => typeof h === 'string' || h?.SkillId || h?.Name)
           .map((h) => (typeof h === 'string' ? h : h?.Name || ''))
           .filter(Boolean)
       : [];

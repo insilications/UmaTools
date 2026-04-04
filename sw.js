@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v54';
+const CACHE_VERSION = 'v55';
 const STATIC_CACHE = `umatools-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `umatools-runtime-${CACHE_VERSION}`;
 
@@ -69,6 +69,9 @@ const STATIC_ASSETS = [
   '/css/skill-popup.css',
   '/css/scroll-nav.css',
   '/deck.html',
+  '/collection.html',
+  '/js/collection.js',
+  '/css/collection.css',
   '/skills.html',
   '/assets/favicon.ico',
   '/assets/favicon-16x16.png',
