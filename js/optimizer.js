@@ -6493,8 +6493,21 @@
   function applyJSONImport(data) {
     const skills = [];
 
+    // acquired_skills: first entry is the unique (innate) skill — skip it.
+    // Remaining entries are skills the player already purchased during training.
+    if (Array.isArray(data.acquired_skills)) {
+      data.acquired_skills.slice(1).forEach((s) => {
+        if (s.name) {
+          skills.push({
+            name: s.name,
+            hint: 0,
+            purchased: true,
+          });
+        }
+      });
+    }
+
     // buyable_skills: available to purchase → use hint level
-    // (acquired_skills are the trainee's innate skills, not purchasable — skip them)
     if (Array.isArray(data.buyable_skills)) {
       data.buyable_skills.forEach((s) => {
         if (s.name) {
@@ -6530,8 +6543,17 @@
       const existingRow = existingByKey.get(key);
 
       if (existingRow) {
-        // Update hint if incoming is better
-        if (typeof skill.hint === 'number' && skill.hint > 0) {
+        // Already-purchased skill matched an existing row: zero cost and require it
+        if (skill.purchased) {
+          const costEl = existingRow.querySelector('.cost');
+          if (costEl) costEl.value = '0';
+          const reqEl = existingRow.querySelector('.required-skill');
+          if (reqEl) {
+            reqEl.checked = true;
+            existingRow.classList.add('required');
+          }
+        } else if (typeof skill.hint === 'number' && skill.hint > 0) {
+          // Update hint if incoming is better
           const hintEl = existingRow.querySelector('.hint-level');
           if (hintEl) {
             const currentHint = parseInt(hintEl.value || '0', 10) || 0;
@@ -6567,6 +6589,24 @@
           allowLinking: true,
           updateCost: true,
         });
+      }
+
+      // Already-purchased skills: cost 0, required, with linked sub-rows also zeroed
+      if (skill.purchased) {
+        const costEl = targetRow.querySelector('.cost');
+        if (costEl) costEl.value = '0';
+        const reqEl = targetRow.querySelector('.required-skill');
+        if (reqEl) {
+          reqEl.checked = true;
+          targetRow.classList.add('required');
+        }
+        for (const linkedId of [targetRow.dataset.lowerRowId, targetRow.dataset.circleRowId]) {
+          if (!linkedId) continue;
+          const linkedRow = rowsEl.querySelector(`.optimizer-row[data-row-id="${linkedId}"]`);
+          if (!linkedRow) continue;
+          const linkedCost = linkedRow.querySelector('.cost');
+          if (linkedCost) linkedCost.value = '0';
+        }
       }
 
       existingByKey.set(key, targetRow);
