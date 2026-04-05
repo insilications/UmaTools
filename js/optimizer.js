@@ -6466,6 +6466,129 @@
     window.applyOCRSkills = applyOCRSkills;
   }
 
+  // JSON Import: Load skill tree from exported JSON file
+  const jsonImportBtn = document.getElementById('json-import-btn');
+  const jsonImportInput = document.getElementById('json-import-input');
+  if (jsonImportBtn && jsonImportInput) {
+    jsonImportBtn.addEventListener('click', () => jsonImportInput.click());
+    jsonImportInput.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          applyJSONImport(data);
+        } catch (err) {
+          console.error('JSON import failed:', err);
+          alert('Invalid JSON file.');
+        }
+      };
+      reader.readAsText(file);
+      // Reset so re-importing the same file triggers change
+      jsonImportInput.value = '';
+    });
+  }
+
+  function applyJSONImport(data) {
+    const skills = [];
+
+    // buyable_skills: available to purchase → use hint level
+    // (acquired_skills are the trainee's innate skills, not purchasable — skip them)
+    if (Array.isArray(data.buyable_skills)) {
+      data.buyable_skills.forEach((s) => {
+        if (s.name) {
+          skills.push({
+            name: s.name,
+            hint: typeof s.hintLevel === 'number' ? Math.min(Math.max(s.hintLevel, 0), 5) : 0,
+          });
+        }
+      });
+    }
+
+    if (skills.length === 0) return;
+
+    // Build existing skill map for dedup
+    const allRows = Array.from(rowsEl.querySelectorAll('.optimizer-row'));
+    const existingByKey = new Map();
+    allRows.forEach((row) => {
+      const name = (row.querySelector('.skill-name')?.value || '').trim();
+      if (!name) return;
+      const skill = findSkillByName(name);
+      const key = getOCRSkillKey(name, skill);
+      if (!existingByKey.has(key)) existingByKey.set(key, row);
+    });
+
+    const topRows = allRows.filter(isTopLevelRow);
+    const lastRow = topRows[topRows.length - 1];
+    const lastRowEmpty = lastRow && !isRowFilled(lastRow);
+    let usedLastRow = false;
+
+    skills.forEach((skill) => {
+      const resolved = findSkillByName(skill.name);
+      const key = getOCRSkillKey(skill.name, resolved);
+      const existingRow = existingByKey.get(key);
+
+      if (existingRow) {
+        // Update hint if incoming is better
+        if (typeof skill.hint === 'number' && skill.hint > 0) {
+          const hintEl = existingRow.querySelector('.hint-level');
+          if (hintEl) {
+            const currentHint = parseInt(hintEl.value || '0', 10) || 0;
+            if (skill.hint > currentHint) {
+              hintEl.value = skill.hint;
+              hintEl.dispatchEvent(new Event('change'));
+            }
+          }
+        }
+        return;
+      }
+
+      let targetRow = null;
+      if (!usedLastRow && lastRowEmpty) {
+        targetRow = lastRow;
+        usedLastRow = true;
+      } else {
+        targetRow = makeRow();
+        rowsEl.appendChild(targetRow);
+      }
+
+      const nameInput = targetRow.querySelector('.skill-name');
+      if (nameInput) nameInput.value = skill.name;
+
+      const hintSelect = targetRow.querySelector('.hint-level');
+      if (hintSelect && typeof skill.hint === 'number') {
+        hintSelect.value = skill.hint;
+      }
+
+      if (typeof targetRow.syncSkillCategory === 'function') {
+        targetRow.syncSkillCategory({
+          triggerOptimize: false,
+          allowLinking: true,
+          updateCost: true,
+        });
+      }
+
+      existingByKey.set(key, targetRow);
+
+      // Track auto-linked rows to prevent duplicates
+      for (const linkedId of [targetRow.dataset.lowerRowId, targetRow.dataset.circleRowId]) {
+        if (!linkedId) continue;
+        const linkedRow = rowsEl.querySelector(`.optimizer-row[data-row-id="${linkedId}"]`);
+        if (!linkedRow) continue;
+        const linkedName = (linkedRow.querySelector('.skill-name')?.value || '').trim();
+        if (!linkedName) continue;
+        const linkedSkill = findSkillByName(linkedName);
+        const linkedKey = getOCRSkillKey(linkedName, linkedSkill);
+        if (!existingByKey.has(linkedKey)) existingByKey.set(linkedKey, linkedRow);
+      }
+    });
+
+    ensureOneEmptyRow();
+    saveState();
+    autoOptimizeDebounced();
+  }
+
   // OCR Results Panel: Close button handler
   const ocrResultsCloseBtn = document.getElementById('ocr-results-close');
   if (ocrResultsCloseBtn) {
