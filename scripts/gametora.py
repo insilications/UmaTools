@@ -1256,8 +1256,11 @@ def _merge_event_hints_into_support_hints(
     return hints
 
 
-def make_support_card(event_name: str, opts: Dict[str, str]) -> Dict[str, Any]:
-    return {"EventName": event_name, "EventOptions": opts}
+def make_support_card(event_name: str, opts: Dict[str, str], support_slug: str = "") -> Dict[str, Any]:
+    d: Dict[str, Any] = {"EventName": event_name, "EventOptions": opts}
+    if support_slug:
+        d["SupportSlug"] = support_slug
+    return d
 
 def make_career(event_name: str, opts: Dict[str, Any]) -> Dict[str, Any]:
     return {"EventName": event_name, "EventOptions": opts}
@@ -1333,7 +1336,7 @@ def _format_event_rewards(rewards: Any) -> str:
         return rewards.strip()
     return str(rewards)
 
-def _parse_events_from_json(event_data: Dict[str, Any], lang: str = "en") -> List[Dict[str, Any]]:
+def _parse_events_from_json(event_data: Dict[str, Any], lang: str = "en", support_slug: str = "") -> List[Dict[str, Any]]:
     """Parse events from JSON, auto-detecting categories and lists."""
     events: List[Dict[str, Any]] = []
     if not event_data:
@@ -1375,10 +1378,7 @@ def _parse_events_from_json(event_data: Dict[str, Any], lang: str = "en") -> Lis
                     or []
                 )
                 reward_str = _format_event_rewards(rewards)
-                events.append({
-                    "EventName": event_name,
-                    "EventOptions": {"(Auto)": reward_str or "See details"}
-                })
+                events.append(make_support_card(event_name, {"(Auto)": reward_str or "See details"}, support_slug))
             else:
                 for choice in choices:
                     if isinstance(choice, dict):
@@ -1398,15 +1398,9 @@ def _parse_events_from_json(event_data: Dict[str, Any], lang: str = "en") -> Lis
                             or []
                         )
                         reward_str = _format_event_rewards(rewards)
-                        events.append({
-                            "EventName": event_name,
-                            "EventOptions": {choice_name: reward_str or "See details"}
-                        })
+                        events.append(make_support_card(event_name, {choice_name: reward_str or "See details"}, support_slug))
                     elif isinstance(choice, str):
-                        events.append({
-                            "EventName": event_name,
-                            "EventOptions": {choice: "See details"}
-                        })
+                        events.append(make_support_card(event_name, {choice: "See details"}, support_slug))
 
     return events
 
@@ -1439,7 +1433,7 @@ def _merge_event_entries(json_events: List[Dict[str, Any]],
             merged.append(ev)
     return merged
 
-def _parse_event_helper_events_from_page(d) -> List[Dict[str, Any]]:
+def _parse_event_helper_events_from_page(d, support_slug: str = "") -> List[Dict[str, Any]]:
     events: List[Dict[str, Any]] = []
     # Try the same event helper list used on support pages
     lists = safe_find_all(d, By.CSS_SELECTOR, 'div[class*=eventhelper_elist]')
@@ -1461,9 +1455,9 @@ def _parse_event_helper_events_from_page(d) -> List[Dict[str, Any]]:
                 rows = parse_event_from_tippy_popper(pop)
                 if rows:
                     for kv in rows:
-                        events.append(make_support_card(ev_name, kv))
+                        events.append(make_support_card(ev_name, kv, support_slug))
                 else:
-                    events.append(make_support_card(ev_name, {"(Auto)": "See details"}))
+                    events.append(make_support_card(ev_name, {"(Auto)": "See details"}, support_slug))
             finally:
                 tippy_hide(d, it)
     return events
@@ -2043,7 +2037,7 @@ def scrape_supports(out_events_path: str, out_hints_path: str, server: str, head
                             try:
                                 rows = parse_event_from_tippy_popper(pop)
                                 for kv in rows:
-                                    evt = make_support_card(ev_name, kv)
+                                    evt = make_support_card(ev_name, kv, support_slug=slug)
                                     card_events.append(evt)
                                     if append_json_item(
                                         out_events_path,
@@ -2215,7 +2209,7 @@ def _scrape_support_detail(d, url: str, previews: dict, thumbs_dir: str,
             hints = _merge_event_hints_into_support_hints(hints, event_hint_names)
 
         # Parse events from JSON
-        events_json = _parse_events_from_json(event_data, lang="en") if event_data else []
+        events_json = _parse_events_from_json(event_data, lang="en", support_slug=slug) if event_data else []
 
     else:
         # Fallback to DOM-based parsing
@@ -2234,7 +2228,7 @@ def _scrape_support_detail(d, url: str, previews: dict, thumbs_dir: str,
     # Optional DOM event parsing for completeness
     if events_source in ("dom", "merge") or (events_source == "json" and not events_json):
         _open_events_tab(d)
-        events_dom = _parse_event_helper_events_from_page(d)
+        events_dom = _parse_event_helper_events_from_page(d, support_slug=slug)
 
     if events_source == "dom":
         events = events_dom or events_json

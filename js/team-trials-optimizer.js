@@ -727,7 +727,12 @@
         var linkedLowerIdx = idToIdx.get(it.lowerRowId);
         if (linkedLowerIdx != null && !used[linkedLowerIdx]) {
           var linkedLower = items[linkedLowerIdx];
-          groups.push([
+          // Check if lower has a ◎ circle upgrade that must also be purchased
+          var hasCircle = linkedLower.circleRowId && idToIdx.has(linkedLower.circleRowId);
+          var circleIdx = hasCircle ? idToIdx.get(linkedLower.circleRowId) : -1;
+          var circleItem = circleIdx >= 0 && !used[circleIdx] ? items[circleIdx] : null;
+
+          var goldOptions = [
             {
               none: true,
               cost: 0,
@@ -737,6 +742,7 @@
               sv: 0,
               items: [],
             },
+            // Lower ○ only
             {
               pick: linkedLowerIdx,
               cost: linkedLower.cost,
@@ -746,7 +752,31 @@
               sv: linkedLower.svInt || 0,
               items: [linkedLowerIdx],
             },
-            {
+          ];
+          if (circleItem) {
+            // Lower ○ + ◎ upgrade (no gold)
+            goldOptions.push({
+              combo: [linkedLowerIdx, circleIdx],
+              cost: linkedLower.cost + circleItem.cost,
+              value: circleItem.expectedValueInt,
+              consistency: circleItem.consistencyInt,
+              rating: circleItem.ratingScore || 0,
+              sv: (circleItem.svInt || 0) + (linkedLower.svInt || 0),
+              items: [linkedLowerIdx, circleIdx],
+            });
+            // Gold combo: it.cost already includes gold + ○ + ◎ (via getLowerDiscountedCost)
+            goldOptions.push({
+              combo: [linkedLowerIdx, circleIdx, i],
+              cost: it.cost,
+              value: it.expectedValueInt,
+              consistency: it.consistencyInt,
+              rating: it.ratingScore || 0,
+              sv: (it.svInt || 0) + (linkedLower.svInt || 0) + (circleItem.svInt || 0),
+              items: [linkedLowerIdx, circleIdx, i],
+            });
+          } else {
+            // Gold combo without circle: ○ + gold
+            goldOptions.push({
               combo: [linkedLowerIdx, i],
               cost: it.cost,
               value: it.expectedValueInt,
@@ -754,9 +784,11 @@
               rating: it.ratingScore || 0,
               sv: (it.svInt || 0) + (linkedLower.svInt || 0),
               items: [linkedLowerIdx, i],
-            },
-          ]);
+            });
+          }
+          groups.push(goldOptions);
           used[i] = used[linkedLowerIdx] = true;
+          if (circleIdx >= 0) used[circleIdx] = true;
           continue;
         }
       }
@@ -905,6 +937,11 @@
           reqIds.add(it.lowerRowId);
           changed = true;
         }
+        // If this ○ skill is a lower for a gold and has a ◎ circle upgrade, require it too
+        if (it.parentGoldId && it.circleRowId && idToIdx.has(it.circleRowId) && !reqIds.has(it.circleRowId)) {
+          reqIds.add(it.circleRowId);
+          changed = true;
+        }
         if (it.lowerSkillId != null && it.lowerSkillId !== '') {
           var li = skillIdToIdx.get(String(it.lowerSkillId));
           if (li != null) {
@@ -963,11 +1000,20 @@
         if (cId && reqIds.has(cId)) lowerIncluded.add(cId);
       }
     });
+    // Circle pairs: when ○ (base) and ◎ (upgrade) are both required,
+    // skip ○'s expected value since ◎ replaces it. Keep ○'s cost (circle costs are additive).
+    var circleBaseValueSkip = new Set();
+    reqItems.forEach(function (it) {
+      if (it.circleRowId && reqIds.has(it.circleRowId)) {
+        circleBaseValueSkip.add(it.id);
+      }
+    });
     var reqCost = 0,
       reqExpected = 0;
     reqItems.forEach(function (it) {
       if (lowerIncluded.has(it.id)) return;
       reqCost += Math.max(0, Math.floor(num(it.cost, 0)));
+      if (circleBaseValueSkip.has(it.id)) return;
       reqExpected += Math.max(0, Math.floor(num(it.expectedValueInt, 0)));
     });
     return {
