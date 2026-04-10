@@ -89,7 +89,7 @@
     return (LB_INDICES[rarity] || LB_INDICES.SSR)[lbStop] ?? 10;
   }
 
-  const STAR_LEVELS = [3, 4, 5];
+  const CHAR_STAR_LEVEL = 5;
 
   // Elements
   const charDisplay = document.getElementById('charDisplay');
@@ -150,7 +150,6 @@
   let characters = [];
   let supports = [];
   let selectedChar = null;
-  let charStarLevel = 5;
   let selectedSupports = []; // card objects
   let supportLbStops = []; // per-card LB stop (0-4), parallel to selectedSupports
   let currentServer = 'en';
@@ -584,7 +583,7 @@
     }
     const c = selectedChar;
 
-    const starKey = `${charStarLevel}\u2605`;
+    const starKey = `${CHAR_STAR_LEVEL}\u2605`;
     const stats = c.UmaBaseStats?.[starKey] || c.UmaBaseStats?.['5\u2605'] || {};
     const bonuses = c.UmaStatBonuses || {};
     const statNames = ['Speed', 'Stamina', 'Power', 'Guts', 'Wit'];
@@ -633,12 +632,6 @@
       ? `<img class="char-thumb" src="${escHtml(charImgSrc)}" alt="${escHtml(locChar.name)}" loading="lazy">`
       : '';
 
-    let starBtnsHtml = '<div class="slot-star-row">';
-    for (const lv of STAR_LEVELS) {
-      const cls = lv === charStarLevel ? 'star-btn active' : 'star-btn';
-      starBtnsHtml += `<button class="${cls}" data-star="${lv}">${lv}\u2605</button>`;
-    }
-    starBtnsHtml += '</div>';
 
     charDisplay.innerHTML = `
       <div class="deck-character-card">
@@ -646,7 +639,6 @@
         <div class="char-info">
           <div class="char-name">${escHtml(locChar.name)}</div>
           ${locChar.nickname ? `<div class="char-nickname">${escHtml(locChar.nickname)}</div>` : ''}
-          ${starBtnsHtml}
           ${statsHtml}
           ${aptHtml}
         </div>
@@ -952,7 +944,6 @@
   function saveDeck() {
     const data = {
       char: selectedChar?.UmaSlug || null,
-      stars: charStarLevel,
       supports: selectedSupports.map((s) => s.SupportSlug),
       lbs: supportLbStops.slice(0, selectedSupports.length),
     };
@@ -968,9 +959,6 @@
       const data = JSON.parse(raw);
       if (data.char) {
         selectedChar = findCharBySlug(data.char);
-      }
-      if (data.stars && STAR_LEVELS.includes(data.stars)) {
-        charStarLevel = data.stars;
       }
       if (Array.isArray(data.supports)) {
         selectedSupports = data.supports
@@ -995,10 +983,6 @@
         selectedChar = found;
         loaded = true;
       }
-    }
-    const starsParam = parseInt(params.get('st'), 10);
-    if (starsParam && STAR_LEVELS.includes(starsParam)) {
-      charStarLevel = starsParam;
     }
     if (s) {
       const slugs = s.split(',').filter(Boolean);
@@ -1066,7 +1050,6 @@
     const deck = {
       name,
       char: selectedChar?.UmaSlug || null,
-      stars: charStarLevel,
       supports: selectedSupports.map((s) => s.SupportSlug),
       lbs: supportLbStops.slice(0, selectedSupports.length),
       ts: Date.now(),
@@ -1085,7 +1068,6 @@
     if (!deck) return;
 
     selectedChar = deck.char ? findCharBySlug(deck.char) : null;
-    charStarLevel = deck.stars && STAR_LEVELS.includes(deck.stars) ? deck.stars : 5;
     selectedSupports = (deck.supports || [])
       .map((slug) => findSupportBySlug(slug))
       .filter(Boolean)
@@ -1832,7 +1814,6 @@
     const found = findCharBySlug(item.dataset.slug);
     if (found) {
       selectedChar = found;
-      charStarLevel = Math.max(found.UmaBaseStars || 3, 3);
       saveDeck();
       render();
       closeCharModal();
@@ -1848,16 +1829,6 @@
       selectedChar = null;
       saveDeck();
       render();
-      return;
-    }
-    const starBtn = e.target.closest('.star-btn');
-    if (starBtn) {
-      const lv = parseInt(starBtn.dataset.star, 10);
-      if (STAR_LEVELS.includes(lv)) {
-        charStarLevel = lv;
-        saveDeck();
-        render();
-      }
       return;
     }
     // Click anywhere on the character card or empty slot opens picker
@@ -1929,7 +1900,6 @@
       const id = selectedChar.UmaId || '';
       const slug = selectedChar.UmaSlug || '';
       params.set('c', id && id.length < slug.length ? id : slug);
-      if (charStarLevel !== 5) params.set('st', String(charStarLevel));
     }
     if (selectedSupports.length) {
       // Use IDs if shorter than slugs
@@ -1954,7 +1924,6 @@
 
   clearAllBtn.addEventListener('click', () => {
     selectedChar = null;
-    charStarLevel = 5;
     selectedSupports = [];
     supportLbStops = [];
     saveDeck();

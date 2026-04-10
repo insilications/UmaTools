@@ -271,45 +271,7 @@
 }
 
 /* Star level selector on character card */
-.slot-star-row {
-  display: flex;
-  gap: 3px;
-  margin-bottom: 0.35rem;
-}
 
-.star-btn {
-  padding: 0.15rem 0.4rem;
-  border: 1px solid var(--border, #d1d5db);
-  border-radius: 4px;
-  background: var(--surface-1, #fff);
-  color: var(--muted, #9ca3af);
-  font-size: 0.65rem;
-  font-weight: 600;
-  cursor: pointer;
-  line-height: 1.3;
-}
-
-.star-btn.active {
-  background: #eab308;
-  color: #fff;
-  border-color: #eab308;
-}
-
-.star-btn:hover:not(.active) {
-  border-color: #eab308;
-}
-
-body.dark .star-btn {
-  background: #111827;
-  border-color: #334155;
-  color: #64748b;
-}
-
-body.dark .star-btn.active {
-  background: #eab308;
-  color: #fff;
-  border-color: #eab308;
-}
 
 /* Character empty slot */
 #charDisplay .deck-support-slot {
