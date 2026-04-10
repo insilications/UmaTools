@@ -5370,10 +5370,10 @@
     "UmaImage": "/assets/character_thumbs/103001-rice-shower.png"
   },
   {
-    "UmaKey": "Agnes Tachyon :: tach-nology",
+    "UmaKey": "Agnes Tachyon :: Tach-nology",
     "UmaName": "Agnes Tachyon",
     "UmaNameJP": "アグネスタキオン",
-    "UmaNickname": "tach-nology",
+    "UmaNickname": "Tach-nology",
     "UmaNicknameJP": "tach-nology",
     "UmaSlug": "103201-agnes-tachyon",
     "UmaId": "103201",
@@ -11536,7 +11536,7 @@
     "UmaNicknameJP": "シュクセ・エトワーレ",
     "UmaSlug": "100502-fuji-kiseki",
     "UmaId": "100502",
-    "UmaServer": "jp",
+    "UmaServer": "global",
     "UmaBaseStars": 3,
     "UmaBaseStats": {
       "3★": {
@@ -11682,20 +11682,20 @@
     ],
     "UmaEvents": [
       {
-        "EventName": "The Way I See You",
+        "EventName": "The Shape of a Miracle",
         "EventOptions": {
           "Top Option": "Guts +10",
           "Bottom Option": "Energy +15\nMotivation +1\nSkill Pts +10"
         }
       },
       {
-        "EventName": "The Shape of a Miracle",
+        "EventName": "A Proffered Hand",
         "EventOptions": {
           "": "Speed +20\nWit +20\nRight-Handed ○ hint +3\nRight-Handed ○ hint +1"
         }
       },
       {
-        "EventName": "A Proffered Hand",
+        "EventName": "The Way I See You",
         "EventOptions": {
           "Top Option": "Wit +10",
           "Bottom Option": "Unyielding Spirit hint +2"
@@ -11712,7 +11712,7 @@
     "UmaNicknameJP": "ソワレ・ド・シャトン",
     "UmaSlug": "102002-seiun-sky",
     "UmaId": "102002",
-    "UmaServer": "jp",
+    "UmaServer": "global",
     "UmaBaseStars": 3,
     "UmaBaseStats": {
       "3★": {
@@ -39636,5 +39636,456 @@
     ],
     "UmaEvents": [],
     "UmaImage": "/assets/character_thumbs/114301-victoire-pisa.png"
+  },
+  {
+    "UmaKey": "Sakura Bakushin O :: 雷の韋駄天",
+    "UmaName": "Sakura Bakushin O",
+    "UmaNameJP": "サクラバクシンオー",
+    "UmaNickname": "雷の韋駄天",
+    "UmaNicknameJP": "春雷の韋駄天",
+    "UmaSlug": "104103-sakura-bakushin-o",
+    "UmaId": "104103",
+    "UmaServer": "jp",
+    "UmaBaseStars": 3,
+    "UmaBaseStats": {
+      "3★": {
+        "Speed": 98,
+        "Stamina": 59,
+        "Power": 102,
+        "Guts": 100,
+        "Wit": 91
+      },
+      "5★": {
+        "Speed": 119,
+        "Stamina": 73,
+        "Power": 125,
+        "Guts": 122,
+        "Wit": 111
+      },
+      "4★": {
+        "Speed": 109,
+        "Stamina": 66,
+        "Power": 114,
+        "Guts": 111,
+        "Wit": 100
+      }
+    },
+    "UmaStatBonuses": {
+      "Speed": 10,
+      "Stamina": 0,
+      "Power": 15,
+      "Guts": 0,
+      "Wit": 5
+    },
+    "UmaAptitudes": {
+      "Surface": {
+        "Turf": "A",
+        "Dirt": "G"
+      },
+      "Distance": {
+        "Short": "A",
+        "Mile": "B",
+        "Medium": "G",
+        "Long": "G"
+      },
+      "Strategy": {
+        "Front": "A",
+        "Pace": "A",
+        "Late": "F",
+        "End": "G"
+      }
+    },
+    "UmaHeightCm": null,
+    "UmaThreeSizes": {},
+    "UmaObjectives": [
+      {
+        "ObjectiveName": "Junior Make Debut",
+        "Turn": "12",
+        "Time": "Junior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Keio Hai Junior Stakes",
+        "Turn": "21",
+        "Time": "Junior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Spring Stakes",
+        "Turn": "30",
+        "Time": "Classic Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Aoi Stakes",
+        "Turn": "34",
+        "Time": "Classic Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Sprinters Stakes",
+        "Turn": "42",
+        "Time": "Classic Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Takamatsunomiya Kinen",
+        "Turn": "54",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Hakodate Sprint Stakes",
+        "Turn": "60",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "CBC Sho",
+        "Turn": "61",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Centaur Stakes",
+        "Turn": "65",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Sprinters Stakes",
+        "Turn": "66",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Mile Championship",
+        "Turn": "70",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "URA Preliminary",
+        "Turn": "74",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "URA Semi-Final",
+        "Turn": "76",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "URA Final",
+        "Turn": "78",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      }
+    ],
+    "UmaEvents": [],
+    "UmaImage": "/assets/character_thumbs/104103-sakura-bakushin-o.png"
+  },
+  {
+    "UmaKey": "North Flight :: 水縹の一閃",
+    "UmaName": "North Flight",
+    "UmaNameJP": "ノースフライト",
+    "UmaNickname": "水縹の一閃",
+    "UmaNicknameJP": "水縹の一閃",
+    "UmaSlug": "108202-north-flight",
+    "UmaId": "108202",
+    "UmaServer": "jp",
+    "UmaBaseStars": 3,
+    "UmaBaseStats": {
+      "3★": {
+        "Speed": 93,
+        "Stamina": 81,
+        "Power": 97,
+        "Guts": 83,
+        "Wit": 96
+      },
+      "5★": {
+        "Speed": 113,
+        "Stamina": 99,
+        "Power": 118,
+        "Guts": 101,
+        "Wit": 119
+      },
+      "4★": {
+        "Speed": 103,
+        "Stamina": 90,
+        "Power": 107,
+        "Guts": 92,
+        "Wit": 108
+      }
+    },
+    "UmaStatBonuses": {
+      "Speed": 15,
+      "Stamina": 0,
+      "Power": 0,
+      "Guts": 0,
+      "Wit": 15
+    },
+    "UmaAptitudes": {
+      "Surface": {
+        "Turf": "A",
+        "Dirt": "G"
+      },
+      "Distance": {
+        "Short": "C",
+        "Mile": "A",
+        "Medium": "B",
+        "Long": "G"
+      },
+      "Strategy": {
+        "Front": "D",
+        "Pace": "A",
+        "Late": "D",
+        "End": "A"
+      }
+    },
+    "UmaHeightCm": null,
+    "UmaThreeSizes": {},
+    "UmaObjectives": [
+      {
+        "ObjectiveName": "Junior Make Debut",
+        "Turn": "12",
+        "Time": "Junior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Earn 7,000 fans",
+        "Turn": "33",
+        "Time": "Classic Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Fuchu Umamusume Stakes",
+        "Turn": "43",
+        "Time": "Classic Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Shuka Sho",
+        "Turn": "44",
+        "Time": "Classic Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Takamatsunomiya Kinen",
+        "Turn": "54",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Milers Cup",
+        "Turn": "56",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Yasuda Kinen",
+        "Turn": "59",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Swan Stakes",
+        "Turn": "68",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Mile Championship",
+        "Turn": "70",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "URA Preliminary",
+        "Turn": "74",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "URA Semi-Final",
+        "Turn": "76",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "URA Final",
+        "Turn": "78",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      }
+    ],
+    "UmaEvents": [],
+    "UmaImage": "/assets/character_thumbs/108202-north-flight.png"
+  },
+  {
+    "UmaKey": "Lucky Lilac :: 113001-lucky-lilac",
+    "UmaName": "Lucky Lilac",
+    "UmaNameJP": "ラッキーライラック",
+    "UmaNickname": null,
+    "UmaNicknameJP": "万折不撓の纏",
+    "UmaSlug": "113001-lucky-lilac",
+    "UmaId": "113001",
+    "UmaServer": "jp",
+    "UmaBaseStars": 3,
+    "UmaBaseStats": {
+      "3★": {
+        "Speed": 92,
+        "Stamina": 84,
+        "Power": 94,
+        "Guts": 89,
+        "Wit": 91
+      },
+      "5★": {
+        "Speed": 112,
+        "Stamina": 102,
+        "Power": 115,
+        "Guts": 109,
+        "Wit": 112
+      },
+      "4★": {
+        "Speed": 102,
+        "Stamina": 93,
+        "Power": 105,
+        "Guts": 99,
+        "Wit": 101
+      }
+    },
+    "UmaStatBonuses": {
+      "Speed": 0,
+      "Stamina": 0,
+      "Power": 10,
+      "Guts": 10,
+      "Wit": 10
+    },
+    "UmaAptitudes": {
+      "Surface": {
+        "Turf": "A",
+        "Dirt": "G"
+      },
+      "Distance": {
+        "Short": "G",
+        "Mile": "A",
+        "Medium": "A",
+        "Long": "C"
+      },
+      "Strategy": {
+        "Front": "F",
+        "Pace": "A",
+        "Late": "A",
+        "End": "G"
+      }
+    },
+    "UmaHeightCm": null,
+    "UmaThreeSizes": {},
+    "UmaObjectives": [
+      {
+        "ObjectiveName": "Junior Make Debut",
+        "Turn": "12",
+        "Time": "Junior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Hanshin Juvenile Fillies",
+        "Turn": "23",
+        "Time": "Junior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Oka Sho",
+        "Turn": "31",
+        "Time": "Classic Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Japanese Oaks",
+        "Turn": "34",
+        "Time": "Classic Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Shuka Sho",
+        "Turn": "44",
+        "Time": "Classic Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Nakayama Kinen",
+        "Turn": "52",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Osaka Hai",
+        "Turn": "54",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Victoria Mile",
+        "Turn": "57",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Queen Elizabeth Cup",
+        "Turn": "69",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "Japan Cup",
+        "Turn": "70",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "URA Preliminary",
+        "Turn": "74",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "URA Semi-Final",
+        "Turn": "76",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      },
+      {
+        "ObjectiveName": "URA Final",
+        "Turn": "78",
+        "Time": "Senior Year",
+        "ObjectiveCondition": ""
+      }
+    ],
+    "UmaEvents": [
+      {
+        "EventName": "冬越える紫丁香花",
+        "EventOptions": {
+          "Top Option": "Speed +20",
+          "Bottom Option": "Guts +20"
+        }
+      },
+      {
+        "EventName": "黄金に咲くは薄紫の花",
+        "EventOptions": {
+          "Top Option": "Speed +20",
+          "Bottom Option": "Stamina +20"
+        }
+      },
+      {
+        "EventName": "テキパキのち、まったり",
+        "EventOptions": {
+          "Top Option": "Stamina +20",
+          "Bottom Option": "Wit +20"
+        }
+      }
+    ],
+    "UmaImage": "/assets/character_thumbs/113001-lucky-lilac.png"
   }
 ]
