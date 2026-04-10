@@ -126,8 +126,8 @@
   // Build navbar element (not in DOM yet)
   const nav = document.createElement('nav');
   nav.className = 'site-nav';
-  var _t = function (key) {
-    return typeof window.t === 'function' ? window.t(key) : key;
+  var _t = function (key, fallback) {
+    return typeof window.t === 'function' ? window.t(key) : (fallback || key);
   };
   nav.setAttribute('aria-label', _t('nav.primary'));
   nav.innerHTML = `
@@ -333,7 +333,7 @@
         btn.className = 'nav-group-btn';
         btn.setAttribute('aria-expanded', 'false');
         btn.setAttribute('aria-haspopup', 'true');
-        const groupLabel = route.i18nKey ? _t(route.i18nKey) : route.label;
+        const groupLabel = route.i18nKey ? _t(route.i18nKey, route.label) : route.label;
         btn.innerHTML =
           '<span' +
           (route.i18nKey ? ' data-i18n="' + route.i18nKey + '"' : '') +
@@ -351,7 +351,7 @@
         for (const child of route.children) {
           const a = document.createElement('a');
           a.className = 'nav-link';
-          a.textContent = child.i18nKey ? _t(child.i18nKey) : child.label;
+          a.textContent = child.i18nKey ? _t(child.i18nKey, child.label) : child.label;
           if (child.i18nKey) a.setAttribute('data-i18n', child.i18nKey);
           a.href = child.href || child.path || child.file || '#';
           a.setAttribute('role', 'menuitem');
@@ -388,7 +388,7 @@
         // Flat link (backward compat)
         const a = document.createElement('a');
         a.className = 'nav-link';
-        a.textContent = route.i18nKey ? _t(route.i18nKey) : route.label;
+        a.textContent = route.i18nKey ? _t(route.i18nKey, route.label) : route.label;
         if (route.i18nKey) a.setAttribute('data-i18n', route.i18nKey);
         a.href = route.path || route.file || '#';
         if (route.file) a.dataset.file = route.file;
