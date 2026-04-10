@@ -110,10 +110,11 @@
     ).toUpperCase();
 
     // Filter out non-skill hints (e.g. "Initial Speed bonus")
+    const isStatBonus = (name) => /^Initial .+ bonus$/i.test(name);
     const hints = Array.isArray(c?.SupportHints)
-      ? c.SupportHints.filter((h) => typeof h === 'string' || h?.SkillId)
+      ? c.SupportHints.filter((h) => typeof h === 'string' || h?.SkillId || h?.Name)
           .map((h) => (typeof h === 'string' ? h : h?.Name || ''))
-          .filter(Boolean)
+          .filter((name) => name && !isStatBonus(name))
       : [];
 
     const img = c?.SupportImage || c?.Image || c?.Thumb || null;
