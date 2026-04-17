@@ -381,7 +381,7 @@ function normalizeSkillNameStrict(value) {
     .replace(/\uFE0E|\uFE0F/g, '')
     .replace(/[’]/g, "'")
     .replace(/[“”]/g, '"')
-    .replace(/[‐‑‒–—―]/g, '-')
+    .replace(/[‐‑‒–—―ーｰ]/g, '-')
     .replace(/[◯〇]/g, '○')
     .replace(/○\?/g, '○')
     .replace(/◎\?/g, '◎')
