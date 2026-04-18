@@ -428,11 +428,16 @@
 
   function refreshAllRowCosts() {
     const dataRows = rowsEl ? rowsEl.querySelectorAll('.optimizer-row') : [];
-    dataRows.forEach((row) => {
+    // Iterate in reverse DOM order: linked children (lower/circle/evo rows) always
+    // appear after their parent gold row, and a gold row's displayed cost is derived
+    // from the lower row's current cost input. Refreshing children first ensures the
+    // gold row reads up-to-date lower costs (fixes Fast Learner not discounting gold).
+    for (let i = dataRows.length - 1; i >= 0; i--) {
+      const row = dataRows[i];
       if (typeof row.syncSkillCategory === 'function') {
         row.syncSkillCategory({ triggerOptimize: false, allowLinking: false, updateCost: true });
       }
-    });
+    }
   }
 
   async function loadSkillCostsJSON() {
