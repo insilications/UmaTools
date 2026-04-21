@@ -1773,20 +1773,23 @@
 
     // Track EN name collisions for disambiguation
     const enNameCollisions = new Map(); // normalizedKey -> [enriched, ...]
+    // Track which keys in nextIndex were claimed by a skill's primary name so
+    // that cross-contaminated alias lists (e.g. a legacy `enname` shared with
+    // another skill's `name_en`) can't displace a primary name.
+    const primaryKeys = new Set();
+    const enrichedBySkill = new Map(); // skill -> enriched (shared across passes)
 
+    // Pass 1: claim primary-name keys and build enriched records.
     Object.entries(skillsByCategory).forEach(([category, list = []]) => {
       list.forEach((skill) => {
         if (!skill || !skill.name) return;
         const key = normalize(skill.name);
         const enriched = { ...skill, category };
+        enrichedBySkill.set(skill, enriched);
 
-        // ◎ skills with a paired ○: index under full name but skip from datalist
-        // ○ skills with a paired ◎: also index under base name, show base name in datalist
-        const isDoubleCircle = !!skill.circleUpgradeOf; // ◎ with paired ○
-        const isPairedSingle = !!skill.circleUpgrade; // ○ with paired ◎
-
-        if (!nextIndex.has(key)) {
+        if (!nextIndex.has(key) || !primaryKeys.has(key)) {
           nextIndex.set(key, enriched);
+          primaryKeys.add(key);
           enNameCollisions.set(key, [enriched]);
         } else {
           // Collision: store under disambiguated key using JP name
@@ -1800,7 +1803,6 @@
               addLooseLookup(skill.name + ' (' + jpSuffix + ')', enriched);
             }
           }
-          // Also add disambiguated key for the first occupant
           const firstEnriched = nextIndex.get(key);
           const firstJpSuffix = (firstEnriched?.jpName || '').trim();
           if (firstJpSuffix) {
@@ -1812,6 +1814,22 @@
           }
         }
         addLooseLookup(skill.name, enriched);
+      });
+    });
+
+    // Pass 2: index aliases, localized names, and circle base names — but
+    // never overwrite a key already claimed by a primary name.
+    Object.entries(skillsByCategory).forEach(([category, list = []]) => {
+      list.forEach((skill) => {
+        if (!skill || !skill.name) return;
+        const enriched = enrichedBySkill.get(skill);
+        if (!enriched) return;
+
+        // ◎ skills with a paired ○: index under full name but skip from datalist
+        // ○ skills with a paired ◎: also index under base name, show base name in datalist
+        const isDoubleCircle = !!skill.circleUpgradeOf; // ◎ with paired ○
+        const isPairedSingle = !!skill.circleUpgrade; // ○ with paired ◎
+
         if (Array.isArray(skill.aliasNames) && skill.aliasNames.length) {
           skill.aliasNames.forEach((alias) => {
             const aliasKey = normalize(alias);
