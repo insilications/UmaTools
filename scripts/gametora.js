@@ -924,13 +924,18 @@ function describeHintOther(type, value) {
 // 4. Build race data from manifest
 // ---------------------------------------------------------------------------
 
+// NOTE: GameTora's racetracks manifest swaps Tokyo and Nakayama relative to
+// the in-game racecourse_master IDs. Track 10005 in the manifest groups the
+// Nakayama courses (310 m final straight) and track 10006 groups the Tokyo
+// courses (525 m). Matching the manifest is the only way to get correct
+// labels on Tokyo Yushun, Arima Kinen, etc. without rewriting upstream data.
 const TRACK_VENUE_JP = Object.freeze({
   10001: '\u672d\u5e4c',
   10002: '\u51fd\u9928',
   10003: '\u798f\u5cf6',
   10004: '\u65b0\u6f5f',
-  10005: '\u6771\u4eac',
-  10006: '\u4e2d\u5c71',
+  10005: '\u4e2d\u5c71',
+  10006: '\u6771\u4eac',
   10007: '\u4e2d\u4eac',
   10008: '\u4eac\u90fd',
   10009: '\u962a\u795e',

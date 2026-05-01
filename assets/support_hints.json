@@ -14450,7 +14450,7 @@
     "SupportName": "Mr. C.B. (R)",
     "SupportNameJP": "ミスターシービー (R)",
     "SupportRarity": "R",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Wit",
     "SupportEffects": [
       {
@@ -38449,7 +38449,7 @@
     "SupportName": "Tokai Teio (SR)",
     "SupportNameJP": "トウカイテイオー (SR)",
     "SupportRarity": "SR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Stamina",
     "SupportEffects": [
       {
@@ -71087,7 +71087,7 @@
     "SupportName": "Bamboo Memory (SSR)",
     "SupportNameJP": "バンブーメモリー (SSR)",
     "SupportRarity": "SSR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Guts",
     "SupportEffects": [
       {
@@ -71301,7 +71301,7 @@
     "SupportName": "Seeking the Pearl (SSR)",
     "SupportNameJP": "シーキングザパール (SSR)",
     "SupportRarity": "SSR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Speed",
     "SupportEffects": [
       {
@@ -71561,7 +71561,7 @@
     "SupportName": "Kawakami Princess (SSR)",
     "SupportNameJP": "カワカミプリンセス (SSR)",
     "SupportRarity": "SSR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Power",
     "SupportEffects": [
       {
@@ -71748,7 +71748,7 @@
     "SupportName": "Mr. C.B. (SSR)",
     "SupportNameJP": "ミスターシービー (SSR)",
     "SupportRarity": "SSR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Wit",
     "SupportEffects": [
       {
@@ -123148,6 +123148,849 @@
       {
         "SkillId": "204312",
         "Name": "On the Offensive",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "",
+        "Name": "Initial Speed bonus",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "",
+        "Name": "Initial Power bonus",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "",
+        "Name": "Initial Guts bonus",
+        "HintLevel": null
+      }
+    ]
+  },
+  {
+    "SupportSlug": "30297-agnes-digital",
+    "SupportId": "30297",
+    "SupportName": "Agnes Digital (SSR)",
+    "SupportNameJP": "アグネスデジタル (SSR)",
+    "SupportRarity": "SSR",
+    "SupportServer": "jp",
+    "SupportType": "Power",
+    "SupportEffects": [
+      {
+        "id": 1,
+        "name": "Friendship Bonus",
+        "symbol": "percent",
+        "values": [
+          10,
+          11,
+          13,
+          15,
+          17,
+          20,
+          25,
+          26,
+          27,
+          28,
+          30
+        ]
+      },
+      {
+        "id": 2,
+        "name": "Mood Effect",
+        "symbol": "percent",
+        "values": [
+          10,
+          14,
+          19,
+          24,
+          29,
+          34,
+          40,
+          45,
+          50,
+          55,
+          60
+        ]
+      },
+      {
+        "id": 5,
+        "name": "Power Bonus",
+        "symbol": "none",
+        "values": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      {
+        "id": 8,
+        "name": "Training Effectiveness",
+        "symbol": "percent",
+        "values": [
+          1,
+          2,
+          3,
+          5,
+          6,
+          8,
+          10,
+          12,
+          15,
+          17,
+          20
+        ]
+      },
+      {
+        "id": 14,
+        "name": "Initial Friendship Gauge",
+        "symbol": "none",
+        "values": [
+          10,
+          12,
+          14,
+          17,
+          19,
+          22,
+          25,
+          26,
+          27,
+          28,
+          30
+        ]
+      },
+      {
+        "id": 15,
+        "name": "Race Bonus",
+        "symbol": "percent",
+        "values": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          5,
+          5,
+          5,
+          5
+        ]
+      },
+      {
+        "id": 16,
+        "name": "Fan Bonus",
+        "symbol": "percent",
+        "values": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          10,
+          15,
+          15,
+          15
+        ]
+      },
+      {
+        "id": 17,
+        "name": "Hint Levels",
+        "symbol": "level",
+        "values": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          2,
+          4
+        ]
+      },
+      {
+        "id": 18,
+        "name": "Hint Frequency",
+        "symbol": "percent",
+        "values": [
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          50,
+          100
+        ]
+      },
+      {
+        "id": 19,
+        "name": "Specialty Priority",
+        "symbol": "none",
+        "values": [
+          5,
+          11,
+          18,
+          26,
+          34,
+          42,
+          50,
+          57,
+          65,
+          72,
+          80
+        ]
+      },
+      {
+        "id": 30,
+        "name": "Skill Point Bonus",
+        "symbol": "none",
+        "values": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          2
+        ]
+      }
+    ],
+    "SupportUnique": {
+      "level": 0,
+      "effects": [
+        {
+          "id": 105,
+          "name": "Effect #105",
+          "symbol": "",
+          "value": 10
+        }
+      ]
+    },
+    "SupportImage": "/assets/support_thumbs/30297-agnes-digital.png",
+    "SupportHints": [
+      {
+        "SkillId": "200602",
+        "Name": "Slick Surge",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "201382",
+        "Name": "Late Surger Straightaways ○",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "201392",
+        "Name": "Late Surger Corners ○",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "201412",
+        "Name": "1,500,000 CC",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "202152",
+        "Name": "Full Throttle",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "202472",
+        "Name": "Tooth and Tail",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "202622",
+        "Name": "On the Move",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "203592",
+        "Name": "Pushing Through!",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "204112",
+        "Name": "No Stagnation",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "204132",
+        "Name": "Be Ambitious",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "204352",
+        "Name": "勇を奮って",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "204362",
+        "Name": "大立ち回り",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "204372",
+        "Name": "流れに任せて",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "",
+        "Name": "Initial Stamina bonus",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "",
+        "Name": "Initial Power bonus",
+        "HintLevel": null
+      }
+    ]
+  },
+  {
+    "SupportSlug": "30298-tap-dance-city",
+    "SupportId": "30298",
+    "SupportName": "Tap Dance City (SSR)",
+    "SupportNameJP": "タップダンスシチー (SSR)",
+    "SupportRarity": "SSR",
+    "SupportServer": "jp",
+    "SupportType": "Speed",
+    "SupportEffects": [
+      {
+        "id": 1,
+        "name": "Friendship Bonus",
+        "symbol": "percent",
+        "values": [
+          10,
+          12,
+          14,
+          17,
+          19,
+          22,
+          25,
+          28,
+          32,
+          36,
+          40
+        ]
+      },
+      {
+        "id": 2,
+        "name": "Mood Effect",
+        "symbol": "percent",
+        "values": [
+          10,
+          10,
+          10,
+          10,
+          15,
+          20,
+          20,
+          23,
+          26,
+          30,
+          30
+        ]
+      },
+      {
+        "id": 8,
+        "name": "Training Effectiveness",
+        "symbol": "percent",
+        "values": [
+          1,
+          2,
+          3,
+          5,
+          6,
+          8,
+          10,
+          12,
+          15,
+          17,
+          20
+        ]
+      },
+      {
+        "id": 9,
+        "name": "Initial Speed",
+        "symbol": "none",
+        "values": [
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          10,
+          25,
+          25,
+          25
+        ]
+      },
+      {
+        "id": 14,
+        "name": "Initial Friendship Gauge",
+        "symbol": "none",
+        "values": [
+          10,
+          12,
+          14,
+          17,
+          19,
+          22,
+          25,
+          27,
+          30,
+          32,
+          35
+        ]
+      },
+      {
+        "id": 15,
+        "name": "Race Bonus",
+        "symbol": "percent",
+        "values": [
+          1,
+          1,
+          2,
+          3,
+          4,
+          5,
+          5,
+          6,
+          7,
+          8,
+          10
+        ]
+      },
+      {
+        "id": 16,
+        "name": "Fan Bonus",
+        "symbol": "percent",
+        "values": [
+          1,
+          1,
+          1,
+          4,
+          7,
+          10,
+          10,
+          11,
+          12,
+          13,
+          15
+        ]
+      },
+      {
+        "id": 17,
+        "name": "Hint Levels",
+        "symbol": "level",
+        "values": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          2
+        ]
+      },
+      {
+        "id": 18,
+        "name": "Hint Frequency",
+        "symbol": "percent",
+        "values": [
+          10,
+          16,
+          25,
+          34,
+          42,
+          51,
+          60,
+          70,
+          80,
+          90,
+          100
+        ]
+      },
+      {
+        "id": 19,
+        "name": "Specialty Priority",
+        "symbol": "none",
+        "values": [
+          10,
+          14,
+          20,
+          25,
+          31,
+          37,
+          42,
+          48,
+          54,
+          60,
+          120
+        ]
+      },
+      {
+        "id": 30,
+        "name": "Skill Point Bonus",
+        "symbol": "none",
+        "values": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          2
+        ]
+      }
+    ],
+    "SupportUnique": {
+      "level": 0,
+      "effects": [
+        {
+          "id": 101,
+          "name": "Effect #101",
+          "symbol": "",
+          "value": 80
+        }
+      ]
+    },
+    "SupportImage": "/assets/support_thumbs/30298-tap-dance-city.png",
+    "SupportHints": [
+      {
+        "SkillId": "200432",
+        "Name": "Focus",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "200542",
+        "Name": "Fast-Paced",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "201242",
+        "Name": "Front Runner Straightaways ○",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "201252",
+        "Name": "Front Runner Corners ○",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "201262",
+        "Name": "Dodging Danger",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "201272",
+        "Name": "Leader's Pride",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "202392",
+        "Name": "Frantic State",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "202692",
+        "Name": "Early Bird",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "202802",
+        "Name": "Opening Leg Adept",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "203032",
+        "Name": "An Honest Step",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "203382",
+        "Name": "Pulling Away",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "203402",
+        "Name": "Riding the Tailwind",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "203472",
+        "Name": "Overflowing Fighting Spirit",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "204342",
+        "Name": "弾みをつけて",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "",
+        "Name": "Initial Speed bonus",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "",
+        "Name": "Initial Power bonus",
+        "HintLevel": null
+      }
+    ]
+  },
+  {
+    "SupportSlug": "30299-agnes-tachyon",
+    "SupportId": "30299",
+    "SupportName": "Agnes Tachyon (SSR)",
+    "SupportNameJP": "アグネスタキオン (SSR)",
+    "SupportRarity": "SSR",
+    "SupportServer": "jp",
+    "SupportType": "Guts",
+    "SupportEffects": [
+      {
+        "id": 1,
+        "name": "Friendship Bonus",
+        "symbol": "percent",
+        "values": [
+          10,
+          10,
+          11,
+          12,
+          13,
+          15,
+          20,
+          21,
+          23,
+          25,
+          25
+        ]
+      },
+      {
+        "id": 2,
+        "name": "Mood Effect",
+        "symbol": "percent",
+        "values": [
+          10,
+          14,
+          19,
+          24,
+          29,
+          34,
+          40,
+          42,
+          45,
+          47,
+          50
+        ]
+      },
+      {
+        "id": 6,
+        "name": "Guts Bonus",
+        "symbol": "none",
+        "values": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      {
+        "id": 9,
+        "name": "Initial Speed",
+        "symbol": "none",
+        "values": [
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          15,
+          30
+        ]
+      },
+      {
+        "id": 12,
+        "name": "Initial Guts",
+        "symbol": "none",
+        "values": [
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          10,
+          25,
+          25,
+          25
+        ]
+      },
+      {
+        "id": 14,
+        "name": "Initial Friendship Gauge",
+        "symbol": "none",
+        "values": [
+          10,
+          10,
+          10,
+          13,
+          16,
+          20,
+          20,
+          21,
+          23,
+          25,
+          25
+        ]
+      },
+      {
+        "id": 17,
+        "name": "Hint Levels",
+        "symbol": "level",
+        "values": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      },
+      {
+        "id": 18,
+        "name": "Hint Frequency",
+        "symbol": "percent",
+        "values": [
+          5,
+          5,
+          5,
+          13,
+          21,
+          30,
+          30,
+          33,
+          36,
+          40,
+          40
+        ]
+      },
+      {
+        "id": 19,
+        "name": "Specialty Priority",
+        "symbol": "none",
+        "values": [
+          5,
+          5,
+          5,
+          5,
+          12,
+          20,
+          20,
+          25,
+          30,
+          35,
+          35
+        ]
+      }
+    ],
+    "SupportUnique": {
+      "level": 0,
+      "effects": [
+        {
+          "id": 101,
+          "name": "Effect #101",
+          "symbol": "",
+          "value": 80
+        }
+      ]
+    },
+    "SupportImage": "/assets/support_thumbs/30299-agnes-tachyon.png",
+    "SupportHints": [
+      {
+        "SkillId": "200572",
+        "Name": "Preferred Position",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "201322",
+        "Name": "Pace Chaser Corners ○",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "201332",
+        "Name": "Shrewd Step",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "201362",
+        "Name": "Tactical Tweak",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "202412",
+        "Name": "Ambitions",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "202792",
+        "Name": "Middle Leg Adept",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "202982",
+        "Name": "Leap Premonition",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "204082",
+        "Name": "Ride the Momentum",
         "HintLevel": null
       },
       {
