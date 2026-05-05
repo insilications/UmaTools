@@ -86,6 +86,31 @@
     return (value || '').toString().trim().toLowerCase() === 'jp' ? 'jp' : 'en';
   }
 
+  // EN server can't reach uncapped stats above 1200; JP keeps the page's original max.
+  const STAT_INPUT_IDS = ['stat-speed', 'stat-stamina', 'stat-power', 'stat-guts', 'stat-wisdom'];
+  const EN_STAT_CAP = 1200;
+  function applyServerStatCap(serverValue) {
+    const isEN = normalizeServer(serverValue) === 'en';
+    STAT_INPUT_IDS.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (!('originalMax' in el.dataset)) {
+        el.dataset.originalMax = el.getAttribute('max') || '';
+      }
+      const target = isEN ? String(EN_STAT_CAP) : el.dataset.originalMax;
+      if (target) el.setAttribute('max', target);
+      else el.removeAttribute('max');
+      if (isEN) {
+        const current = Number.parseInt(el.value, 10);
+        if (Number.isFinite(current) && current > EN_STAT_CAP) {
+          el.value = String(EN_STAT_CAP);
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    });
+  }
+
   function normalizeSiteLanguage(value) {
     return (value || '').toString().trim().toLowerCase() === 'jp' ? 'jp' : 'en';
   }
@@ -440,7 +465,9 @@
       window.addEventListener('umatools:server-change', (event) => {
         const next = normalizeServer(event?.detail?.server);
         if (serverSelect.value !== next) serverSelect.value = next;
+        applyServerStatCap(next);
       });
+      applyServerStatCap(serverSelect.value);
       window.dispatchEvent(
         new CustomEvent('umatools:server-change', {
           detail: { server: serverSelect.value, source: 'nav-init' },
