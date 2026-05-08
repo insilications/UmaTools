@@ -1245,8 +1245,11 @@
 
   // State persistence
   const STORAGE_KEY = 'umatools-calculator';
+  let _initComplete = false;
+  let _restoringState = false;
 
   function saveState() {
+    if (_restoringState || !_initComplete) return;
     try {
       const skills = [];
       rowsEl.querySelectorAll('.calculator-row').forEach((row) => {
@@ -1271,6 +1274,7 @@
   }
 
   function loadState() {
+    _restoringState = true;
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
@@ -1315,6 +1319,8 @@
       }
     } catch (e) {
       console.warn('Failed to load calculator state', e);
+    } finally {
+      _restoringState = false;
     }
   }
 
@@ -1511,6 +1517,7 @@
     });
 
     // Initial display update
+    _initComplete = true;
     updateSelectedSkillsDisplay();
     initTutorial();
   }

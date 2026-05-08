@@ -390,10 +390,9 @@ function normalizeSkillNameStrict(value) {
 }
 
 function normalizeSkillNameLoose(value) {
-  return normalizeSkillNameStrict(value).replace(
-    /[!?？！☆★♪♡♥❤#＃『』「」()（）［］【】・･,，.。…~～]/g,
-    ''
-  );
+  return normalizeSkillNameStrict(value)
+    .replace(/[!?？！☆★♪♡♥❤#＃『』「」()（）［］【】・･,，.。…~～;；:：∴]/g, '')
+    .toLowerCase();
 }
 
 function addIndexEntry(map, key, value) {
