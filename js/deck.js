@@ -290,18 +290,19 @@
   }
 
   // --- Compatibility Score ---
-  // Based on uma.moe class 6 statistics (top-tier players):
-  // Speed: 2.8 avg/deck (46%), Wit: 1.85 avg (18%), Friend: 1.03 avg (13%),
-  // Power: 1.46 avg (11%), Stamina: 1.43 avg (9%), Guts: 1.38 avg (2%)
-  // Top combos: 3Spd+2Pow+1Fri, 3Spd+2Wit+1Fri, 3Wit+2Spd+1Fri
+  // Based on beta.uma.moe 2026-05-11 statistics:
+  // MANT scenario, Team Stadium class 6 only.
+  // Speed: 2.20 avg/deck, Wit: 1.80, Power: 0.95, Guts: 0.55,
+  // Stamina: 0.33, Friend: 0.13, Group: 0.03.
+  // Top combos: 2Spd+2Pow+2Wit, 2Spd+1Pow+3Wit, 3Spd+1Pow+2Wit.
   const META_TYPE_RANGES = {
     Speed: { ideal: [2, 3], ok: [1, 4], weight: 5 },
-    Wit: { ideal: [1, 3], ok: [0, 4], weight: 3 },
-    Friend: { ideal: [1, 1], ok: [0, 2], weight: 4 },
+    Wit: { ideal: [2, 3], ok: [1, 4], weight: 5 },
     Power: { ideal: [1, 2], ok: [0, 3], weight: 3 },
-    Stamina: { ideal: [1, 2], ok: [0, 3], weight: 3 },
-    Guts: { ideal: [0, 1], ok: [0, 2], weight: 1 },
-    Group: { ideal: [0, 1], ok: [0, 1], weight: 1 },
+    Guts: { ideal: [0, 1], ok: [0, 3], weight: 2 },
+    Stamina: { ideal: [0, 1], ok: [0, 2], weight: 2 },
+    Friend: { ideal: [0, 1], ok: [0, 1], weight: 1 },
+    Group: { ideal: [0, 0], ok: [0, 1], weight: 1 },
   };
 
   function scoreTypeDistribution() {
@@ -398,13 +399,12 @@
     return Math.min(25, score);
   }
 
-  // Distance-appropriate type weights (from class 6 distance stats)
-  // Sprint/Mile: heavy Speed+Wit; Medium: Speed+Power+Stamina; Long: Speed+Stamina+Power
+  // Distance-appropriate type weights from MANT class 6 distance stats.
   const DISTANCE_TYPE_WEIGHTS = {
-    Short: { Speed: 3, Wit: 3, Power: 1, Stamina: 0, Friend: 2 },
-    Mile: { Speed: 3, Wit: 2, Power: 2, Stamina: 1, Friend: 2 },
-    Medium: { Speed: 3, Wit: 1, Power: 2, Stamina: 2, Friend: 2 },
-    Long: { Speed: 3, Wit: 1, Power: 2, Stamina: 3, Friend: 2 },
+    Short: { Speed: 3, Wit: 3, Power: 2, Guts: 1 },
+    Mile: { Speed: 3, Wit: 3, Power: 2, Guts: 1 },
+    Medium: { Speed: 3, Wit: 3, Power: 2, Stamina: 1 },
+    Long: { Speed: 3, Stamina: 3, Wit: 2, Power: 2 },
   };
 
   function scoreCharacterFit() {
@@ -1157,158 +1157,158 @@
   });
 
   // =====================================================================
-  // Meta Templates (from uma.moe Class 6 statistics)
+  // Meta Templates (from beta.uma.moe MANT Class 6 statistics)
   // =====================================================================
 
   const META_TEMPLATES = [
     {
-      id: 'sprint-spd-wit',
-      label: 'Sprint — 3 Speed + 2 Wit + 1 Friend',
+      id: 'sprint-spd-pow-wit3',
+      label: 'Sprint - 2 Speed + 1 Power + 3 Wit',
       distance: 'Sprint',
-      combo: '3 Speed + 2 Wit + 1 Friend',
-      usage: 14.2,
+      combo: '2 Speed + 1 Power + 3 Wit',
+      usage: 14.55,
       slugs: [
         '30028-kitasan-black',
-        '20023-sweep-tosho',
-        '20013-eishin-flash',
+        '30078-matikanefukukitaru',
+        '30074-marvelous-sunday',
         '30010-fine-motion',
-        '20016-matikanefukukitaru',
-        '30036-riko-kashimoto',
+        '20012-agnes-tachyon',
+        '30054-nice-nature',
       ],
     },
     {
-      id: 'sprint-wit-spd',
-      label: 'Sprint — 3 Wit + 2 Speed + 1 Friend',
+      id: 'sprint-spd-pow2-wit2',
+      label: 'Sprint - 2 Speed + 2 Power + 2 Wit',
       distance: 'Sprint',
-      combo: '3 Wit + 2 Speed + 1 Friend',
-      usage: 13.3,
+      combo: '2 Speed + 2 Power + 2 Wit',
+      usage: 13.07,
       slugs: [
+        '30028-kitasan-black',
+        '30078-matikanefukukitaru',
+        '30074-marvelous-sunday',
+        '20027-nishino-flower',
         '30010-fine-motion',
-        '20016-matikanefukukitaru',
+        '20012-agnes-tachyon',
+      ],
+    },
+    {
+      id: 'mile-spd-pow2-wit2',
+      label: 'Mile - 2 Speed + 2 Power + 2 Wit',
+      distance: 'Mile',
+      combo: '2 Speed + 2 Power + 2 Wit',
+      usage: 15.68,
+      slugs: [
+        '30028-kitasan-black',
+        '30078-matikanefukukitaru',
+        '30074-marvelous-sunday',
+        '20027-nishino-flower',
+        '30010-fine-motion',
+        '20012-agnes-tachyon',
+      ],
+    },
+    {
+      id: 'mile-spd-pow-wit3',
+      label: 'Mile - 2 Speed + 1 Power + 3 Wit',
+      distance: 'Mile',
+      combo: '2 Speed + 1 Power + 3 Wit',
+      usage: 13.24,
+      slugs: [
+        '30028-kitasan-black',
+        '30078-matikanefukukitaru',
+        '30074-marvelous-sunday',
+        '30010-fine-motion',
+        '20012-agnes-tachyon',
+        '30054-nice-nature',
+      ],
+    },
+    {
+      id: 'medium-spd-pow2-wit2',
+      label: 'Medium - 2 Speed + 2 Power + 2 Wit',
+      distance: 'Medium',
+      combo: '2 Speed + 2 Power + 2 Wit',
+      usage: 16.17,
+      slugs: [
+        '30028-kitasan-black',
+        '30078-matikanefukukitaru',
+        '30074-marvelous-sunday',
+        '20027-nishino-flower',
+        '30010-fine-motion',
+        '20012-agnes-tachyon',
+      ],
+    },
+    {
+      id: 'medium-spd-pow-wit3',
+      label: 'Medium - 2 Speed + 1 Power + 3 Wit',
+      distance: 'Medium',
+      combo: '2 Speed + 1 Power + 3 Wit',
+      usage: 11.92,
+      slugs: [
+        '30028-kitasan-black',
+        '30078-matikanefukukitaru',
+        '30074-marvelous-sunday',
+        '30010-fine-motion',
+        '20012-agnes-tachyon',
+        '30054-nice-nature',
+      ],
+    },
+    {
+      id: 'long-spd-sta-pow-wit',
+      label: 'Long - 2 Speed + 1 Stamina + 1 Power + 2 Wit',
+      distance: 'Long',
+      combo: '2 Speed + 1 Stamina + 1 Power + 2 Wit',
+      usage: 10.01,
+      slugs: [
+        '30028-kitasan-black',
+        '30078-matikanefukukitaru',
+        '30016-super-creek',
+        '30074-marvelous-sunday',
+        '30010-fine-motion',
+        '20012-agnes-tachyon',
+      ],
+    },
+    {
+      id: 'long-spd-sta2-wit2',
+      label: 'Long - 2 Speed + 2 Stamina + 2 Wit',
+      distance: 'Long',
+      combo: '2 Speed + 2 Stamina + 2 Wit',
+      usage: 8.43,
+      slugs: [
+        '30028-kitasan-black',
+        '30078-matikanefukukitaru',
+        '30016-super-creek',
+        '20008-manhattan-cafe',
+        '30010-fine-motion',
         '20015-marvelous-sunday',
-        '30028-kitasan-black',
-        '20023-sweep-tosho',
-        '30036-riko-kashimoto',
       ],
     },
     {
-      id: 'mile-spd-wit',
-      label: 'Mile — 3 Speed + 2 Wit + 1 Friend',
-      distance: 'Mile',
-      combo: '3 Speed + 2 Wit + 1 Friend',
-      usage: 13.9,
-      slugs: [
-        '30028-kitasan-black',
-        '20023-sweep-tosho',
-        '20013-eishin-flash',
-        '20016-matikanefukukitaru',
-        '30010-fine-motion',
-        '30036-riko-kashimoto',
-      ],
-    },
-    {
-      id: 'mile-spd-pow',
-      label: 'Mile — 3 Speed + 2 Power + 1 Friend',
-      distance: 'Mile',
-      combo: '3 Speed + 2 Power + 1 Friend',
-      usage: 10.5,
-      slugs: [
-        '30028-kitasan-black',
-        '20023-sweep-tosho',
-        '20020-king-halo',
-        '30034-rice-shower',
-        '20003-hishi-amazon',
-        '30036-riko-kashimoto',
-      ],
-    },
-    {
-      id: 'medium-spd-pow',
-      label: 'Medium — 3 Speed + 2 Power + 1 Friend',
-      distance: 'Medium',
-      combo: '3 Speed + 2 Power + 1 Friend',
-      usage: 11.5,
-      slugs: [
-        '30028-kitasan-black',
-        '20023-sweep-tosho',
-        '20020-king-halo',
-        '30034-rice-shower',
-        '20003-hishi-amazon',
-        '30036-riko-kashimoto',
-      ],
-    },
-    {
-      id: 'medium-spd-sta',
-      label: 'Medium — 3 Speed + 2 Stamina + 1 Friend',
-      distance: 'Medium',
-      combo: '3 Speed + 2 Stamina + 1 Friend',
-      usage: 8.3,
-      slugs: [
-        '30028-kitasan-black',
-        '20023-sweep-tosho',
-        '20020-king-halo',
-        '30016-super-creek',
-        '20008-manhattan-cafe',
-        '30036-riko-kashimoto',
-      ],
-    },
-    {
-      id: 'long-spd-sta',
-      label: 'Long — 3 Speed + 2 Stamina + 1 Friend',
-      distance: 'Long',
-      combo: '3 Speed + 2 Stamina + 1 Friend',
-      usage: 19.8,
-      slugs: [
-        '30028-kitasan-black',
-        '20023-sweep-tosho',
-        '20020-king-halo',
-        '30016-super-creek',
-        '20008-manhattan-cafe',
-        '30036-riko-kashimoto',
-      ],
-    },
-    {
-      id: 'long-spd-pow',
-      label: 'Long — 3 Speed + 2 Power + 1 Friend',
-      distance: 'Long',
-      combo: '3 Speed + 2 Power + 1 Friend',
-      usage: 14.0,
-      slugs: [
-        '30028-kitasan-black',
-        '20023-sweep-tosho',
-        '20020-king-halo',
-        '30034-rice-shower',
-        '20003-hishi-amazon',
-        '30036-riko-kashimoto',
-      ],
-    },
-    {
-      id: 'dirt-spd-wit',
-      label: 'Dirt — 3 Speed + 2 Wit + 1 Friend',
+      id: 'dirt-spd-pow2-wit2',
+      label: 'Dirt - 2 Speed + 2 Power + 2 Wit',
       distance: 'Dirt',
-      combo: '3 Speed + 2 Wit + 1 Friend',
-      usage: 12.2,
+      combo: '2 Speed + 2 Power + 2 Wit',
+      usage: 16.99,
       slugs: [
         '30028-kitasan-black',
-        '20023-sweep-tosho',
-        '20013-eishin-flash',
-        '20016-matikanefukukitaru',
+        '30078-matikanefukukitaru',
+        '30074-marvelous-sunday',
+        '20027-nishino-flower',
         '30010-fine-motion',
-        '30036-riko-kashimoto',
+        '20012-agnes-tachyon',
       ],
     },
     {
-      id: 'dirt-spd-pow',
-      label: 'Dirt — 3 Speed + 2 Power + 1 Friend',
+      id: 'dirt-spd-pow-wit3',
+      label: 'Dirt - 2 Speed + 1 Power + 3 Wit',
       distance: 'Dirt',
-      combo: '3 Speed + 2 Power + 1 Friend',
-      usage: 11.4,
+      combo: '2 Speed + 1 Power + 3 Wit',
+      usage: 13.82,
       slugs: [
         '30028-kitasan-black',
-        '20023-sweep-tosho',
-        '20013-eishin-flash',
-        '30034-rice-shower',
-        '20024-daitaku-helios',
-        '30036-riko-kashimoto',
+        '30078-matikanefukukitaru',
+        '30074-marvelous-sunday',
+        '30010-fine-motion',
+        '20012-agnes-tachyon',
+        '30054-nice-nature',
       ],
     },
   ];

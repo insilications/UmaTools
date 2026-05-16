@@ -30,16 +30,22 @@
 
   // ── Scenario Definitions ──
   const SCENARIOS = {
-    trackblazer: {
-      name: 'Trackblazer',
+    mant: {
+      name: 'MANT (Class 6)',
       constraints: { minRaceBonus: 50 },
+      // Source: beta.uma.moe statistics dataset 2026-05-11,
+      // scenario 4 (MANT), Team Stadium class 6.
       templates: [
-        { id: 'spd2-sta2-wit2', label: '2 Speed + 2 Stamina + 2 Wit', slots: { Speed: 2, Stamina: 2, Wit: 2 }, group: 'standard' },
-        { id: 'spd2-pow2-wit2', label: '2 Speed + 2 Power + 2 Wit', slots: { Speed: 2, Power: 2, Wit: 2 }, group: 'standard' },
-        { id: 'spd2-sta1-flex1-wit2', label: '2 Speed + 1 Stamina + 1 Friend/Group + 2 Wit', slots: { Speed: 2, Stamina: 1, Wit: 2 }, flex: { count: 1, types: ['Friend', 'Group'] }, group: 'standard' },
-        { id: 'spd2-pow1-flex1-wit2', label: '2 Speed + 1 Power + 1 Friend/Group + 2 Wit', slots: { Speed: 2, Power: 1, Wit: 2 }, flex: { count: 1, types: ['Friend', 'Group'] }, group: 'standard' },
-        { id: 'guts2-spd2-flex1-wit1', label: '2 Guts + 2 Speed + 1 Friend/Group + 1 Wit', slots: { Guts: 2, Speed: 2, Wit: 1 }, flex: { count: 1, types: ['Friend', 'Group'] }, group: 'guts' },
-        { id: 'guts3-spd1-flex1-wit1', label: '3 Guts + 1 Speed + 1 Friend/Group + 1 Wit', slots: { Guts: 3, Speed: 1, Wit: 1 }, flex: { count: 1, types: ['Friend', 'Group'] }, group: 'guts' },
+        { id: 'mant-spd2-pow2-wit2', label: '2 Speed + 2 Power + 2 Wit', slots: { Speed: 2, Power: 2, Wit: 2 }, group: 'core' },
+        { id: 'mant-spd2-pow1-wit3', label: '2 Speed + 1 Power + 3 Wit', slots: { Speed: 2, Power: 1, Wit: 3 }, group: 'core' },
+        { id: 'mant-spd3-pow1-wit2', label: '3 Speed + 1 Power + 2 Wit', slots: { Speed: 3, Power: 1, Wit: 2 }, group: 'core' },
+        { id: 'mant-spd3-wit3', label: '3 Speed + 3 Wit', slots: { Speed: 3, Wit: 3 }, group: 'core' },
+        { id: 'mant-spd2-sta1-pow1-wit2', label: '2 Speed + 1 Stamina + 1 Power + 2 Wit', slots: { Speed: 2, Stamina: 1, Power: 1, Wit: 2 }, group: 'stamina' },
+        { id: 'mant-spd2-sta2-wit2', label: '2 Speed + 2 Stamina + 2 Wit', slots: { Speed: 2, Stamina: 2, Wit: 2 }, group: 'stamina' },
+        { id: 'mant-spd3-sta1-wit2', label: '3 Speed + 1 Stamina + 2 Wit', slots: { Speed: 3, Stamina: 1, Wit: 2 }, group: 'stamina' },
+        { id: 'mant-spd1-guts3-wit2', label: '1 Speed + 3 Guts + 2 Wit', slots: { Speed: 1, Guts: 3, Wit: 2 }, group: 'guts' },
+        { id: 'mant-spd2-guts2-wit2', label: '2 Speed + 2 Guts + 2 Wit', slots: { Speed: 2, Guts: 2, Wit: 2 }, group: 'guts' },
+        { id: 'mant-spd2-pow1-wit2-friend1', label: '2 Speed + 1 Power + 2 Wit + 1 Friend', slots: { Speed: 2, Power: 1, Wit: 2, Friend: 1 }, group: 'friend' },
       ],
       scoringWeights: { raceBonus: 0.35, effectStacking: 0.25, skillAffinity: 0.25, hintOverlap: 0.15 },
     },
@@ -851,8 +857,11 @@
   }
 
   const GROUP_LABELS = {
-    standard: 'Standard Decks',
+    core: 'MANT Core',
+    stamina: 'Stamina Variants',
     guts: 'Guts Decks',
+    friend: 'Friend Decks',
+    standard: 'Standard Decks',
   };
 
   function renderResults(results, scenario, sIndex) {
