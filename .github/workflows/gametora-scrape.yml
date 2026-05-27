@@ -45,7 +45,8 @@ jobs:
 
       - name: Commit If Changed
         run: |
-          git add -A assets/uma_data.json assets/support_card.json assets/support_hints.json assets/skills_all.json assets/skills_core.json
+          git add -A assets/uma_data.json assets/support_card.json assets/support_hints.json assets/skills_all.json
+          git add -f assets/skills_core.json
           if git diff --cached --quiet; then
             echo "No data changes to commit."
             exit 0
