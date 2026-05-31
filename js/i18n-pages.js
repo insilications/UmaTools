@@ -710,6 +710,11 @@
       'home.staminaCheckDesc': 'スタミナが距離と脚質の基準を満たしているか確認できます。',
       'home.staminaCheckBadge': 'スタミナガイド',
       'home.openStaminaCheck': 'スタミナチェックを開く',
+      'home.tokenPlanner': 'グランドライブトークンプランナー',
+      'home.tokenPlannerDesc':
+        '目標楽曲を選び、必要な5種類のグランドライブトークン数を管理できます。',
+      'home.tokenPlannerBadge': 'シナリオプランナー',
+      'home.openTokenPlanner': 'トークンプランナーを開く',
       'home.accelChecker': '加速スキルチェッカー',
       'home.accelCheckerDesc': 'レース設定に対して有効な加速スキルを確認できます。',
       'home.accelCheckerBadge': 'VAC判定',
