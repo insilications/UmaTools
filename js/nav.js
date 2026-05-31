@@ -37,6 +37,12 @@
           file: '/stamina.html',
         },
         {
+          label: 'Token Planner',
+          i18nKey: 'nav.tokenPlanner',
+          path: '/token-planner',
+          file: '/token-planner.html',
+        },
+        {
           label: 'Accel Checker',
           path: '/accel',
           file: '/accel.html',

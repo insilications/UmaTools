@@ -26,6 +26,11 @@
       'home.staminaCheckDesc': 'See if your stamina meets distance and style thresholds.',
       'home.staminaCheckBadge': 'Stamina guide',
       'home.openStaminaCheck': 'Open Stamina Check',
+      'home.tokenPlanner': 'Grand Live Token Planner',
+      'home.tokenPlannerDesc':
+        'Choose target songs and track the five Grand Live token totals you still need.',
+      'home.tokenPlannerBadge': 'Scenario planner',
+      'home.openTokenPlanner': 'Open Token Planner',
       'home.accelChecker': 'Accel Checker',
       'home.accelCheckerDesc': 'Check which acceleration skills are valid for your race setup.',
       'home.accelCheckerBadge': 'VAC checker',
