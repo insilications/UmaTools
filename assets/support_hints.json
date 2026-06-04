@@ -38664,7 +38664,7 @@
     "SupportName": "Oguri Cap (SR)",
     "SupportNameJP": "オグリキャップ (SR)",
     "SupportRarity": "SR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Guts",
     "SupportEffects": [
       {
@@ -62225,7 +62225,7 @@
     "SupportName": "Taiki Shuttle (SSR)",
     "SupportNameJP": "タイキシャトル (SSR)",
     "SupportRarity": "SSR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Speed",
     "SupportEffects": [
       {
