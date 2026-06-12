@@ -73185,7 +73185,7 @@
     "SupportName": "El Condor Pasa (SSR)",
     "SupportNameJP": "エルコンドルパサー (SSR)",
     "SupportRarity": "SSR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Guts",
     "SupportEffects": [
       {
@@ -73422,7 +73422,7 @@
     "SupportName": "Matikanetannhauser (SSR)",
     "SupportNameJP": "マチカネタンホイザ (SSR)",
     "SupportRarity": "SSR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Wit",
     "SupportEffects": [
       {
@@ -73662,7 +73662,7 @@
     "SupportName": "Zenno Rob Roy (SSR)",
     "SupportNameJP": "ゼンノロブロイ (SSR)",
     "SupportRarity": "SSR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Stamina",
     "SupportEffects": [
       {
