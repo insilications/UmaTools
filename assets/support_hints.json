@@ -38912,7 +38912,7 @@
     "SupportName": "Gold City (SR)",
     "SupportNameJP": "ゴールドシチー (SR)",
     "SupportRarity": "SR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Wit",
     "SupportEffects": [
       {
@@ -74181,7 +74181,7 @@
     "SupportName": "Air Groove (SSR)",
     "SupportNameJP": "エアグルーヴ (SSR)",
     "SupportRarity": "SSR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Power",
     "SupportEffects": [
       {
@@ -124880,7 +124880,7 @@
       },
       {
         "SkillId": "204462",
-        "Name": "いざ我が道へ！",
+        "Name": "Now, Onto My Path!",
         "HintLevel": null
       },
       {
@@ -125191,12 +125191,12 @@
       },
       {
         "SkillId": "204293",
-        "Name": "超長距離回復○",
+        "Name": "Ultra-Long-Distance Recovery ○",
         "HintLevel": null
       },
       {
         "SkillId": "204382",
-        "Name": "輝きを放って",
+        "Name": "Radiating Brilliance",
         "HintLevel": null
       },
       {
