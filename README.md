@@ -123,14 +123,16 @@ Refresh only GameTora skill metadata:
 npm run sync:skills-all
 ```
 
-Refresh GameWith skill CSVs (`assets/uma_skills.csv`, `assets/uma_skills_jp.csv`):
+Refresh skill CSVs (`assets/uma_skills.csv`, `assets/uma_skills_jp.csv`):
 
 ```bash
 npm run sync:uma-skills
 ```
 
 This command also writes scrape metadata to `.cache_gamewith/gamewith_metadata.json`.
-`uma_skills_jp.csv` stores fan/unofficial EN in `alias_name` and localized EN in `localized_name`.
+`uma_skills.csv` is sourced from GameWith simulator data. `uma_skills_jp.csv` is expanded from
+`assets/skills_all.json` so JP mode follows the full GameTora skill list; it stores fan/unofficial
+EN in `alias_name` and localized EN in `localized_name`.
 
 Full skill data refresh (recommended):
 

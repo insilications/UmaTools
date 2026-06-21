@@ -786,6 +786,142 @@ function writeCsv(filePath, headers, rows) {
   fs.writeFileSync(filePath, `${lines.join('\n')}\n`, 'utf8');
 }
 
+function normalizeCSVLookupKey(value) {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFKC');
+}
+
+function buildCSVRowLookup(rows) {
+  const lookup = new Map();
+  function add(name, row) {
+    const key = normalizeCSVLookupKey(name);
+    if (key && !lookup.has(key)) lookup.set(key, row);
+    const strict = normalizeSkillNameStrict(name);
+    if (strict && !lookup.has(strict)) lookup.set(strict, row);
+  }
+
+  for (const row of rows) {
+    add(row.name, row);
+    add(row.localized_name, row);
+    String(row.alias_name || '')
+      .split('|')
+      .forEach((alias) => add(alias, row));
+  }
+
+  return lookup;
+}
+
+function findCSVOverlayForSkill(lookup, skill) {
+  const candidates = [skill?.jpname, skill?.name_en, skill?.enname, skill?.name];
+  for (const name of candidates) {
+    const key = normalizeCSVLookupKey(name);
+    if (key && lookup.has(key)) return lookup.get(key);
+    const strict = normalizeSkillNameStrict(name);
+    if (strict && lookup.has(strict)) return lookup.get(strict);
+  }
+  return null;
+}
+
+function collectEffectTypes(skill) {
+  const types = new Set();
+  for (const group of skill?.condition_groups || []) {
+    for (const effect of group.effects || []) {
+      if (effect?.type != null) types.add(effect.type);
+    }
+  }
+  return Array.from(types);
+}
+
+function deriveGameToraSkillType(skill, overlay) {
+  if (overlay?.skill_type) return overlay.skill_type;
+
+  const rarity = Number(skill?.rarity);
+  if (rarity === 6) return 'evo';
+  if (rarity === 3 || rarity === 4 || rarity === 5) return 'ius';
+  if (rarity === 2) return 'gold';
+
+  const iconid = Number(skill?.iconid);
+  if (Number.isFinite(iconid)) {
+    if (iconid >= 30000 && iconid < 40000) return 'red';
+    if (iconid % 10 === 4) return 'purple';
+    if (iconid >= 10000 && iconid < 20000) return 'green';
+    const tensDigit = Math.floor((iconid % 100) / 10);
+    if (tensDigit === 2) return 'blue';
+  }
+
+  const effects = collectEffectTypes(skill);
+  if (effects.includes(9)) return 'blue';
+  if (
+    effects.some(
+      (type) =>
+        (type >= 1 && type <= 6) || type === 32 || type === 501 || type === 502 || type === 503
+    )
+  ) {
+    return 'green';
+  }
+  return 'yellow';
+}
+
+function fallbackGameToraScore(skill, skillType) {
+  if (skillType === 'ius') return 180;
+  if (typeof skill?.cost === 'number') return skill.cost;
+  return 0;
+}
+
+function addAlias(aliases, value, primaryName) {
+  const trimmed = String(value ?? '').trim();
+  if (!trimmed || trimmed === primaryName) return;
+  aliases.add(trimmed);
+}
+
+function buildGameToraJpRows(gameWithJpRows) {
+  if (!fs.existsSync(SKILLS_ALL_PATH)) return gameWithJpRows;
+
+  const skillsAll = JSON.parse(fs.readFileSync(SKILLS_ALL_PATH, 'utf8'));
+  if (!Array.isArray(skillsAll) || !skillsAll.length) return gameWithJpRows;
+
+  const overlayByName = buildCSVRowLookup(gameWithJpRows);
+
+  return skillsAll.map((skill) => {
+    const overlay = findCSVOverlayForSkill(overlayByName, skill);
+    const primaryName =
+      String(skill?.jpname || '').trim() ||
+      String(skill?.name_en || skill?.enname || skill?.name || '').trim() ||
+      (skill?.id != null ? `Skill #${skill.id}` : '');
+    const skillType = deriveGameToraSkillType(skill, overlay);
+    const aliases = new Set();
+
+    addAlias(aliases, skill?.enname, primaryName);
+    addAlias(aliases, skill?.name, primaryName);
+    String(overlay?.alias_name || '')
+      .split('|')
+      .forEach((alias) => addAlias(aliases, alias, primaryName));
+
+    const localizedName = String(skill?.name_en || overlay?.localized_name || '').trim();
+    const baseValue =
+      overlay && overlay.base_value !== ''
+        ? overlay.base_value
+        : toFixedOne(fallbackGameToraScore(skill, skillType));
+
+    return {
+      skill_type: skillType,
+      name: primaryName,
+      alias_name: Array.from(aliases).join('|'),
+      localized_name: localizedName && localizedName !== primaryName ? localizedName : '',
+      base_value: baseValue,
+      S_A: overlay?.S_A || '',
+      B_C: overlay?.B_C || '',
+      D_E_F: overlay?.D_E_F || '',
+      G: overlay?.G || '',
+      affinity_role: overlay?.affinity_role || '',
+      is_evo: overlay?.is_evo || (skillType === 'evo' ? 1 : 0),
+      evo_parents: overlay?.evo_parents || '',
+    };
+  });
+}
+
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
   const outDir = path.resolve(opts.out);
@@ -943,6 +1079,7 @@ async function main() {
 
   const matchedCount = enrichedSkills.filter((x) => x.skill_en).length;
   const unmatchedCount = enrichedSkills.length - matchedCount;
+  const gameToraJpRows = buildGameToraJpRows(finalUmaSkillsRowsJp);
 
   const metadata = {
     source_url: opts.url,
@@ -953,6 +1090,8 @@ async function main() {
     evo_skill_count: embedded.evoSkillDatas.length,
     evo_rows_added_to_exports: evoSkills.length,
     total_exported_skill_rows: allSkills.length,
+    jp_exported_skill_rows: gameToraJpRows.length,
+    jp_export_source: gameToraJpRows === finalUmaSkillsRowsJp ? 'gamewith' : 'gametora',
     uma_data_count: embedded.umaDatas.length,
     scenario_data_count: embedded.scenarioDatas.length,
     english_matched_count: matchedCount,
@@ -979,7 +1118,7 @@ async function main() {
   ];
 
   writeCsv(path.join(outDir, 'uma_skills.csv'), umaSkillsHeaders, finalUmaSkillsRowsEn);
-  writeCsv(path.join(outDir, 'uma_skills_jp.csv'), umaSkillsHeaders, finalUmaSkillsRowsJp);
+  writeCsv(path.join(outDir, 'uma_skills_jp.csv'), umaSkillsHeaders, gameToraJpRows);
 
   const extraOutputFiles = [
     'gamewith_skills_enriched.json',
@@ -1096,6 +1235,7 @@ async function main() {
       `Expanded skills: ${metadata.expanded_skill_count}`,
       `Evo rows added: ${metadata.evo_rows_added_to_exports}`,
       `Total exported rows: ${metadata.total_exported_skill_rows}`,
+      `JP exported rows: ${metadata.jp_exported_skill_rows} (${metadata.jp_export_source})`,
       `Output mode: ${metadata.output_mode}`,
       `English matched: ${metadata.english_matched_count}`,
       `English unmatched: ${metadata.english_unmatched_count}`,
