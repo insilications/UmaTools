@@ -15005,7 +15005,7 @@
     "SupportName": "Tsurumaru Tsuyoshi (R)",
     "SupportNameJP": "ツルマルツヨシ (R)",
     "SupportRarity": "R",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Guts",
     "SupportEffects": [
       {
@@ -35380,7 +35380,7 @@
     "SupportName": "El Condor Pasa (SR)",
     "SupportNameJP": "エルコンドルパサー (SR)",
     "SupportRarity": "SR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Speed",
     "SupportEffects": [
       {
@@ -65323,7 +65323,7 @@
     "SupportName": "The Throne's Assemblage (SSR)",
     "SupportNameJP": "玉座に集いし者たち (SSR)",
     "SupportRarity": "SSR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Group",
     "SupportEffects": [
       {
@@ -73907,7 +73907,7 @@
     "SupportName": "Special Week (SSR)",
     "SupportNameJP": "スペシャルウィーク (SSR)",
     "SupportRarity": "SSR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Guts",
     "SupportEffects": [
       {
