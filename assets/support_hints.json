@@ -14979,7 +14979,7 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
@@ -15005,7 +15005,7 @@
     "SupportName": "Tsurumaru Tsuyoshi (R)",
     "SupportNameJP": "ツルマルツヨシ (R)",
     "SupportRarity": "R",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Guts",
     "SupportEffects": [
       {
@@ -15392,7 +15392,7 @@
       },
       {
         "SkillId": "202422",
-        "Name": "Devil-May-Care",
+        "Name": "Scramble",
         "HintLevel": null
       },
       {
@@ -15981,7 +15981,7 @@
       },
       {
         "SkillId": "202422",
-        "Name": "Devil-May-Care",
+        "Name": "Scramble",
         "HintLevel": null
       },
       {
@@ -16231,7 +16231,7 @@
       },
       {
         "SkillId": "202412",
-        "Name": "Ambitions",
+        "Name": "Aspire",
         "HintLevel": null
       },
       {
@@ -16631,12 +16631,12 @@
       },
       {
         "SkillId": "202432",
-        "Name": "Firm Step",
+        "Name": "Steady Gait",
         "HintLevel": null
       },
       {
         "SkillId": "202532",
-        "Name": "Graceful Step",
+        "Name": "Graceful Gait",
         "HintLevel": null
       },
       {
@@ -16830,12 +16830,12 @@
       },
       {
         "SkillId": "202452",
-        "Name": "Razor-Sharp Stride",
+        "Name": "Pedal to the Metal",
         "HintLevel": null
       },
       {
         "SkillId": "202492",
-        "Name": "Witful",
+        "Name": "Sharp Steps",
         "HintLevel": null
       },
       {
@@ -17032,17 +17032,17 @@
       },
       {
         "SkillId": "202262",
-        "Name": "Promising Omen",
+        "Name": "Sunny Sign",
         "HintLevel": null
       },
       {
         "SkillId": "202282",
-        "Name": "At Full Speed",
+        "Name": "Full Tilt",
         "HintLevel": null
       },
       {
         "SkillId": "202312",
-        "Name": "Full of Zeal",
+        "Name": "Got the Spirit!",
         "HintLevel": null
       },
       {
@@ -17256,17 +17256,17 @@
       },
       {
         "SkillId": "202412",
-        "Name": "Ambitions",
+        "Name": "Aspire",
         "HintLevel": null
       },
       {
         "SkillId": "202432",
-        "Name": "Firm Step",
+        "Name": "Steady Gait",
         "HintLevel": null
       },
       {
         "SkillId": "202462",
-        "Name": "Steadfast",
+        "Name": "Firm Resolve",
         "HintLevel": null
       },
       {
@@ -17424,22 +17424,22 @@
       },
       {
         "SkillId": "202212",
-        "Name": "Funabashi Racetrack ○",
+        "Name": "Funabashi Racecourse ○",
         "HintLevel": null
       },
       {
         "SkillId": "202222",
-        "Name": "Morioka Racetrack ○",
+        "Name": "Morioka Racecourse ○",
         "HintLevel": null
       },
       {
         "SkillId": "202252",
-        "Name": "Exchange Races ○",
+        "Name": "Collaborative Graded Races ○",
         "HintLevel": null
       },
       {
         "SkillId": "202302",
-        "Name": "Dust Bath ○",
+        "Name": "Down in the Dirt ○",
         "HintLevel": null
       },
       {
@@ -17633,32 +17633,32 @@
       },
       {
         "SkillId": "202212",
-        "Name": "Funabashi Racetrack ○",
+        "Name": "Funabashi Racecourse ○",
         "HintLevel": null
       },
       {
         "SkillId": "202232",
-        "Name": "Nocturnal ○",
+        "Name": "Night Races ○",
         "HintLevel": null
       },
       {
         "SkillId": "202282",
-        "Name": "At Full Speed",
+        "Name": "Full Tilt",
         "HintLevel": null
       },
       {
         "SkillId": "202302",
-        "Name": "Dust Bath ○",
+        "Name": "Down in the Dirt ○",
         "HintLevel": null
       },
       {
         "SkillId": "202343",
-        "Name": "Mud Play ○",
+        "Name": "Muddy ○",
         "HintLevel": null
       },
       {
         "SkillId": "202362",
-        "Name": "Pressing Feeling",
+        "Name": "Oppression",
         "HintLevel": null
       },
       {
@@ -18813,7 +18813,7 @@
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -19234,12 +19234,12 @@
       },
       {
         "SkillId": "202552",
-        "Name": "Rapid",
+        "Name": "High Speed",
         "HintLevel": null
       },
       {
         "SkillId": "202662",
-        "Name": "Rising Passion",
+        "Name": "Rising Heat",
         "HintLevel": null
       },
       {
@@ -19678,12 +19678,12 @@
       },
       {
         "SkillId": "202552",
-        "Name": "Rapid",
+        "Name": "High Speed",
         "HintLevel": null
       },
       {
         "SkillId": "202662",
-        "Name": "Rising Passion",
+        "Name": "Rising Heat",
         "HintLevel": null
       },
       {
@@ -20091,12 +20091,12 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
         "SkillId": "202482",
-        "Name": "True Worth",
+        "Name": "My True Strength",
         "HintLevel": null
       },
       {
@@ -20300,7 +20300,7 @@
       },
       {
         "SkillId": "202522",
-        "Name": "Mold Breaker",
+        "Name": "Break the Mold",
         "HintLevel": null
       },
       {
@@ -20512,17 +20512,17 @@
       },
       {
         "SkillId": "202562",
-        "Name": "Lock On",
+        "Name": "Locked On",
         "HintLevel": null
       },
       {
         "SkillId": "202592",
-        "Name": "Great Haste",
+        "Name": "Hurry Up!",
         "HintLevel": null
       },
       {
         "SkillId": "202622",
-        "Name": "On the Move",
+        "Name": "Start the Charge",
         "HintLevel": null
       },
       {
@@ -20726,7 +20726,7 @@
       },
       {
         "SkillId": "202472",
-        "Name": "Tooth and Tail",
+        "Name": "Latch On",
         "HintLevel": null
       },
       {
@@ -21104,22 +21104,22 @@
       },
       {
         "SkillId": "202252",
-        "Name": "Exchange Races ○",
+        "Name": "Collaborative Graded Races ○",
         "HintLevel": null
       },
       {
         "SkillId": "202262",
-        "Name": "Promising Omen",
+        "Name": "Sunny Sign",
         "HintLevel": null
       },
       {
         "SkillId": "202302",
-        "Name": "Dust Bath ○",
+        "Name": "Down in the Dirt ○",
         "HintLevel": null
       },
       {
         "SkillId": "202332",
-        "Name": "Skillful Step",
+        "Name": "Solid Steps",
         "HintLevel": null
       },
       {
@@ -21323,7 +21323,7 @@
       },
       {
         "SkillId": "202412",
-        "Name": "Ambitions",
+        "Name": "Aspire",
         "HintLevel": null
       },
       {
@@ -21537,7 +21537,7 @@
       },
       {
         "SkillId": "202532",
-        "Name": "Graceful Step",
+        "Name": "Graceful Gait",
         "HintLevel": null
       },
       {
@@ -21963,7 +21963,7 @@
       },
       {
         "SkillId": "202472",
-        "Name": "Tooth and Tail",
+        "Name": "Latch On",
         "HintLevel": null
       },
       {
@@ -22170,7 +22170,7 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
@@ -22430,12 +22430,12 @@
       },
       {
         "SkillId": "202472",
-        "Name": "Tooth and Tail",
+        "Name": "Latch On",
         "HintLevel": null
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -22644,7 +22644,7 @@
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -23103,17 +23103,17 @@
       },
       {
         "SkillId": "202452",
-        "Name": "Razor-Sharp Stride",
+        "Name": "Pedal to the Metal",
         "HintLevel": null
       },
       {
         "SkillId": "202612",
-        "Name": "Overflowing Passion",
+        "Name": "Unrestrained Passion",
         "HintLevel": null
       },
       {
         "SkillId": "202622",
-        "Name": "On the Move",
+        "Name": "Start the Charge",
         "HintLevel": null
       },
       {
@@ -23544,7 +23544,7 @@
       },
       {
         "SkillId": "202702",
-        "Name": "Inquisitive Mind",
+        "Name": "Adventurer",
         "HintLevel": null
       },
       {
@@ -23763,7 +23763,7 @@
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -23952,12 +23952,12 @@
       },
       {
         "SkillId": "202552",
-        "Name": "Rapid",
+        "Name": "High Speed",
         "HintLevel": null
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -24161,7 +24161,7 @@
       },
       {
         "SkillId": "202332",
-        "Name": "Skillful Step",
+        "Name": "Solid Steps",
         "HintLevel": null
       },
       {
@@ -24390,7 +24390,7 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
@@ -25015,7 +25015,7 @@
       },
       {
         "SkillId": "202432",
-        "Name": "Firm Step",
+        "Name": "Steady Gait",
         "HintLevel": null
       },
       {
@@ -25219,7 +25219,7 @@
       },
       {
         "SkillId": "202582",
-        "Name": "Stay the Course",
+        "Name": "Undistracted",
         "HintLevel": null
       },
       {
@@ -25469,7 +25469,7 @@
       },
       {
         "SkillId": "202532",
-        "Name": "Graceful Step",
+        "Name": "Graceful Gait",
         "HintLevel": null
       },
       {
@@ -25917,7 +25917,7 @@
       },
       {
         "SkillId": "202472",
-        "Name": "Tooth and Tail",
+        "Name": "Latch On",
         "HintLevel": null
       },
       {
@@ -26332,12 +26332,12 @@
       },
       {
         "SkillId": "202382",
-        "Name": "Breakthrough Plan",
+        "Name": "Breakin' Out",
         "HintLevel": null
       },
       {
         "SkillId": "202402",
-        "Name": "Mighty Leap",
+        "Name": "Leap Forward",
         "HintLevel": null
       },
       {
@@ -26564,7 +26564,7 @@
       },
       {
         "SkillId": "202532",
-        "Name": "Graceful Step",
+        "Name": "Graceful Gait",
         "HintLevel": null
       },
       {
@@ -26931,17 +26931,17 @@
       },
       {
         "SkillId": "202192",
-        "Name": "Faultless",
+        "Name": "All Set",
         "HintLevel": null
       },
       {
         "SkillId": "202482",
-        "Name": "True Worth",
+        "Name": "My True Strength",
         "HintLevel": null
       },
       {
         "SkillId": "202662",
-        "Name": "Rising Passion",
+        "Name": "Rising Heat",
         "HintLevel": null
       },
       {
@@ -27193,7 +27193,7 @@
       },
       {
         "SkillId": "202552",
-        "Name": "Rapid",
+        "Name": "High Speed",
         "HintLevel": null
       },
       {
@@ -27593,12 +27593,12 @@
       },
       {
         "SkillId": "202452",
-        "Name": "Razor-Sharp Stride",
+        "Name": "Pedal to the Metal",
         "HintLevel": null
       },
       {
         "SkillId": "202642",
-        "Name": "From the First Step",
+        "Name": "First Step",
         "HintLevel": null
       },
       {
@@ -27975,17 +27975,17 @@
       },
       {
         "SkillId": "202262",
-        "Name": "Promising Omen",
+        "Name": "Sunny Sign",
         "HintLevel": null
       },
       {
         "SkillId": "202302",
-        "Name": "Dust Bath ○",
+        "Name": "Down in the Dirt ○",
         "HintLevel": null
       },
       {
         "SkillId": "202332",
-        "Name": "Skillful Step",
+        "Name": "Solid Steps",
         "HintLevel": null
       },
       {
@@ -35380,7 +35380,7 @@
     "SupportName": "El Condor Pasa (SR)",
     "SupportNameJP": "エルコンドルパサー (SR)",
     "SupportRarity": "SR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Speed",
     "SupportEffects": [
       {
@@ -36245,7 +36245,7 @@
       },
       {
         "SkillId": "202582",
-        "Name": "Stay the Course",
+        "Name": "Undistracted",
         "HintLevel": null
       },
       {
@@ -39539,7 +39539,7 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
@@ -40670,12 +40670,12 @@
       },
       {
         "SkillId": "202452",
-        "Name": "Razor-Sharp Stride",
+        "Name": "Pedal to the Metal",
         "HintLevel": null
       },
       {
         "SkillId": "202492",
-        "Name": "Witful",
+        "Name": "Sharp Steps",
         "HintLevel": null
       },
       {
@@ -41174,7 +41174,7 @@
       },
       {
         "SkillId": "202422",
-        "Name": "Devil-May-Care",
+        "Name": "Scramble",
         "HintLevel": null
       },
       {
@@ -41440,7 +41440,7 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
@@ -41642,7 +41642,7 @@
       },
       {
         "SkillId": "202412",
-        "Name": "Ambitions",
+        "Name": "Aspire",
         "HintLevel": null
       },
       {
@@ -41942,12 +41942,12 @@
       },
       {
         "SkillId": "202382",
-        "Name": "Breakthrough Plan",
+        "Name": "Breakin' Out",
         "HintLevel": null
       },
       {
         "SkillId": "202492",
-        "Name": "Witful",
+        "Name": "Sharp Steps",
         "HintLevel": null
       },
       {
@@ -42167,7 +42167,7 @@
       },
       {
         "SkillId": "202532",
-        "Name": "Graceful Step",
+        "Name": "Graceful Gait",
         "HintLevel": null
       },
       {
@@ -42423,7 +42423,7 @@
       },
       {
         "SkillId": "202502",
-        "Name": "Rushing in Blind",
+        "Name": "No Looking Back",
         "HintLevel": null
       },
       {
@@ -42651,22 +42651,22 @@
       },
       {
         "SkillId": "202212",
-        "Name": "Funabashi Racetrack ○",
+        "Name": "Funabashi Racecourse ○",
         "HintLevel": null
       },
       {
         "SkillId": "202222",
-        "Name": "Morioka Racetrack ○",
+        "Name": "Morioka Racecourse ○",
         "HintLevel": null
       },
       {
         "SkillId": "202252",
-        "Name": "Exchange Races ○",
+        "Name": "Collaborative Graded Races ○",
         "HintLevel": null
       },
       {
         "SkillId": "202302",
-        "Name": "Dust Bath ○",
+        "Name": "Down in the Dirt ○",
         "HintLevel": null
       },
       {
@@ -43142,7 +43142,7 @@
       },
       {
         "SkillId": "202462",
-        "Name": "Steadfast",
+        "Name": "Firm Resolve",
         "HintLevel": null
       },
       {
@@ -44804,7 +44804,7 @@
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -45029,7 +45029,7 @@
       },
       {
         "SkillId": "202412",
-        "Name": "Ambitions",
+        "Name": "Aspire",
         "HintLevel": null
       },
       {
@@ -45267,7 +45267,7 @@
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -45469,7 +45469,7 @@
       },
       {
         "SkillId": "202382",
-        "Name": "Breakthrough Plan",
+        "Name": "Breakin' Out",
         "HintLevel": null
       },
       {
@@ -45748,7 +45748,7 @@
       },
       {
         "SkillId": "202472",
-        "Name": "Tooth and Tail",
+        "Name": "Latch On",
         "HintLevel": null
       },
       {
@@ -46511,12 +46511,12 @@
       },
       {
         "SkillId": "202422",
-        "Name": "Devil-May-Care",
+        "Name": "Scramble",
         "HintLevel": null
       },
       {
         "SkillId": "202662",
-        "Name": "Rising Passion",
+        "Name": "Rising Heat",
         "HintLevel": null
       },
       {
@@ -46767,7 +46767,7 @@
       },
       {
         "SkillId": "202502",
-        "Name": "Rushing in Blind",
+        "Name": "No Looking Back",
         "HintLevel": null
       },
       {
@@ -46995,7 +46995,7 @@
       },
       {
         "SkillId": "202412",
-        "Name": "Ambitions",
+        "Name": "Aspire",
         "HintLevel": null
       },
       {
@@ -47238,7 +47238,7 @@
       },
       {
         "SkillId": "202532",
-        "Name": "Graceful Step",
+        "Name": "Graceful Gait",
         "HintLevel": null
       },
       {
@@ -47512,7 +47512,7 @@
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -47722,7 +47722,7 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
@@ -48492,7 +48492,7 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
@@ -48735,7 +48735,7 @@
       },
       {
         "SkillId": "202472",
-        "Name": "Tooth and Tail",
+        "Name": "Latch On",
         "HintLevel": null
       },
       {
@@ -48996,7 +48996,7 @@
       },
       {
         "SkillId": "202402",
-        "Name": "Mighty Leap",
+        "Name": "Leap Forward",
         "HintLevel": null
       },
       {
@@ -49229,7 +49229,7 @@
       },
       {
         "SkillId": "202532",
-        "Name": "Graceful Step",
+        "Name": "Graceful Gait",
         "HintLevel": null
       },
       {
@@ -49472,12 +49472,12 @@
       },
       {
         "SkillId": "202302",
-        "Name": "Dust Bath ○",
+        "Name": "Down in the Dirt ○",
         "HintLevel": null
       },
       {
         "SkillId": "202312",
-        "Name": "Full of Zeal",
+        "Name": "Got the Spirit!",
         "HintLevel": null
       },
       {
@@ -49725,7 +49725,7 @@
       },
       {
         "SkillId": "202642",
-        "Name": "From the First Step",
+        "Name": "First Step",
         "HintLevel": null
       },
       {
@@ -49991,7 +49991,7 @@
       },
       {
         "SkillId": "202662",
-        "Name": "Rising Passion",
+        "Name": "Rising Heat",
         "HintLevel": null
       },
       {
@@ -50257,12 +50257,12 @@
       },
       {
         "SkillId": "202452",
-        "Name": "Razor-Sharp Stride",
+        "Name": "Pedal to the Metal",
         "HintLevel": null
       },
       {
         "SkillId": "202642",
-        "Name": "From the First Step",
+        "Name": "First Step",
         "HintLevel": null
       },
       {
@@ -50513,7 +50513,7 @@
       },
       {
         "SkillId": "202672",
-        "Name": "High Hopes",
+        "Name": "Beating Heart",
         "HintLevel": null
       },
       {
@@ -50989,7 +50989,7 @@
       },
       {
         "SkillId": "202492",
-        "Name": "Witful",
+        "Name": "Sharp Steps",
         "HintLevel": null
       },
       {
@@ -59566,22 +59566,22 @@
       },
       {
         "SkillId": "202412",
-        "Name": "Ambitions",
+        "Name": "Aspire",
         "HintLevel": null
       },
       {
         "SkillId": "202432",
-        "Name": "Firm Step",
+        "Name": "Steady Gait",
         "HintLevel": null
       },
       {
         "SkillId": "202472",
-        "Name": "Tooth and Tail",
+        "Name": "Latch On",
         "HintLevel": null
       },
       {
         "SkillId": "202522",
-        "Name": "Mold Breaker",
+        "Name": "Break the Mold",
         "HintLevel": null
       },
       {
@@ -65323,7 +65323,7 @@
     "SupportName": "The Throne's Assemblage (SSR)",
     "SupportNameJP": "玉座に集いし者たち (SSR)",
     "SupportRarity": "SSR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Group",
     "SupportEffects": [
       {
@@ -73164,7 +73164,7 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
@@ -73907,7 +73907,7 @@
     "SupportName": "Special Week (SSR)",
     "SupportNameJP": "スペシャルウィーク (SSR)",
     "SupportRarity": "SSR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Guts",
     "SupportEffects": [
       {
@@ -75873,7 +75873,7 @@
       },
       {
         "SkillId": "202392",
-        "Name": "Frantic State",
+        "Name": "Mad Dash",
         "HintLevel": null
       },
       {
@@ -76148,7 +76148,7 @@
       },
       {
         "SkillId": "202192",
-        "Name": "Faultless",
+        "Name": "All Set",
         "HintLevel": null
       },
       {
@@ -76825,7 +76825,7 @@
       },
       {
         "SkillId": "202392",
-        "Name": "Frantic State",
+        "Name": "Mad Dash",
         "HintLevel": null
       },
       {
@@ -77047,27 +77047,27 @@
       },
       {
         "SkillId": "202282",
-        "Name": "At Full Speed",
+        "Name": "Full Tilt",
         "HintLevel": null
       },
       {
         "SkillId": "202302",
-        "Name": "Dust Bath ○",
+        "Name": "Down in the Dirt ○",
         "HintLevel": null
       },
       {
         "SkillId": "202312",
-        "Name": "Full of Zeal",
+        "Name": "Got the Spirit!",
         "HintLevel": null
       },
       {
         "SkillId": "202343",
-        "Name": "Mud Play ○",
+        "Name": "Muddy ○",
         "HintLevel": null
       },
       {
         "SkillId": "202362",
-        "Name": "Pressing Feeling",
+        "Name": "Oppression",
         "HintLevel": null
       },
       {
@@ -77327,7 +77327,7 @@
       },
       {
         "SkillId": "202422",
-        "Name": "Devil-May-Care",
+        "Name": "Scramble",
         "HintLevel": null
       },
       {
@@ -78477,22 +78477,22 @@
       },
       {
         "SkillId": "202192",
-        "Name": "Faultless",
+        "Name": "All Set",
         "HintLevel": null
       },
       {
         "SkillId": "202432",
-        "Name": "Firm Step",
+        "Name": "Steady Gait",
         "HintLevel": null
       },
       {
         "SkillId": "202472",
-        "Name": "Tooth and Tail",
+        "Name": "Latch On",
         "HintLevel": null
       },
       {
         "SkillId": "202482",
-        "Name": "True Worth",
+        "Name": "My True Strength",
         "HintLevel": null
       },
       {
@@ -78984,7 +78984,7 @@
       },
       {
         "SkillId": "202422",
-        "Name": "Devil-May-Care",
+        "Name": "Scramble",
         "HintLevel": null
       },
       {
@@ -79262,7 +79262,7 @@
       },
       {
         "SkillId": "202412",
-        "Name": "Ambitions",
+        "Name": "Aspire",
         "HintLevel": null
       },
       {
@@ -79818,12 +79818,12 @@
       },
       {
         "SkillId": "202382",
-        "Name": "Breakthrough Plan",
+        "Name": "Breakin' Out",
         "HintLevel": null
       },
       {
         "SkillId": "202492",
-        "Name": "Witful",
+        "Name": "Sharp Steps",
         "HintLevel": null
       },
       {
@@ -80040,7 +80040,7 @@
       },
       {
         "SkillId": "202192",
-        "Name": "Faultless",
+        "Name": "All Set",
         "HintLevel": null
       },
       {
@@ -80285,7 +80285,7 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
@@ -80563,7 +80563,7 @@
       },
       {
         "SkillId": "202422",
-        "Name": "Devil-May-Care",
+        "Name": "Scramble",
         "HintLevel": null
       },
       {
@@ -80795,7 +80795,7 @@
       },
       {
         "SkillId": "202402",
-        "Name": "Mighty Leap",
+        "Name": "Leap Forward",
         "HintLevel": null
       },
       {
@@ -81290,12 +81290,12 @@
       },
       {
         "SkillId": "202432",
-        "Name": "Firm Step",
+        "Name": "Steady Gait",
         "HintLevel": null
       },
       {
         "SkillId": "202532",
-        "Name": "Graceful Step",
+        "Name": "Graceful Gait",
         "HintLevel": null
       },
       {
@@ -81522,17 +81522,17 @@
       },
       {
         "SkillId": "202412",
-        "Name": "Ambitions",
+        "Name": "Aspire",
         "HintLevel": null
       },
       {
         "SkillId": "202432",
-        "Name": "Firm Step",
+        "Name": "Steady Gait",
         "HintLevel": null
       },
       {
         "SkillId": "202462",
-        "Name": "Steadfast",
+        "Name": "Firm Resolve",
         "HintLevel": null
       },
       {
@@ -82471,7 +82471,7 @@
       },
       {
         "SkillId": "202582",
-        "Name": "Stay the Course",
+        "Name": "Undistracted",
         "HintLevel": null
       },
       {
@@ -82685,7 +82685,7 @@
       },
       {
         "SkillId": "202432",
-        "Name": "Firm Step",
+        "Name": "Steady Gait",
         "HintLevel": null
       },
       {
@@ -83167,17 +83167,17 @@
       },
       {
         "SkillId": "202592",
-        "Name": "Great Haste",
+        "Name": "Hurry Up!",
         "HintLevel": null
       },
       {
         "SkillId": "202612",
-        "Name": "Overflowing Passion",
+        "Name": "Unrestrained Passion",
         "HintLevel": null
       },
       {
         "SkillId": "202622",
-        "Name": "On the Move",
+        "Name": "Start the Charge",
         "HintLevel": null
       },
       {
@@ -83865,7 +83865,7 @@
       },
       {
         "SkillId": "202432",
-        "Name": "Firm Step",
+        "Name": "Steady Gait",
         "HintLevel": null
       },
       {
@@ -84123,12 +84123,12 @@
       },
       {
         "SkillId": "202492",
-        "Name": "Witful",
+        "Name": "Sharp Steps",
         "HintLevel": null
       },
       {
         "SkillId": "202662",
-        "Name": "Rising Passion",
+        "Name": "Rising Heat",
         "HintLevel": null
       },
       {
@@ -84393,7 +84393,7 @@
       },
       {
         "SkillId": "202462",
-        "Name": "Steadfast",
+        "Name": "Firm Resolve",
         "HintLevel": null
       },
       {
@@ -85174,7 +85174,7 @@
       },
       {
         "SkillId": "202432",
-        "Name": "Firm Step",
+        "Name": "Steady Gait",
         "HintLevel": null
       },
       {
@@ -85465,12 +85465,12 @@
       },
       {
         "SkillId": "202482",
-        "Name": "True Worth",
+        "Name": "My True Strength",
         "HintLevel": null
       },
       {
         "SkillId": "202562",
-        "Name": "Lock On",
+        "Name": "Locked On",
         "HintLevel": null
       },
       {
@@ -85723,17 +85723,17 @@
       },
       {
         "SkillId": "202402",
-        "Name": "Mighty Leap",
+        "Name": "Leap Forward",
         "HintLevel": null
       },
       {
         "SkillId": "202502",
-        "Name": "Rushing in Blind",
+        "Name": "No Looking Back",
         "HintLevel": null
       },
       {
         "SkillId": "202672",
-        "Name": "High Hopes",
+        "Name": "Beating Heart",
         "HintLevel": null
       },
       {
@@ -85998,12 +85998,12 @@
       },
       {
         "SkillId": "202392",
-        "Name": "Frantic State",
+        "Name": "Mad Dash",
         "HintLevel": null
       },
       {
         "SkillId": "202682",
-        "Name": "Up the Vibes",
+        "Name": "Pop Off!",
         "HintLevel": null
       },
       {
@@ -86560,32 +86560,32 @@
       },
       {
         "SkillId": "202212",
-        "Name": "Funabashi Racetrack ○",
+        "Name": "Funabashi Racecourse ○",
         "HintLevel": null
       },
       {
         "SkillId": "202232",
-        "Name": "Nocturnal ○",
+        "Name": "Night Races ○",
         "HintLevel": null
       },
       {
         "SkillId": "202282",
-        "Name": "At Full Speed",
+        "Name": "Full Tilt",
         "HintLevel": null
       },
       {
         "SkillId": "202302",
-        "Name": "Dust Bath ○",
+        "Name": "Down in the Dirt ○",
         "HintLevel": null
       },
       {
         "SkillId": "202343",
-        "Name": "Mud Play ○",
+        "Name": "Muddy ○",
         "HintLevel": null
       },
       {
         "SkillId": "202362",
-        "Name": "Pressing Feeling",
+        "Name": "Oppression",
         "HintLevel": null
       },
       {
@@ -86820,22 +86820,22 @@
       },
       {
         "SkillId": "202422",
-        "Name": "Devil-May-Care",
+        "Name": "Scramble",
         "HintLevel": null
       },
       {
         "SkillId": "202522",
-        "Name": "Mold Breaker",
+        "Name": "Break the Mold",
         "HintLevel": null
       },
       {
         "SkillId": "202562",
-        "Name": "Lock On",
+        "Name": "Locked On",
         "HintLevel": null
       },
       {
         "SkillId": "202592",
-        "Name": "Great Haste",
+        "Name": "Hurry Up!",
         "HintLevel": null
       },
       {
@@ -87067,12 +87067,12 @@
       },
       {
         "SkillId": "202612",
-        "Name": "Overflowing Passion",
+        "Name": "Unrestrained Passion",
         "HintLevel": null
       },
       {
         "SkillId": "202622",
-        "Name": "On the Move",
+        "Name": "Start the Charge",
         "HintLevel": null
       },
       {
@@ -87309,7 +87309,7 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
@@ -87781,7 +87781,7 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
@@ -88171,12 +88171,12 @@
       },
       {
         "SkillId": "202442",
-        "Name": "Gambling Spirit",
+        "Name": "Risk-Taker",
         "HintLevel": null
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -89094,7 +89094,7 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
@@ -89558,12 +89558,12 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
         "SkillId": "202472",
-        "Name": "Tooth and Tail",
+        "Name": "Latch On",
         "HintLevel": null
       },
       {
@@ -90296,7 +90296,7 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
@@ -90832,12 +90832,12 @@
       },
       {
         "SkillId": "202402",
-        "Name": "Mighty Leap",
+        "Name": "Leap Forward",
         "HintLevel": null
       },
       {
         "SkillId": "202612",
-        "Name": "Overflowing Passion",
+        "Name": "Unrestrained Passion",
         "HintLevel": null
       },
       {
@@ -91092,12 +91092,12 @@
       },
       {
         "SkillId": "202432",
-        "Name": "Firm Step",
+        "Name": "Steady Gait",
         "HintLevel": null
       },
       {
         "SkillId": "202532",
-        "Name": "Graceful Step",
+        "Name": "Graceful Gait",
         "HintLevel": null
       },
       {
@@ -91571,7 +91571,7 @@
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -91816,12 +91816,12 @@
       },
       {
         "SkillId": "202552",
-        "Name": "Rapid",
+        "Name": "High Speed",
         "HintLevel": null
       },
       {
         "SkillId": "202662",
-        "Name": "Rising Passion",
+        "Name": "Rising Heat",
         "HintLevel": null
       },
       {
@@ -92112,12 +92112,12 @@
       },
       {
         "SkillId": "202612",
-        "Name": "Overflowing Passion",
+        "Name": "Unrestrained Passion",
         "HintLevel": null
       },
       {
         "SkillId": "202622",
-        "Name": "On the Move",
+        "Name": "Start the Charge",
         "HintLevel": null
       },
       {
@@ -92558,12 +92558,12 @@
       },
       {
         "SkillId": "202392",
-        "Name": "Frantic State",
+        "Name": "Mad Dash",
         "HintLevel": null
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -92806,17 +92806,17 @@
       },
       {
         "SkillId": "202262",
-        "Name": "Promising Omen",
+        "Name": "Sunny Sign",
         "HintLevel": null
       },
       {
         "SkillId": "202282",
-        "Name": "At Full Speed",
+        "Name": "Full Tilt",
         "HintLevel": null
       },
       {
         "SkillId": "202312",
-        "Name": "Full of Zeal",
+        "Name": "Got the Spirit!",
         "HintLevel": null
       },
       {
@@ -93102,12 +93102,12 @@
       },
       {
         "SkillId": "202612",
-        "Name": "Overflowing Passion",
+        "Name": "Unrestrained Passion",
         "HintLevel": null
       },
       {
         "SkillId": "202622",
-        "Name": "On the Move",
+        "Name": "Start the Charge",
         "HintLevel": null
       },
       {
@@ -93785,7 +93785,7 @@
       },
       {
         "SkillId": "202532",
-        "Name": "Graceful Step",
+        "Name": "Graceful Gait",
         "HintLevel": null
       },
       {
@@ -94007,12 +94007,12 @@
       },
       {
         "SkillId": "202552",
-        "Name": "Rapid",
+        "Name": "High Speed",
         "HintLevel": null
       },
       {
         "SkillId": "202662",
-        "Name": "Rising Passion",
+        "Name": "Rising Heat",
         "HintLevel": null
       },
       {
@@ -95039,7 +95039,7 @@
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -95271,12 +95271,12 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
         "SkillId": "202482",
-        "Name": "True Worth",
+        "Name": "My True Strength",
         "HintLevel": null
       },
       {
@@ -96044,12 +96044,12 @@
       },
       {
         "SkillId": "202502",
-        "Name": "Rushing in Blind",
+        "Name": "No Looking Back",
         "HintLevel": null
       },
       {
         "SkillId": "202532",
-        "Name": "Graceful Step",
+        "Name": "Graceful Gait",
         "HintLevel": null
       },
       {
@@ -96263,7 +96263,7 @@
       },
       {
         "SkillId": "202382",
-        "Name": "Breakthrough Plan",
+        "Name": "Breakin' Out",
         "HintLevel": null
       },
       {
@@ -96531,7 +96531,7 @@
       },
       {
         "SkillId": "202522",
-        "Name": "Mold Breaker",
+        "Name": "Break the Mold",
         "HintLevel": null
       },
       {
@@ -96771,17 +96771,17 @@
       },
       {
         "SkillId": "202562",
-        "Name": "Lock On",
+        "Name": "Locked On",
         "HintLevel": null
       },
       {
         "SkillId": "202592",
-        "Name": "Great Haste",
+        "Name": "Hurry Up!",
         "HintLevel": null
       },
       {
         "SkillId": "202622",
-        "Name": "On the Move",
+        "Name": "Start the Charge",
         "HintLevel": null
       },
       {
@@ -97026,12 +97026,12 @@
       },
       {
         "SkillId": "202472",
-        "Name": "Tooth and Tail",
+        "Name": "Latch On",
         "HintLevel": null
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -97302,7 +97302,7 @@
       },
       {
         "SkillId": "202382",
-        "Name": "Breakthrough Plan",
+        "Name": "Breakin' Out",
         "HintLevel": null
       },
       {
@@ -97567,12 +97567,12 @@
       },
       {
         "SkillId": "202402",
-        "Name": "Mighty Leap",
+        "Name": "Leap Forward",
         "HintLevel": null
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -97804,12 +97804,12 @@
       },
       {
         "SkillId": "202522",
-        "Name": "Mold Breaker",
+        "Name": "Break the Mold",
         "HintLevel": null
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -98095,7 +98095,7 @@
       },
       {
         "SkillId": "202462",
-        "Name": "Steadfast",
+        "Name": "Firm Resolve",
         "HintLevel": null
       },
       {
@@ -98309,7 +98309,7 @@
       },
       {
         "SkillId": "202532",
-        "Name": "Graceful Step",
+        "Name": "Graceful Gait",
         "HintLevel": null
       },
       {
@@ -98549,7 +98549,7 @@
       },
       {
         "SkillId": "202622",
-        "Name": "On the Move",
+        "Name": "Start the Charge",
         "HintLevel": null
       },
       {
@@ -99577,7 +99577,7 @@
       },
       {
         "SkillId": "202462",
-        "Name": "Steadfast",
+        "Name": "Firm Resolve",
         "HintLevel": null
       },
       {
@@ -99861,27 +99861,27 @@
       },
       {
         "SkillId": "202252",
-        "Name": "Exchange Races ○",
+        "Name": "Collaborative Graded Races ○",
         "HintLevel": null
       },
       {
         "SkillId": "202262",
-        "Name": "Promising Omen",
+        "Name": "Sunny Sign",
         "HintLevel": null
       },
       {
         "SkillId": "202302",
-        "Name": "Dust Bath ○",
+        "Name": "Down in the Dirt ○",
         "HintLevel": null
       },
       {
         "SkillId": "202332",
-        "Name": "Skillful Step",
+        "Name": "Solid Steps",
         "HintLevel": null
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -100134,12 +100134,12 @@
       },
       {
         "SkillId": "202252",
-        "Name": "Exchange Races ○",
+        "Name": "Collaborative Graded Races ○",
         "HintLevel": null
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
@@ -100625,12 +100625,12 @@
       },
       {
         "SkillId": "202532",
-        "Name": "Graceful Step",
+        "Name": "Graceful Gait",
         "HintLevel": null
       },
       {
         "SkillId": "202702",
-        "Name": "Inquisitive Mind",
+        "Name": "Adventurer",
         "HintLevel": null
       },
       {
@@ -101173,7 +101173,7 @@
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -101423,7 +101423,7 @@
       },
       {
         "SkillId": "202472",
-        "Name": "Tooth and Tail",
+        "Name": "Latch On",
         "HintLevel": null
       },
       {
@@ -101712,12 +101712,12 @@
       },
       {
         "SkillId": "202502",
-        "Name": "Rushing in Blind",
+        "Name": "No Looking Back",
         "HintLevel": null
       },
       {
         "SkillId": "202672",
-        "Name": "High Hopes",
+        "Name": "Beating Heart",
         "HintLevel": null
       },
       {
@@ -101993,12 +101993,12 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
         "SkillId": "202472",
-        "Name": "Tooth and Tail",
+        "Name": "Latch On",
         "HintLevel": null
       },
       {
@@ -102503,12 +102503,12 @@
       },
       {
         "SkillId": "202192",
-        "Name": "Faultless",
+        "Name": "All Set",
         "HintLevel": null
       },
       {
         "SkillId": "202472",
-        "Name": "Tooth and Tail",
+        "Name": "Latch On",
         "HintLevel": null
       },
       {
@@ -102774,22 +102774,22 @@
       },
       {
         "SkillId": "202252",
-        "Name": "Exchange Races ○",
+        "Name": "Collaborative Graded Races ○",
         "HintLevel": null
       },
       {
         "SkillId": "202262",
-        "Name": "Promising Omen",
+        "Name": "Sunny Sign",
         "HintLevel": null
       },
       {
         "SkillId": "202302",
-        "Name": "Dust Bath ○",
+        "Name": "Down in the Dirt ○",
         "HintLevel": null
       },
       {
         "SkillId": "202332",
-        "Name": "Skillful Step",
+        "Name": "Solid Steps",
         "HintLevel": null
       },
       {
@@ -103353,12 +103353,12 @@
       },
       {
         "SkillId": "202472",
-        "Name": "Tooth and Tail",
+        "Name": "Latch On",
         "HintLevel": null
       },
       {
         "SkillId": "202482",
-        "Name": "True Worth",
+        "Name": "My True Strength",
         "HintLevel": null
       },
       {
@@ -103613,7 +103613,7 @@
       },
       {
         "SkillId": "202642",
-        "Name": "From the First Step",
+        "Name": "First Step",
         "HintLevel": null
       },
       {
@@ -103876,7 +103876,7 @@
       },
       {
         "SkillId": "202522",
-        "Name": "Mold Breaker",
+        "Name": "Break the Mold",
         "HintLevel": null
       },
       {
@@ -104417,7 +104417,7 @@
       },
       {
         "SkillId": "202452",
-        "Name": "Razor-Sharp Stride",
+        "Name": "Pedal to the Metal",
         "HintLevel": null
       },
       {
@@ -104427,17 +104427,17 @@
       },
       {
         "SkillId": "202592",
-        "Name": "Great Haste",
+        "Name": "Hurry Up!",
         "HintLevel": null
       },
       {
         "SkillId": "202612",
-        "Name": "Overflowing Passion",
+        "Name": "Unrestrained Passion",
         "HintLevel": null
       },
       {
         "SkillId": "202622",
-        "Name": "On the Move",
+        "Name": "Start the Charge",
         "HintLevel": null
       },
       {
@@ -104718,7 +104718,7 @@
       },
       {
         "SkillId": "202402",
-        "Name": "Mighty Leap",
+        "Name": "Leap Forward",
         "HintLevel": null
       },
       {
@@ -105027,7 +105027,7 @@
       },
       {
         "SkillId": "202472",
-        "Name": "Tooth and Tail",
+        "Name": "Latch On",
         "HintLevel": null
       },
       {
@@ -105499,7 +105499,7 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
@@ -105805,7 +105805,7 @@
       },
       {
         "SkillId": "202552",
-        "Name": "Rapid",
+        "Name": "High Speed",
         "HintLevel": null
       },
       {
@@ -106045,12 +106045,12 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
         "SkillId": "202532",
-        "Name": "Graceful Step",
+        "Name": "Graceful Gait",
         "HintLevel": null
       },
       {
@@ -106570,7 +106570,7 @@
       },
       {
         "SkillId": "202402",
-        "Name": "Mighty Leap",
+        "Name": "Leap Forward",
         "HintLevel": null
       },
       {
@@ -107162,12 +107162,12 @@
       },
       {
         "SkillId": "202502",
-        "Name": "Rushing in Blind",
+        "Name": "No Looking Back",
         "HintLevel": null
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -108118,7 +108118,7 @@
       },
       {
         "SkillId": "202702",
-        "Name": "Inquisitive Mind",
+        "Name": "Adventurer",
         "HintLevel": null
       },
       {
@@ -108391,12 +108391,12 @@
       },
       {
         "SkillId": "202552",
-        "Name": "Rapid",
+        "Name": "High Speed",
         "HintLevel": null
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -108705,17 +108705,17 @@
       },
       {
         "SkillId": "202422",
-        "Name": "Devil-May-Care",
+        "Name": "Scramble",
         "HintLevel": null
       },
       {
         "SkillId": "202562",
-        "Name": "Lock On",
+        "Name": "Locked On",
         "HintLevel": null
       },
       {
         "SkillId": "202592",
-        "Name": "Great Haste",
+        "Name": "Hurry Up!",
         "HintLevel": null
       },
       {
@@ -108988,17 +108988,17 @@
       },
       {
         "SkillId": "202452",
-        "Name": "Razor-Sharp Stride",
+        "Name": "Pedal to the Metal",
         "HintLevel": null
       },
       {
         "SkillId": "202612",
-        "Name": "Overflowing Passion",
+        "Name": "Unrestrained Passion",
         "HintLevel": null
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -109564,7 +109564,7 @@
       },
       {
         "SkillId": "202562",
-        "Name": "Lock On",
+        "Name": "Locked On",
         "HintLevel": null
       },
       {
@@ -109868,17 +109868,17 @@
       },
       {
         "SkillId": "202452",
-        "Name": "Razor-Sharp Stride",
+        "Name": "Pedal to the Metal",
         "HintLevel": null
       },
       {
         "SkillId": "202612",
-        "Name": "Overflowing Passion",
+        "Name": "Unrestrained Passion",
         "HintLevel": null
       },
       {
         "SkillId": "202622",
-        "Name": "On the Move",
+        "Name": "Start the Charge",
         "HintLevel": null
       },
       {
@@ -110159,7 +110159,7 @@
       },
       {
         "SkillId": "202332",
-        "Name": "Skillful Step",
+        "Name": "Solid Steps",
         "HintLevel": null
       },
       {
@@ -110460,7 +110460,7 @@
       },
       {
         "SkillId": "202532",
-        "Name": "Graceful Step",
+        "Name": "Graceful Gait",
         "HintLevel": null
       },
       {
@@ -110689,22 +110689,22 @@
       },
       {
         "SkillId": "202282",
-        "Name": "At Full Speed",
+        "Name": "Full Tilt",
         "HintLevel": null
       },
       {
         "SkillId": "202302",
-        "Name": "Dust Bath ○",
+        "Name": "Down in the Dirt ○",
         "HintLevel": null
       },
       {
         "SkillId": "202343",
-        "Name": "Mud Play ○",
+        "Name": "Muddy ○",
         "HintLevel": null
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -110972,7 +110972,7 @@
       },
       {
         "SkillId": "202692",
-        "Name": "Early Bird",
+        "Name": "Goin' First",
         "HintLevel": null
       },
       {
@@ -111265,12 +111265,12 @@
       },
       {
         "SkillId": "202402",
-        "Name": "Mighty Leap",
+        "Name": "Leap Forward",
         "HintLevel": null
       },
       {
         "SkillId": "202672",
-        "Name": "High Hopes",
+        "Name": "Beating Heart",
         "HintLevel": null
       },
       {
@@ -111561,12 +111561,12 @@
       },
       {
         "SkillId": "202502",
-        "Name": "Rushing in Blind",
+        "Name": "No Looking Back",
         "HintLevel": null
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -112092,12 +112092,12 @@
       },
       {
         "SkillId": "202522",
-        "Name": "Mold Breaker",
+        "Name": "Break the Mold",
         "HintLevel": null
       },
       {
         "SkillId": "202552",
-        "Name": "Rapid",
+        "Name": "High Speed",
         "HintLevel": null
       },
       {
@@ -112844,7 +112844,7 @@
       },
       {
         "SkillId": "202432",
-        "Name": "Firm Step",
+        "Name": "Steady Gait",
         "HintLevel": null
       },
       {
@@ -113094,7 +113094,7 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
@@ -113398,7 +113398,7 @@
       },
       {
         "SkillId": "202582",
-        "Name": "Stay the Course",
+        "Name": "Undistracted",
         "HintLevel": null
       },
       {
@@ -113694,7 +113694,7 @@
       },
       {
         "SkillId": "202382",
-        "Name": "Breakthrough Plan",
+        "Name": "Breakin' Out",
         "HintLevel": null
       },
       {
@@ -113946,12 +113946,12 @@
       },
       {
         "SkillId": "202642",
-        "Name": "From the First Step",
+        "Name": "First Step",
         "HintLevel": null
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -114227,7 +114227,7 @@
       },
       {
         "SkillId": "202532",
-        "Name": "Graceful Step",
+        "Name": "Graceful Gait",
         "HintLevel": null
       },
       {
@@ -114803,7 +114803,7 @@
       },
       {
         "SkillId": "202472",
-        "Name": "Tooth and Tail",
+        "Name": "Latch On",
         "HintLevel": null
       },
       {
@@ -115400,12 +115400,12 @@
       },
       {
         "SkillId": "202382",
-        "Name": "Breakthrough Plan",
+        "Name": "Breakin' Out",
         "HintLevel": null
       },
       {
         "SkillId": "202402",
-        "Name": "Mighty Leap",
+        "Name": "Leap Forward",
         "HintLevel": null
       },
       {
@@ -115938,7 +115938,7 @@
       },
       {
         "SkillId": "202402",
-        "Name": "Mighty Leap",
+        "Name": "Leap Forward",
         "HintLevel": null
       },
       {
@@ -116272,12 +116272,12 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
         "SkillId": "202672",
-        "Name": "High Hopes",
+        "Name": "Beating Heart",
         "HintLevel": null
       },
       {
@@ -116575,12 +116575,12 @@
       },
       {
         "SkillId": "202612",
-        "Name": "Overflowing Passion",
+        "Name": "Unrestrained Passion",
         "HintLevel": null
       },
       {
         "SkillId": "202642",
-        "Name": "From the First Step",
+        "Name": "First Step",
         "HintLevel": null
       },
       {
@@ -116812,7 +116812,7 @@
       },
       {
         "SkillId": "202612",
-        "Name": "Overflowing Passion",
+        "Name": "Unrestrained Passion",
         "HintLevel": null
       },
       {
@@ -117129,17 +117129,17 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
         "SkillId": "202472",
-        "Name": "Tooth and Tail",
+        "Name": "Latch On",
         "HintLevel": null
       },
       {
         "SkillId": "202482",
-        "Name": "True Worth",
+        "Name": "My True Strength",
         "HintLevel": null
       },
       {
@@ -117417,7 +117417,7 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
@@ -118199,7 +118199,7 @@
       },
       {
         "SkillId": "202562",
-        "Name": "Lock On",
+        "Name": "Locked On",
         "HintLevel": null
       },
       {
@@ -118482,17 +118482,17 @@
       },
       {
         "SkillId": "202192",
-        "Name": "Faultless",
+        "Name": "All Set",
         "HintLevel": null
       },
       {
         "SkillId": "202482",
-        "Name": "True Worth",
+        "Name": "My True Strength",
         "HintLevel": null
       },
       {
         "SkillId": "202662",
-        "Name": "Rising Passion",
+        "Name": "Rising Heat",
         "HintLevel": null
       },
       {
@@ -118734,17 +118734,17 @@
       },
       {
         "SkillId": "202382",
-        "Name": "Breakthrough Plan",
+        "Name": "Breakin' Out",
         "HintLevel": null
       },
       {
         "SkillId": "202552",
-        "Name": "Rapid",
+        "Name": "High Speed",
         "HintLevel": null
       },
       {
         "SkillId": "202662",
-        "Name": "Rising Passion",
+        "Name": "Rising Heat",
         "HintLevel": null
       },
       {
@@ -118999,17 +118999,17 @@
       },
       {
         "SkillId": "202422",
-        "Name": "Devil-May-Care",
+        "Name": "Scramble",
         "HintLevel": null
       },
       {
         "SkillId": "202592",
-        "Name": "Great Haste",
+        "Name": "Hurry Up!",
         "HintLevel": null
       },
       {
         "SkillId": "202662",
-        "Name": "Rising Passion",
+        "Name": "Rising Heat",
         "HintLevel": null
       },
       {
@@ -119297,12 +119297,12 @@
       },
       {
         "SkillId": "202472",
-        "Name": "Tooth and Tail",
+        "Name": "Latch On",
         "HintLevel": null
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -119572,7 +119572,7 @@
       },
       {
         "SkillId": "202702",
-        "Name": "Inquisitive Mind",
+        "Name": "Adventurer",
         "HintLevel": null
       },
       {
@@ -119821,17 +119821,17 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
         "SkillId": "202412",
-        "Name": "Ambitions",
+        "Name": "Aspire",
         "HintLevel": null
       },
       {
         "SkillId": "202472",
-        "Name": "Tooth and Tail",
+        "Name": "Latch On",
         "HintLevel": null
       },
       {
@@ -120117,12 +120117,12 @@
       },
       {
         "SkillId": "202402",
-        "Name": "Mighty Leap",
+        "Name": "Leap Forward",
         "HintLevel": null
       },
       {
         "SkillId": "202622",
-        "Name": "On the Move",
+        "Name": "Start the Charge",
         "HintLevel": null
       },
       {
@@ -120451,12 +120451,12 @@
       },
       {
         "SkillId": "202482",
-        "Name": "True Worth",
+        "Name": "My True Strength",
         "HintLevel": null
       },
       {
         "SkillId": "202682",
-        "Name": "Up the Vibes",
+        "Name": "Pop Off!",
         "HintLevel": null
       },
       {
@@ -120744,12 +120744,12 @@
       },
       {
         "SkillId": "202532",
-        "Name": "Graceful Step",
+        "Name": "Graceful Gait",
         "HintLevel": null
       },
       {
         "SkillId": "202552",
-        "Name": "Rapid",
+        "Name": "High Speed",
         "HintLevel": null
       },
       {
@@ -121356,7 +121356,7 @@
       },
       {
         "SkillId": "202552",
-        "Name": "Rapid",
+        "Name": "High Speed",
         "HintLevel": null
       },
       {
@@ -122080,17 +122080,17 @@
       },
       {
         "SkillId": "202262",
-        "Name": "Promising Omen",
+        "Name": "Sunny Sign",
         "HintLevel": null
       },
       {
         "SkillId": "202302",
-        "Name": "Dust Bath ○",
+        "Name": "Down in the Dirt ○",
         "HintLevel": null
       },
       {
         "SkillId": "202332",
-        "Name": "Skillful Step",
+        "Name": "Solid Steps",
         "HintLevel": null
       },
       {
@@ -122419,12 +122419,12 @@
       },
       {
         "SkillId": "202532",
-        "Name": "Graceful Step",
+        "Name": "Graceful Gait",
         "HintLevel": null
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -122766,12 +122766,12 @@
       },
       {
         "SkillId": "202532",
-        "Name": "Graceful Step",
+        "Name": "Graceful Gait",
         "HintLevel": null
       },
       {
         "SkillId": "202652",
-        "Name": "Self-Assured",
+        "Name": "Confident",
         "HintLevel": null
       },
       {
@@ -123051,7 +123051,7 @@
       },
       {
         "SkillId": "202372",
-        "Name": "Attack Stance",
+        "Name": "On the Attack",
         "HintLevel": null
       },
       {
@@ -123655,12 +123655,12 @@
       },
       {
         "SkillId": "202472",
-        "Name": "Tooth and Tail",
+        "Name": "Latch On",
         "HintLevel": null
       },
       {
         "SkillId": "202622",
-        "Name": "On the Move",
+        "Name": "Start the Charge",
         "HintLevel": null
       },
       {
@@ -123958,12 +123958,12 @@
       },
       {
         "SkillId": "202392",
-        "Name": "Frantic State",
+        "Name": "Mad Dash",
         "HintLevel": null
       },
       {
         "SkillId": "202692",
-        "Name": "Early Bird",
+        "Name": "Goin' First",
         "HintLevel": null
       },
       {
@@ -124215,7 +124215,7 @@
       },
       {
         "SkillId": "202412",
-        "Name": "Ambitions",
+        "Name": "Aspire",
         "HintLevel": null
       },
       {
@@ -124845,7 +124845,7 @@
       },
       {
         "SkillId": "202402",
-        "Name": "Mighty Leap",
+        "Name": "Leap Forward",
         "HintLevel": null
       },
       {
@@ -125156,7 +125156,7 @@
       },
       {
         "SkillId": "202562",
-        "Name": "Lock On",
+        "Name": "Locked On",
         "HintLevel": null
       },
       {
@@ -125431,12 +125431,12 @@
       },
       {
         "SkillId": "202452",
-        "Name": "Razor-Sharp Stride",
+        "Name": "Pedal to the Metal",
         "HintLevel": null
       },
       {
         "SkillId": "202662",
-        "Name": "Rising Passion",
+        "Name": "Rising Heat",
         "HintLevel": null
       },
       {
@@ -125470,5 +125470,497 @@
         "HintLevel": null
       }
     ]
+  },
+  {
+    "SupportSlug": "30304-meisho-doto",
+    "SupportId": "30304",
+    "SupportName": "Meisho Doto (SSR)",
+    "SupportNameJP": "メイショウドトウ (SSR)",
+    "SupportRarity": "SSR",
+    "SupportServer": "jp",
+    "SupportType": "Stamina",
+    "SupportEffects": [
+      {
+        "id": 1,
+        "name": "Friendship Bonus",
+        "symbol": "percent",
+        "values": [
+          10,
+          12,
+          14,
+          17,
+          19,
+          22,
+          25,
+          28,
+          32,
+          36,
+          40
+        ]
+      },
+      {
+        "id": 2,
+        "name": "Mood Effect",
+        "symbol": "percent",
+        "values": [
+          10,
+          10,
+          10,
+          10,
+          10,
+          10,
+          10,
+          20,
+          40,
+          40,
+          40
+        ]
+      },
+      {
+        "id": 8,
+        "name": "Training Effectiveness",
+        "symbol": "percent",
+        "values": [
+          1,
+          1,
+          1,
+          2,
+          3,
+          5,
+          10,
+          11,
+          12,
+          13,
+          15
+        ]
+      },
+      {
+        "id": 12,
+        "name": "Initial Guts",
+        "symbol": "none",
+        "values": [
+          10,
+          12,
+          14,
+          17,
+          19,
+          22,
+          25,
+          26,
+          27,
+          28,
+          30
+        ]
+      },
+      {
+        "id": 14,
+        "name": "Initial Friendship Gauge",
+        "symbol": "none",
+        "values": [
+          10,
+          12,
+          14,
+          17,
+          19,
+          22,
+          25,
+          27,
+          30,
+          32,
+          35
+        ]
+      },
+      {
+        "id": 15,
+        "name": "Race Bonus",
+        "symbol": "percent",
+        "values": [
+          1,
+          1,
+          2,
+          3,
+          4,
+          5,
+          5,
+          6,
+          7,
+          8,
+          10
+        ]
+      },
+      {
+        "id": 16,
+        "name": "Fan Bonus",
+        "symbol": "percent",
+        "values": [
+          1,
+          1,
+          1,
+          4,
+          7,
+          10,
+          10,
+          12,
+          15,
+          17,
+          20
+        ]
+      },
+      {
+        "id": 17,
+        "name": "Hint Levels",
+        "symbol": "level",
+        "values": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          2,
+          2,
+          3,
+          3,
+          4
+        ]
+      },
+      {
+        "id": 18,
+        "name": "Hint Frequency",
+        "symbol": "percent",
+        "values": [
+          10,
+          16,
+          25,
+          34,
+          42,
+          51,
+          60,
+          70,
+          80,
+          90,
+          100
+        ]
+      },
+      {
+        "id": 19,
+        "name": "Specialty Priority",
+        "symbol": "none",
+        "values": [
+          10,
+          14,
+          20,
+          25,
+          31,
+          37,
+          42,
+          48,
+          54,
+          60,
+          120
+        ]
+      },
+      {
+        "id": 30,
+        "name": "Skill Point Bonus",
+        "symbol": "none",
+        "values": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          2
+        ]
+      },
+      {
+        "id": 32,
+        "name": "Effect #32",
+        "symbol": "none",
+        "values": [
+          10,
+          12,
+          16,
+          19,
+          23,
+          26,
+          30,
+          37,
+          45,
+          52,
+          60
+        ]
+      }
+    ],
+    "SupportUnique": {
+      "level": 0,
+      "effects": [
+        {
+          "id": 101,
+          "name": "Effect #101",
+          "symbol": "",
+          "value": 80
+        }
+      ]
+    },
+    "SupportImage": "/assets/support_thumbs/30304-meisho-doto.png",
+    "SupportHints": [
+      {
+        "SkillId": "200332",
+        "Name": "Corner Adept ○",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "200352",
+        "Name": "Corner Recovery ○",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "201591",
+        "Name": "Uma Stan",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "201651",
+        "Name": "Slipstream",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "202012",
+        "Name": "Feature Act",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "202172",
+        "Name": "Downhill Speedster",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "202602",
+        "Name": "Ignition",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "203642",
+        "Name": "Luminance",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "203652",
+        "Name": "Find a Way!",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "204392",
+        "Name": "息抜き上手",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "204472",
+        "Name": "奮い立つ心",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "",
+        "Name": "Initial Stamina bonus",
+        "HintLevel": null
+      },
+      {
+        "SkillId": "",
+        "Name": "Initial Guts bonus",
+        "HintLevel": null
+      }
+    ]
+  },
+  {
+    "SupportSlug": "30305-tazuna-hayakawa",
+    "SupportId": "30305",
+    "SupportName": "Tazuna Hayakawa (SSR)",
+    "SupportNameJP": "駿川たづな (SSR)",
+    "SupportRarity": "SSR",
+    "SupportServer": "jp",
+    "SupportType": "Friend",
+    "SupportEffects": [
+      {
+        "id": 8,
+        "name": "Training Effectiveness",
+        "symbol": "percent",
+        "values": [
+          1,
+          2,
+          3,
+          5,
+          6,
+          8,
+          10,
+          12,
+          15,
+          17,
+          20
+        ]
+      },
+      {
+        "id": 14,
+        "name": "Initial Friendship Gauge",
+        "symbol": "none",
+        "values": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          15,
+          30
+        ]
+      },
+      {
+        "id": 15,
+        "name": "Race Bonus",
+        "symbol": "percent",
+        "values": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          5,
+          5,
+          5,
+          5
+        ]
+      },
+      {
+        "id": 16,
+        "name": "Fan Bonus",
+        "symbol": "percent",
+        "values": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          10,
+          15,
+          15,
+          15
+        ]
+      },
+      {
+        "id": 25,
+        "name": "Event Recovery",
+        "symbol": "percent",
+        "values": [
+          10,
+          14,
+          19,
+          24,
+          29,
+          34,
+          40,
+          45,
+          50,
+          55,
+          60
+        ]
+      },
+      {
+        "id": 26,
+        "name": "Event Effectiveness",
+        "symbol": "percent",
+        "values": [
+          1,
+          5,
+          10,
+          13,
+          16,
+          20,
+          20,
+          22,
+          25,
+          27,
+          30
+        ]
+      },
+      {
+        "id": 27,
+        "name": "Failure Protection",
+        "symbol": "percent",
+        "values": [
+          5,
+          5,
+          5,
+          5,
+          7,
+          10,
+          10,
+          11,
+          13,
+          15,
+          15
+        ]
+      },
+      {
+        "id": 28,
+        "name": "Energy Cost Reduction",
+        "symbol": "percent",
+        "values": [
+          1,
+          2,
+          5,
+          7,
+          10,
+          12,
+          15,
+          18,
+          22,
+          26,
+          30
+        ]
+      },
+      {
+        "id": 32,
+        "name": "Effect #32",
+        "symbol": "none",
+        "values": [
+          20,
+          20,
+          20,
+          20,
+          25,
+          30,
+          30,
+          33,
+          36,
+          40,
+          40
+        ]
+      }
+    ],
+    "SupportUnique": {
+      "level": 0,
+      "effects": [
+        {
+          "id": 101,
+          "name": "Effect #101",
+          "symbol": "",
+          "value": 60
+        }
+      ]
+    },
+    "SupportImage": "/assets/support_thumbs/30305-tazuna-hayakawa.png",
+    "SupportHints": []
   }
 ]
