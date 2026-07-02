@@ -1467,6 +1467,24 @@ body.dark .compat-bar {
   font-weight: 600;
 }
 
+.compat-cap-note {
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+body.dark .compat-cap-note {
+  border-color: rgba(251, 191, 36, 0.35);
+  background: rgba(146, 64, 14, 0.18);
+  color: #fde68a;
+}
+
 /* --- Hint Categories --- */
 .deck-hints-grouped {
   display: flex;

@@ -444,6 +444,40 @@
     return Math.min(25, Math.round((score * 25) / 20));
   }
 
+  const LIMIT_BREAK_SCORE_CAPS = [55, 65, 78, 90, 100];
+
+  function getCompatibilityGrade(total) {
+    return total >= 90
+      ? 'S'
+      : total >= 75
+        ? 'A'
+        : total >= 60
+          ? 'B'
+          : total >= 45
+            ? 'C'
+            : total >= 30
+              ? 'D'
+              : 'F';
+  }
+
+  function getLimitBreakScoreCap() {
+    if (selectedSupports.length === 0) return null;
+    let lbTotal = 0;
+    for (let i = 0; i < selectedSupports.length; i++) {
+      const lb = Number(supportLbStops[i] ?? 4);
+      const normalized = Number.isFinite(lb) ? Math.max(0, Math.min(4, lb)) : 4;
+      lbTotal += normalized;
+    }
+
+    const avgLb = lbTotal / selectedSupports.length;
+    const lower = Math.floor(avgLb);
+    const upper = Math.ceil(avgLb);
+    const lowerCap = LIMIT_BREAK_SCORE_CAPS[lower] ?? LIMIT_BREAK_SCORE_CAPS[4];
+    const upperCap = LIMIT_BREAK_SCORE_CAPS[upper] ?? lowerCap;
+    const scoreCap = Math.round(lowerCap + (upperCap - lowerCap) * (avgLb - lower));
+    return { avgLb, scoreCap };
+  }
+
   function computeCompatibilityScore() {
     if (selectedSupports.length === 0) return null;
     const breakdown = {
@@ -457,19 +491,14 @@
       breakdown.effectStacking +
       breakdown.hintSynergy +
       breakdown.characterFit;
-    const grade =
-      total >= 90
-        ? 'S'
-        : total >= 75
-          ? 'A'
-          : total >= 60
-            ? 'B'
-            : total >= 45
-              ? 'C'
-              : total >= 30
-                ? 'D'
-                : 'F';
-    return { total, grade, breakdown };
+    const lbCap = getLimitBreakScoreCap();
+    const adjustedTotal = lbCap ? Math.min(total, lbCap.scoreCap) : total;
+    const grade = getCompatibilityGrade(adjustedTotal);
+    const limitBreakCap =
+      lbCap && adjustedTotal < total
+        ? { scoreCap: lbCap.scoreCap, avgLb: lbCap.avgLb, rawTotal: total }
+        : null;
+    return { total: adjustedTotal, grade, breakdown, limitBreakCap };
   }
 
   // --- Synergy helpers ---
@@ -751,7 +780,7 @@
     if (selectedSupports.length > 0) {
       const compat = computeCompatibilityScore();
       if (compat) {
-        const { total, grade, breakdown } = compat;
+        const { total, grade, breakdown, limitBreakCap } = compat;
         html += `
           <div class="compat-score">
             <div class="compat-grade" data-grade="${grade}">${grade}</div>
@@ -763,6 +792,11 @@
               <div class="compat-item"><span>${t('deck.hintSynergy')}</span><span class="compat-item-score">${breakdown.hintSynergy}/25</span></div>
               <div class="compat-item"><span>${t('deck.characterFit')}</span><span class="compat-item-score">${breakdown.characterFit}/25</span></div>
             </div>
+            ${
+              limitBreakCap
+                ? `<div class="compat-cap-note">${escHtml(t('deck.limitBreakCap', { score: limitBreakCap.scoreCap }))}</div>`
+                : ''
+            }
           </div>`;
       }
     }

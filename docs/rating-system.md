@@ -31,7 +31,7 @@ Total Rating = Stat Score + Unique Bonus + Skill Score
 
 | Component | What It Measures |
 | --- | --- |
-| **Stat Score** | How high your five stats (Speed, Stamina, Power, Guts, Wisdom) are, scored using progressively increasing per-block rates. |
+| **Stat Score** | How high your five stats (Speed, Stamina, Power, Guts, Wisdom) are, scored using progressively increasing lookup-table rates. |
 | **Unique Bonus** | A flat bonus based on the character's star level and unique skill level. |
 | **Skill Score** | The sum of all selected skills' scores, evaluated against your race aptitudes. |
 
@@ -45,89 +45,66 @@ Each of the five stats -- Speed, Stamina, Power, Guts, and Wisdom -- is clamped 
 
 ### How It Works
 
-The code stores a per-block multiplier for each 50-point stat block (50 entries covering stats 0-2500). The cumulative boundary scores at each 50-point interval are computed dynamically from these multipliers on page load.
+The code precomputes a `STAT_SCORES` lookup entry for every whole-number stat value from 0 to 2500. It accumulates raw per-point rates and stores `Math.round(raw / 10)` as the displayed score.
 
 ![Stat Scoring Curve](images/stat-curve.svg)
 
-The score grows slowly at low stats and accelerates dramatically at high stats -- the per-point rate ranges from **0.5** in the first block to **19.4** in blocks above stat 1750.
+The score grows slowly at low stats and accelerates dramatically at high stats -- the displayed per-point rate ranges from **0.5** in the first block to **20.2** near the 2500 cap.
 
-### Per-Block Multipliers
+### Scoring Ranges
 
-Each 50-point block of stats has a fixed per-point rate. The multiplier for each block:
+The lookup table is generated in three ranges:
 
-| Block | Stats | Rate | Block | Stats | Rate | Block | Stats | Rate |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0-49 | 0.5 | 17 | 850-899 | 3.9 | 34 | 1700-1749 | 13.9 |
-| 1 | 50-99 | 0.8 | 18 | 900-949 | 4.1 | 35 | 1750-1799 | 17.3 |
-| 2 | 100-149 | 1.0 | 19 | 950-999 | 4.2 | 36 | 1800-1849 | 19.4 |
-| 3 | 150-199 | 1.3 | 20 | 1000-1049 | 4.3 | 37 | 1850-1899 | 19.4 |
-| 4 | 200-249 | 1.6 | 21 | 1050-1099 | 5.2 | 38 | 1900-1949 | 19.4 |
-| 5 | 250-299 | 1.8 | 22 | 1100-1149 | 5.5 | 39 | 1950-1999 | 19.4 |
-| 6 | 300-349 | 2.1 | 23 | 1150-1199 | 6.6 | 40 | 2000-2049 | 19.4 |
-| 7 | 350-399 | 2.4 | 24 | 1200-1249 | 6.8 | 41 | 2050-2099 | 19.4 |
-| 8 | 400-449 | 2.6 | 25 | 1250-1299 | 6.9 | 42 | 2100-2149 | 19.4 |
-| 9 | 450-499 | 2.8 | 26 | 1300-1349 | 11.0 | 43 | 2150-2199 | 19.4 |
-| 10 | 500-549 | 2.9 | 27 | 1350-1399 | 11.0 | 44 | 2200-2249 | 19.4 |
-| 11 | 550-599 | 3.0 | 28 | 1400-1449 | 11.0 | 45 | 2250-2299 | 19.4 |
-| 12 | 600-649 | 3.1 | 29 | 1450-1499 | 11.0 | 46 | 2300-2349 | 19.4 |
-| 13 | 650-699 | 3.3 | 30 | 1500-1549 | 11.0 | 47 | 2350-2399 | 19.4 |
-| 14 | 700-749 | 3.4 | 31 | 1550-1599 | 11.0 | 48 | 2400-2449 | 19.4 |
-| 15 | 750-799 | 3.5 | 32 | 1600-1649 | 12.5 | 49 | 2450-2499 | 19.4 |
-| 16 | 800-849 | 3.9 | 33 | 1650-1699 | 12.5 | | | |
+| Stat Range | Granularity | Raw Rate Behavior | Displayed Per-Point Range |
+| ---: | --- | --- | ---: |
+| 0-1200 | 50-point blocks | Fixed raw rates from 5 to 68 | 0.5-6.8 |
+| 1201-2000 | 10-point blocks | Fixed raw rates from 79 to 182, starting from raw 38,413 at stat 1200 | 7.9-18.2 |
+| 2001-2500 | 25-point blocks | Starts at raw rate 183, then increases by 1 every 25 points | 18.3-20.2 |
 
 ### Boundary Score Table
 
-The cumulative score at each 50-point boundary (dynamically computed from multipliers):
+The cumulative score at selected 50-point boundaries from the integer lookup table:
 
 | Stat | Score | | Stat | Score | | Stat | Score |
 | ---: | ---: | --- | ---: | ---: | --- | ---: | ---: |
-| 0 | 0 | | 850 | 2,000 | | 1700 | 9,425 |
-| 50 | 25 | | 900 | 2,205 | | 1750 | 10,290 |
-| 100 | 65 | | 950 | 2,415 | | 1800 | 11,260 |
-| 150 | 115 | | 1000 | 2,630 | | 1850 | 12,230 |
-| 200 | 180 | | 1050 | 2,890 | | 1900 | 13,200 |
-| 250 | 260 | | 1100 | 3,165 | | 1950 | 14,170 |
-| 300 | 350 | | 1150 | 3,495 | | 2000 | 15,140 |
-| 350 | 455 | | 1200 | 3,835 | | 2050 | 16,110 |
-| 400 | 575 | | 1250 | 4,180 | | 2100 | 17,080 |
-| 450 | 705 | | 1300 | 4,730 | | 2150 | 18,050 |
-| 500 | 845 | | 1350 | 5,280 | | 2200 | 19,020 |
-| 550 | 990 | | 1400 | 5,830 | | 2250 | 19,990 |
-| 600 | 1,140 | | 1450 | 6,380 | | 2300 | 20,960 |
-| 650 | 1,295 | | 1500 | 6,930 | | 2350 | 21,930 |
-| 700 | 1,460 | | 1550 | 7,480 | | 2400 | 22,900 |
-| 750 | 1,630 | | 1600 | 8,105 | | 2450 | 23,870 |
-| 800 | 1,805 | | 1650 | 8,730 | | 2500 | 24,840 |
+| 0 | 0 | | 850 | 2,004 | | 1700 | 9,383 |
+| 50 | 25 | | 900 | 2,209 | | 1750 | 10,117 |
+| 100 | 66 | | 950 | 2,419 | | 1800 | 10,884 |
+| 150 | 116 | | 1000 | 2,635 | | 1850 | 11,684 |
+| 200 | 181 | | 1050 | 2,895 | | 1900 | 12,516 |
+| 250 | 261 | | 1100 | 3,171 | | 1950 | 13,382 |
+| 300 | 352 | | 1150 | 3,501 | | 2000 | 14,280 |
+| 350 | 457 | | 1200 | 3,841 | | 2050 | 15,197 |
+| 400 | 577 | | 1250 | 4,249 | | 2100 | 16,125 |
+| 450 | 707 | | 1300 | 4,688 | | 2150 | 17,062 |
+| 500 | 847 | | 1350 | 5,160 | | 2200 | 18,010 |
+| 550 | 993 | | 1400 | 5,665 | | 2250 | 18,967 |
+| 600 | 1,143 | | 1450 | 6,203 | | 2300 | 19,935 |
+| 650 | 1,298 | | 1500 | 6,773 | | 2350 | 20,912 |
+| 700 | 1,463 | | 1550 | 7,377 | | 2400 | 21,900 |
+| 750 | 1,633 | | 1600 | 8,013 | | 2450 | 22,897 |
+| 800 | 1,808 | | 1650 | 8,681 | | 2500 | 23,905 |
 
 ### Formula
 
 ```text
-idx       = floor(stat / 50)
-remainder = stat % 50
-
-base      = BOUNDARY_SCORES[idx]
-blockDiff = BOUNDARY_SCORES[idx + 1] - base
-
-statScore = base + round(blockDiff * remainder / 50)
+stat      = clamp(parseInt(input, 10), 0, 2500)
+statScore = STAT_SCORES[stat]
 ```
 
 Key details:
 
-- At exact boundaries (remainder = 0), the score equals the table value directly.
-- Between boundaries, `blockDiff / 50` acts as the effective per-point rate for that block, with rounding for precision.
+- The UI reads stat inputs as whole numbers with `parseInt`.
+- Runtime scoring is an array lookup; there is no runtime interpolation.
 - Stats above 2500 are clamped to 2500 before scoring. Stats below 0 are clamped to 0.
 
 ### Worked Example: stat = 1500
 
 ```text
-idx       = floor(1500 / 50) = 30
-remainder = 1500 % 50 = 0
-base      = BOUNDARY_SCORES[30] = 6930
-
-statScore = 6930
+statScore = STAT_SCORES[1500] = 6773
 ```
 
-So a single stat at 1500 contributes **6,930** to the total stat score.
+So a single stat at 1500 contributes **6,773** to the total stat score.
 
 ### Total Stat Score
 
@@ -139,7 +116,7 @@ totalStatScore = calcStatScore(speed)
                + calcStatScore(wisdom)
 ```
 
-Maximum possible: 5 × 24,840 = **124,200** (all stats at 2500).
+Maximum possible: 5 x 23,905 = **119,525** (all stats at 2500).
 
 ---
 
@@ -533,7 +510,7 @@ At maximum rank (LS24 at 190,400+), the progress bar shows "Max rank reached" wi
 
 - **Stats above 2500 are clamped and provide no additional rating benefit.** There is no reason to push any individual stat above 2500 for rating purposes. Spread the points across stats instead.
 
-- **Rounding matters for intermediate stat values.** Between 50-point boundaries, the score is computed by rounding the proportional block difference. At exact boundaries (e.g., 1000, 1050), the score equals the lookup table value directly.
+- **Rounding matters for stat values.** Scores come from a precomputed integer lookup table built from accumulated raw rates, rounded with `Math.round(raw / 10)`.
 
 - **Pick Rating or Aptitude Test mode based on your goal.** The optimizer changes its objective accordingly -- Rating mode purely maximizes skill score, while Aptitude Test mode prioritizes earning aptitude points.
 
