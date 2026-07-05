@@ -130,9 +130,9 @@ npm run sync:uma-skills
 ```
 
 This command also writes scrape metadata to `.cache_gamewith/gamewith_metadata.json`.
-`uma_skills.csv` is sourced from GameWith simulator data. `uma_skills_jp.csv` is expanded from
-`assets/skills_all.json` so JP mode follows the full GameTora skill list; it stores fan/unofficial
-EN in `alias_name` and localized EN in `localized_name`.
+Both skill CSVs are expanded from `assets/skills_all.json` so Global and JP modes follow the full
+GameTora skill list. GameWith simulator rows are used as the score/affinity overlay; fan/unofficial
+EN is stored in `alias_name`, and localized EN is stored in `localized_name`.
 
 Full skill data refresh (recommended):
 

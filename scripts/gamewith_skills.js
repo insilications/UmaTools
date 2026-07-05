@@ -876,30 +876,44 @@ function addAlias(aliases, value, primaryName) {
   aliases.add(trimmed);
 }
 
-function buildGameToraJpRows(gameWithJpRows) {
-  if (!fs.existsSync(SKILLS_ALL_PATH)) return gameWithJpRows;
+function buildGameToraRows(gameWithRows, locale) {
+  if (!fs.existsSync(SKILLS_ALL_PATH)) return gameWithRows;
 
   const skillsAll = JSON.parse(fs.readFileSync(SKILLS_ALL_PATH, 'utf8'));
-  if (!Array.isArray(skillsAll) || !skillsAll.length) return gameWithJpRows;
+  if (!Array.isArray(skillsAll) || !skillsAll.length) return gameWithRows;
 
-  const overlayByName = buildCSVRowLookup(gameWithJpRows);
+  const overlayByName = buildCSVRowLookup(gameWithRows);
+  const isJp = locale === 'jp';
 
   return skillsAll.map((skill) => {
     const overlay = findCSVOverlayForSkill(overlayByName, skill);
+    const jpName = String(skill?.jpname || '').trim();
+    const officialName = String(skill?.name_en || '').trim();
+    const fanName = String(skill?.enname || '').trim();
+    const fallbackName = String(skill?.name || '').trim();
     const primaryName =
-      String(skill?.jpname || '').trim() ||
-      String(skill?.name_en || skill?.enname || skill?.name || '').trim() ||
+      (isJp
+        ? jpName || officialName || fanName || fallbackName
+        : officialName || fanName || fallbackName || jpName) ||
       (skill?.id != null ? `Skill #${skill.id}` : '');
     const skillType = deriveGameToraSkillType(skill, overlay);
     const aliases = new Set();
 
-    addAlias(aliases, skill?.enname, primaryName);
-    addAlias(aliases, skill?.name, primaryName);
+    if (isJp) {
+      addAlias(aliases, fanName, primaryName);
+      addAlias(aliases, fallbackName, primaryName);
+    } else {
+      addAlias(aliases, jpName, primaryName);
+      addAlias(aliases, fanName, primaryName);
+      addAlias(aliases, fallbackName, primaryName);
+      addAlias(aliases, overlay?.name, primaryName);
+      addAlias(aliases, overlay?.localized_name, primaryName);
+    }
     String(overlay?.alias_name || '')
       .split('|')
       .forEach((alias) => addAlias(aliases, alias, primaryName));
 
-    const localizedName = String(skill?.name_en || overlay?.localized_name || '').trim();
+    const localizedName = String(officialName || overlay?.localized_name || '').trim();
     const baseValue =
       overlay && overlay.base_value !== ''
         ? overlay.base_value
@@ -909,7 +923,8 @@ function buildGameToraJpRows(gameWithJpRows) {
       skill_type: skillType,
       name: primaryName,
       alias_name: Array.from(aliases).join('|'),
-      localized_name: localizedName && localizedName !== primaryName ? localizedName : '',
+      localized_name:
+        localizedName && (!isJp || localizedName !== primaryName) ? localizedName : '',
       base_value: baseValue,
       S_A: overlay?.S_A || '',
       B_C: overlay?.B_C || '',
@@ -920,6 +935,14 @@ function buildGameToraJpRows(gameWithJpRows) {
       evo_parents: overlay?.evo_parents || '',
     };
   });
+}
+
+function buildGameToraEnRows(gameWithEnRows) {
+  return buildGameToraRows(gameWithEnRows, 'en');
+}
+
+function buildGameToraJpRows(gameWithJpRows) {
+  return buildGameToraRows(gameWithJpRows, 'jp');
 }
 
 async function main() {
@@ -1079,6 +1102,7 @@ async function main() {
 
   const matchedCount = enrichedSkills.filter((x) => x.skill_en).length;
   const unmatchedCount = enrichedSkills.length - matchedCount;
+  const gameToraEnRows = buildGameToraEnRows(finalUmaSkillsRowsEn);
   const gameToraJpRows = buildGameToraJpRows(finalUmaSkillsRowsJp);
 
   const metadata = {
@@ -1090,6 +1114,8 @@ async function main() {
     evo_skill_count: embedded.evoSkillDatas.length,
     evo_rows_added_to_exports: evoSkills.length,
     total_exported_skill_rows: allSkills.length,
+    en_exported_skill_rows: gameToraEnRows.length,
+    en_export_source: gameToraEnRows === finalUmaSkillsRowsEn ? 'gamewith' : 'gametora',
     jp_exported_skill_rows: gameToraJpRows.length,
     jp_export_source: gameToraJpRows === finalUmaSkillsRowsJp ? 'gamewith' : 'gametora',
     uma_data_count: embedded.umaDatas.length,
@@ -1117,7 +1143,7 @@ async function main() {
     'evo_parents',
   ];
 
-  writeCsv(path.join(outDir, 'uma_skills.csv'), umaSkillsHeaders, finalUmaSkillsRowsEn);
+  writeCsv(path.join(outDir, 'uma_skills.csv'), umaSkillsHeaders, gameToraEnRows);
   writeCsv(path.join(outDir, 'uma_skills_jp.csv'), umaSkillsHeaders, gameToraJpRows);
 
   const extraOutputFiles = [
@@ -1235,6 +1261,7 @@ async function main() {
       `Expanded skills: ${metadata.expanded_skill_count}`,
       `Evo rows added: ${metadata.evo_rows_added_to_exports}`,
       `Total exported rows: ${metadata.total_exported_skill_rows}`,
+      `EN exported rows: ${metadata.en_exported_skill_rows} (${metadata.en_export_source})`,
       `JP exported rows: ${metadata.jp_exported_skill_rows} (${metadata.jp_export_source})`,
       `Output mode: ${metadata.output_mode}`,
       `English matched: ${metadata.english_matched_count}`,
