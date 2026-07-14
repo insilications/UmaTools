@@ -5318,7 +5318,7 @@
         // Apply lower hint level to linked row (gold skills)
         if (opts.lowerHint > 0) {
           const linked = row.nextElementSibling;
-          if (linked && linked.classList.contains('linked-lower-row')) {
+          if (linked && linked.classList.contains('linked-lower')) {
             const linkedHint = linked.querySelector('.hint-level');
             if (linkedHint) {
               linkedHint.value = String(opts.lowerHint);
