@@ -39135,7 +39135,7 @@
     "SupportName": "Seiun Sky (SR)",
     "SupportNameJP": "セイウンスカイ (SR)",
     "SupportRarity": "SR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Wit",
     "SupportEffects": [
       {
@@ -75405,7 +75405,7 @@
     "SupportName": "Manhattan Cafe (SSR)",
     "SupportNameJP": "マンハッタンカフェ (SSR)",
     "SupportRarity": "SSR",
-    "SupportServer": "jp",
+    "SupportServer": "global",
     "SupportType": "Stamina",
     "SupportEffects": [
       {
