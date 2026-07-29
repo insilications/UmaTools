@@ -108,9 +108,9 @@ Requires [Node.js](https://nodejs.org) and the [Vercel CLI](https://vercel.com/d
 
 ```bash
 npm i -g vercel
-git clone https://github.com/daftuyda/Uma-Event-Helper-Web.git
-cd Uma-Event-Helper-Web
-vercel dev --debug
+git clone https://github.com/insilications/UmaTools.git
+cd UmaTools
+vercel dev --local
 ```
 
 </details>
