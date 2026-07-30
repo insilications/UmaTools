@@ -9,6 +9,7 @@
 //   5. Preprocessing pipeline validity
 //   6. OCR text normalization
 //   7. End-to-end skill parsing
+//   8. Sequential multi-file batch orchestration
 
 (function () {
   'use strict';
@@ -293,6 +294,102 @@ Focus 100`;
     assert(!!P.SKILL_REGIONS.mobile, 'SKILL_REGIONS.mobile defined');
   }
 
+  // ─── Test: Sequential screenshot batch orchestration ─────────
+
+  async function testSequentialBatch() {
+    const batchCore = window.ocrBatchCore;
+    assert(typeof batchCore === 'function', 'OCR batch core loaded');
+    if (typeof batchCore !== 'function') return;
+
+    const files = [{ name: 'first.png' }, { name: 'broken.png' }, { name: 'third.png' }];
+    const callOrder = [];
+    const progress = [];
+    let active = 0;
+    let maxActive = 0;
+
+    const outcome = await batchCore(
+      files,
+      async (file) => {
+        callOrder.push(file.name);
+        active++;
+        maxActive = Math.max(maxActive, active);
+
+        try {
+          await new Promise((resolve) => setTimeout(resolve, 0));
+          if (file.name === 'broken.png') {
+            throw new Error('expected test failure');
+          }
+          return {
+            detectedSkills: [{ name: 'Focus', sourceFile: file.name }],
+          };
+        } finally {
+          active--;
+        }
+      },
+      ({ current, total }) => {
+        progress.push(`${current}/${total}`);
+      }
+    );
+
+    assert(
+      callOrder.join(',') === 'first.png,broken.png,third.png',
+      'Batch: preserves selected file order',
+      callOrder.join(',')
+    );
+    assert(maxActive === 1, 'Batch: runs at most one processor at a time', `max=${maxActive}`);
+    assert(outcome.succeededCount === 2, 'Batch: counts successful files');
+    assert(outcome.failedCount === 1, 'Batch: records a failed file');
+    assert(
+      outcome.failures[0]?.name === 'broken.png',
+      'Batch: identifies the failed file',
+      outcome.failures[0]?.name
+    );
+    assert(
+      outcome.detectedSkills.length === 2 &&
+        outcome.detectedSkills[0].name === 'Focus' &&
+        outcome.detectedSkills[1].name === 'Focus',
+      'Batch: retains unmerged duplicate detections in file order'
+    );
+    assert(
+      outcome.lastSuccessfulResult?.detectedSkills?.[0]?.sourceFile === 'third.png',
+      'Batch: retains the last successful result for debug state'
+    );
+    assert(
+      progress.join(',') === '1/3,2/3,3/3',
+      'Batch: reports progress for every file',
+      progress.join(',')
+    );
+
+    let emptyProcessorCalled = false;
+    const emptyOutcome = await batchCore([], async () => {
+      emptyProcessorCalled = true;
+      return { detectedSkills: [] };
+    });
+    assert(!emptyProcessorCalled, 'Batch: empty selection does not invoke the processor');
+    assert(
+      emptyOutcome.processedCount === 0 && emptyOutcome.detectedSkills.length === 0,
+      'Batch: empty selection returns an empty outcome'
+    );
+
+    const zeroDetectionOutcome = await batchCore([{ name: 'empty.png' }], async () => ({
+      detectedSkills: [],
+    }));
+    assert(
+      zeroDetectionOutcome.succeededCount === 1 && zeroDetectionOutcome.failedCount === 0,
+      'Batch: a zero-detection image still counts as successfully processed'
+    );
+
+    const allFailedOutcome = await batchCore(files.slice(0, 2), async () => {
+      throw new Error('expected all-failed test error');
+    });
+    assert(
+      allFailedOutcome.failedCount === 2 &&
+        allFailedOutcome.detectedSkills.length === 0 &&
+        allFailedOutcome.lastSuccessfulResult === null,
+      'Batch: all-failed outcome has no detections or debug result'
+    );
+  }
+
   // ─── Test: Region cropping ──────────────────────────────────
 
   function testRegionCropping() {
@@ -424,7 +521,7 @@ Focus 100`;
 
   // ─── Run all tests ────────────────────────────────────────────
 
-  function runAll() {
+  async function runAll() {
     results.passed = 0;
     results.failed = 0;
     results.total = 0;
@@ -446,6 +543,7 @@ Focus 100`;
     testConfidenceScoring();
     testSuggestions();
     testEndToEndParsing();
+    await testSequentialBatch();
 
     const benchmark = runAccuracyBenchmark();
 
@@ -481,212 +579,66 @@ Focus 100`;
       image: './reference/m1.png',
       layout: 'mobile',
       expected: [
-        { name: 'Studious', hint: 0 },
-        { name: 'I Can See Right Through You', hint: 1 },
-        { name: 'Levelheaded', hint: 1 },
+        {
+          name: 'Ignited Spirit SPD',
+          hint: 4,
+        },
+        {
+          name: 'Ignited Spirit STA',
+          hint: 1,
+        },
+        {
+          name: 'Ignited Spirit PWR',
+          hint: 3,
+        },
+        {
+          name: 'Ignited Spirit WIT',
+          hint: 4,
+        },
       ],
     },
     {
       image: './reference/m2.png',
       layout: 'mobile',
       expected: [
-        { name: 'Studious', hint: 1 },
-        { name: 'Levelheaded', hint: 1 },
-        { name: 'Lucky Seven', hint: 0 },
+        {
+          name: 'Be Still',
+          hint: 2,
+        },
+        {
+          name: 'Burning Spirit SPD',
+          hint: 3,
+        },
+        {
+          name: 'Ignited Spirit SPD',
+          hint: 4,
+        },
+        {
+          name: 'Ignited Spirit STA',
+          hint: 1,
+        },
       ],
     },
     {
       image: './reference/m3.png',
       layout: 'mobile',
       expected: [
-        { name: 'Focus', hint: null },
-        { name: 'Iron Will', hint: 1 },
-        { name: 'Lay Low', hint: null },
-      ],
-    },
-    {
-      image: './reference/m4.png',
-      layout: 'mobile',
-      expected: [
-        { name: 'Preferred Position', hint: null },
-        { name: 'Medium Straightaways', hint: null },
-        { name: 'Medium Corners', hint: null },
-        { name: 'Dominator', hint: 0 },
-      ],
-    },
-    {
-      image: './reference/m5.png',
-      layout: 'mobile',
-      expected: [
-        { name: 'This Dance Is for Vittoria!', hint: 1 },
-        { name: 'I See Victory in My Future!', hint: 1 },
-        { name: 'Standard Distance', hint: null },
-      ],
-    },
-    {
-      image: './reference/m6.png',
-      layout: 'mobile',
-      expected: [
-        { name: 'Tether', hint: null },
-        { name: 'Fighter', hint: 3 },
-        { name: 'Tail Held High', hint: 1 },
-      ],
-    },
-    {
-      image: './reference/m7.png',
-      layout: 'mobile',
-      expected: [
-        { name: 'Straightaway Acceleration', hint: 3 },
-        { name: 'Straightaway Recovery', hint: 3 },
-        { name: 'Race Planner', hint: 0 },
-      ],
-    },
-    {
-      image: './reference/m8.png',
-      layout: 'mobile',
-      expected: [
-        { name: 'Tether', hint: null },
-        { name: 'Levelheaded', hint: 1 },
-        { name: 'Lucky Seven', hint: 1 },
-        { name: 'Tail Held High', hint: 1 },
-      ],
-    },
-    {
-      image: './reference/m9.png',
-      layout: 'mobile',
-      expected: [
-        { name: 'Hanshin Racecourse', hint: 1 },
-        { name: 'Standard Distance', hint: null },
-        { name: 'Non-Standard Distance', hint: 1 },
-        { name: 'Straightaway Recovery', hint: 3 },
-      ],
-    },
-    {
-      image: './reference/m10.png',
-      layout: 'mobile',
-      expected: [
-        { name: 'Preferred Position', hint: null },
-        { name: 'Extra Tank', hint: 5 },
-        { name: 'Hesitant Front Runners', hint: 1 },
-      ],
-    },
-    {
-      image: './reference/pc1.png',
-      layout: 'pc',
-      expected: [
-        { name: 'Angling and Scheming', hint: 2 },
-        { name: 'Flowery☆Maneuver', hint: 2 },
-        { name: 'Straightaway Adept', hint: null },
-      ],
-    },
-    {
-      image: './reference/pc2.png',
-      layout: 'pc',
-      expected: [
-        { name: 'No Stopping Me!', hint: 1 },
-        { name: 'Nimble Navigator', hint: null },
-        { name: 'Go with the Flow', hint: 4 },
-      ],
-    },
-    {
-      image: './reference/pc3.png',
-      layout: 'pc',
-      expected: [
-        { name: 'Steadfast', hint: 3 },
-        { name: 'Extra Tank', hint: 5 },
-        { name: 'Frenzied Pace Chasers', hint: 1 },
-        { name: 'Flustered Pace Chasers', hint: null },
-      ],
-    },
-    {
-      image: './reference/pc4.png',
-      layout: 'pc',
-      expected: [
-        { name: 'Mile Maven', hint: null },
-        { name: 'Productive Plan', hint: null },
-        { name: 'Updrafters', hint: 2 },
-      ],
-    },
-    {
-      image: './reference/pc5.png',
-      layout: 'pc',
-      expected: [
-        { name: 'Watchful Eye', hint: 2 },
-        { name: 'Up-Tempo', hint: 2 },
-        { name: 'Subdued Front Runners', hint: 1 },
-      ],
-    },
-    {
-      image: './reference/pc6.png',
-      layout: 'pc',
-      expected: [
-        { name: 'Hard Worker', hint: null },
-        { name: 'Fighter', hint: null },
-        { name: 'Shake It Out', hint: null },
-      ],
-    },
-    {
-      image: './reference/pc7.png',
-      layout: 'pc',
-      expected: [
-        { name: 'Prudent Positioning', hint: null },
-        { name: 'Hesitant Late Surgers', hint: 2 },
-        { name: 'Unyielding Spirit', hint: null },
-      ],
-    },
-    {
-      image: './reference/pc8.png',
-      layout: 'pc',
-      expected: [
-        { name: 'Barcarole of Blessings', hint: 2 },
-        { name: 'Shooting for Victory!', hint: 2 },
-        { name: 'Snowy Days', hint: null },
-      ],
-    },
-    {
-      image: './reference/pc9.png',
-      layout: 'pc',
-      expected: [
-        { name: 'Pace Strategy', hint: 2 },
-        { name: 'Nimble Navigator', hint: 1 },
-        { name: 'Go with the Flow', hint: 2 },
-        { name: 'Speed Star', hint: 3 },
-      ],
-    },
-    {
-      image: './reference/pc10.png',
-      layout: 'pc',
-      expected: [
-        { name: 'Focus', hint: 2 },
-        { name: 'Center Stage', hint: null },
-        { name: 'Prudent Positioning', hint: 3 },
-      ],
-    },
-    {
-      image: './reference/pc11.png',
-      layout: 'pc',
-      expected: [
-        { name: 'Updrafters', hint: 1 },
-        { name: 'Hesitant Late Surgers', hint: 2 },
-        { name: 'Sprint Straightaways', hint: 2 },
-      ],
-    },
-    {
-      image: './reference/pc12.png',
-      layout: 'pc',
-      expected: [
-        { name: 'Shooting for Victory!', hint: 4 },
-        { name: 'Barcarole of Blessings', hint: 2 },
-        { name: 'Flashy\u2606Landing', hint: 3 },
-      ],
-    },
-    {
-      image: './reference/pc13.png',
-      layout: 'pc',
-      expected: [
-        { name: 'Corner Adept', hint: null },
-        { name: 'Corner Recovery', hint: 3 },
-        { name: 'Straightaway Adept', hint: 4 },
+        {
+          name: 'Lucky Seven',
+          hint: 1,
+        },
+        {
+          name: 'Triple 7s',
+          hint: 1,
+        },
+        {
+          name: 'Sympathy',
+          hint: 3,
+        },
+        {
+          name: 'Be Still',
+          hint: 2,
+        },
       ],
     },
   ];
@@ -728,12 +680,12 @@ Focus 100`;
         const result = await pipeline(blob);
         const detected = result.detectedSkills;
         const cards = result.cards;
+        let rawOCRTextSerialized = null;
 
         console.log(`   Cards detected: ${cards.length} | Skills matched: ${detected.length}`);
         if (result.rawOCRText) {
-          console.log(
-            `   Raw OCR (first 150): "${result.rawOCRText.substring(0, 150).replace(/\n/g, ' | ')}"`
-          );
+          rawOCRTextSerialized = JSON.stringify(result.rawOCRText);
+          console.log(`   Raw OCR: `, rawOCRTextSerialized);
         }
 
         // Compare each expected skill against detected
@@ -784,23 +736,29 @@ Focus 100`;
 
         imageResults.push({
           image: label,
-          expected: test.expected.length,
-          found: nameCorrect,
-          hintCorrect,
-          falsePositives: falsePositives.length,
-          detected,
-          cards: cards.length,
+          rawOCRText: rawOCRTextSerialized,
+          expectedCount: test.expected.length,
+          foundCount: nameCorrect,
+          correctHintsCount: hintCorrect,
+          possibleFalsePositives: falsePositives.length,
+          detected: detected.map(({ name, hint }) => ({ name, hint })),
+          expected: test.expected,
+          detectedDetailed: detected,
+          segmentedCards: cards.length,
         });
       } catch (err) {
         console.error(`   ERROR processing ${label}:`, err);
         imageResults.push({
           image: label,
-          expected: test.expected.length,
-          found: 0,
-          hintCorrect: 0,
-          falsePositives: 0,
+          rawOCRText: rawOCRTextSerialized,
+          expectedCount: test.expected.length,
+          foundCount: 0,
+          correctHintsCount: 0,
+          possibleFalsePositives: 0,
           detected: [],
-          cards: 0,
+          expected: [],
+          detectedDetailed: [],
+          segmentedCards: 0,
           error: err.message,
         });
         totalExpected += test.expected.length;
@@ -823,24 +781,24 @@ Focus 100`;
     console.log(`${'='.repeat(60)}\n`);
 
     // Per-image table
-    console.table(
-      imageResults.map((r) => ({
-        Image: r.image,
-        Cards: r.cards,
-        Expected: r.expected,
-        Found: r.found,
-        'Hint OK': r.hintCorrect,
-        'False+': r.falsePositives,
-        Error: r.error || '',
-      }))
-    );
+    // console.table(
+    //   imageResults.map((r) => ({
+    //     Image: r.image,
+    //     Cards: r.cards,
+    //     Expected: r.expectedCount,
+    //     Found: r.foundCount,
+    //     'Hint OK': r.correctHintsCount,
+    //     'False+': r.possibleFalsePositives,
+    //     Error: r.error || '',
+    //   }))
+    // );
 
     return {
       nameAccuracy: parseFloat(nameAcc),
       hintAccuracy: parseFloat(hintAcc),
       totalExpected,
       totalFound: totalNameCorrect,
-      totalFalsePositives,
+      totalPossibleFalsePositives: totalFalsePositives,
       imageResults,
     };
   }

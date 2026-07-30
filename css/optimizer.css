@@ -953,6 +953,38 @@
   margin-bottom: 16px;
 }
 
+.ocr-batch-status {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-1);
+  color: var(--text-2);
+  font-size: 0.88rem;
+}
+
+.ocr-batch-status[hidden] {
+  display: none;
+}
+
+.ocr-batch-status.is-progress {
+  color: var(--text-1);
+}
+
+.ocr-batch-status.is-success {
+  border-color: color-mix(in srgb, var(--success, #22c55e) 45%, var(--border));
+}
+
+.ocr-batch-status.is-warning {
+  border-color: color-mix(in srgb, var(--warning, #f59e0b) 55%, var(--border));
+  color: var(--text-1);
+}
+
+.ocr-batch-status.is-error {
+  border-color: color-mix(in srgb, var(--danger, #ef4444) 55%, var(--border));
+  color: var(--danger, #ef4444);
+}
+
 .ocr-results-hint {
   font-size: 0.8rem;
   color: var(--text-muted, #888);

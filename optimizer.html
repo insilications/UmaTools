@@ -63,13 +63,13 @@
     <link rel="stylesheet" href="/css/theme-d.build.css" />
     <link rel="stylesheet" href="/css/rating.css" />
     <link rel="stylesheet" href="/css/optimizer.css" />
-    <link rel="stylesheet" href="/css/skill-popup.css" media="print" onload="this.media='all'" />
-    <link rel="stylesheet" href="/css/scroll-nav.css" media="print" onload="this.media='all'" />
+    <link rel="stylesheet" href="/css/skill-popup.css" media="print" onload="this.media = 'all'" />
+    <link rel="stylesheet" href="/css/scroll-nav.css" media="print" onload="this.media = 'all'" />
     <link rel="stylesheet" href="/css/tutorial.css" />
     <!-- Tesseract.js loaded on-demand by ocr.js ensureTesseract() -->
     <script>
       // Image optimization helper - creates picture elements with WebP and fallback
-      (function() {
+      (function () {
         'use strict';
 
         /**
@@ -80,7 +80,7 @@
          * @param {Object} attrs - Additional attributes (loading, decoding, fetchpriority, etc.)
          * @returns {string} HTML string for picture element
          */
-        window.createPictureHTML = function(src, alt, className, attrs) {
+        window.createPictureHTML = function (src, alt, className, attrs) {
           if (!src) return '';
 
           attrs = attrs || {};
@@ -101,10 +101,12 @@
           }
 
           // Return picture element with WebP source and fallback
-          return `<picture>` +
+          return (
+            `<picture>` +
             `<source srcset="${webpSrc}" type="image/webp">` +
             `<img src="${src}"${attrStr}>` +
-            `</picture>`;
+            `</picture>`
+          );
         };
       })();
     </script>
@@ -1025,13 +1027,15 @@
           <span class="muted" data-i18n="optimizer.rowTip"
             >Tip: just enter the skill name and cost - its type auto-detects</span
           >
-          <div style="flex:1"></div>
+          <div style="flex: 1"></div>
           <input
             type="file"
             id="screenshot-upload-input"
             accept="image/*"
+            multiple
             style="display: none"
-            aria-label="Upload screenshot"
+            aria-label="Upload screenshots"
+            data-i18n-aria="optimizer.uploadScreenshotsAria"
           />
           <input
             type="file"
@@ -1054,7 +1058,7 @@
             type="button"
             data-i18n="optimizer.uploadScreenshot"
           >
-            Upload Screenshot
+            Upload Screenshots
           </button>
           <button
             id="captureBtn"
@@ -1092,7 +1096,12 @@
           </button>
         </div>
         <div class="toolbar" style="justify-content: flex-end; gap: 8px">
-          <button id="browse-skills-btn" class="btn btn-secondary" type="button" data-i18n="optimizer.browseSkills">
+          <button
+            id="browse-skills-btn"
+            class="btn btn-secondary"
+            type="button"
+            data-i18n="optimizer.browseSkills"
+          >
             Browse Skills
           </button>
           <button id="clear-all" class="btn" type="button" data-i18n="optimizer.clearAllSkills">
@@ -1118,6 +1127,14 @@
             </button>
           </div>
           <div class="ocr-results-body">
+            <div
+              id="ocr-batch-status"
+              class="ocr-batch-status"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              hidden
+            ></div>
             <div id="ocr-results-list" class="ocr-results-list"></div>
           </div>
           <div class="ocr-results-footer">
@@ -1198,9 +1215,19 @@
           <div class="skill-browser-grid" id="skill-browser-grid"></div>
         </div>
         <div class="modal-footer">
-          <button id="skill-browser-cancel" class="btn btn-secondary" type="button" data-i18n="optimizer.cancel">Cancel</button>
+          <button
+            id="skill-browser-cancel"
+            class="btn btn-secondary"
+            type="button"
+            data-i18n="optimizer.cancel"
+          >
+            Cancel
+          </button>
           <button id="skill-browser-add" class="btn" type="button" disabled>
-            <span data-i18n="optimizer.addSelected">Add Selected</span> (<span id="skill-browser-selected-count">0</span>)
+            <span data-i18n="optimizer.addSelected">Add Selected</span> (<span
+              id="skill-browser-selected-count"
+              >0</span
+            >)
           </button>
         </div>
       </div>
@@ -1417,6 +1444,16 @@
           var uploadBtn = document.getElementById('screenshot-upload-btn');
           var uploadInput = document.getElementById('screenshot-upload-input');
           var captureBtn = document.getElementById('captureBtn');
+
+          const params = new URLSearchParams(window.location.search);
+          const isTestMode = params.get('test') === '1';
+          if (isTestMode) {
+            console.log('Test mode is active.');
+            OCR_SCRIPTS.push('/js/ocr-test.js');
+            ensureOCR().then(function () {
+              console.log('Loaded OCR scripts.');
+            });
+          }
 
           if (uploadBtn && uploadInput) {
             uploadBtn.addEventListener('click', function () {

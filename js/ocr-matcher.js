@@ -787,7 +787,7 @@
     for (const base of [pipesAsI, noPipes]) {
       const stripped = base
         .replace(/[Hh]int\s*[Ll][vV]\.?\s*\d/g, '')
-        .replace(/\d+%\s*[Oo][Ff][Ff]/gi, '')
+        .replace(/\d+%\s*[Oo][Ff][Ff][Ii]?/gi, '')
         .replace(/\s+\d{1,3}\s*[+]?\s*$/, '')
         .replace(/\s{2,}/g, ' ')
         .trim();

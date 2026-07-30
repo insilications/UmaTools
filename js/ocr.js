@@ -10,7 +10,7 @@ const MAX_MS_PER_SCAN = 60;
 
 const OCR_OPTS = { lang: 'eng', psm: 6 }; // 6 = block of text (ribbon often has 2 lines)
 const TRIGGER_COOLDOWN_MS = 1500;
-const TESSERACT_SRC = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+const TESSERACT_SRC = 'https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js';
 const MAX_OCR_WORKERS = 3; // Max workers for skill OCR pool
 
 const captureBtn = document.getElementById('captureBtn');
@@ -835,21 +835,174 @@ if (captureBtn) captureBtn.onclick = startScreenCapture;
 
 // Skill OCR: Screenshot upload handler
 const screenshotUploadInput = document.getElementById('screenshot-upload-input');
-const screenshotUploadBtn = document.getElementById('screenshot-upload-btn');
+const ocrBusyControlState = new Map();
+const OCR_TRIGGER_CONTROL_IDS = [
+  'screenshot-upload-input',
+  'screenshot-upload-btn',
+  'captureBtn',
+  'capture-frame-btn',
+];
+const OCR_RESULT_ACTION_IDS = ['ocr-add-all', 'ocr-add-selected', 'ocr-results-close'];
+let skillOCRBusy = false;
+
+function setSkillOCRBusy(busy) {
+  skillOCRBusy = !!busy;
+
+  for (const id of OCR_TRIGGER_CONTROL_IDS) {
+    const control = document.getElementById(id);
+    if (!control) continue;
+
+    if (skillOCRBusy) {
+      if (!ocrBusyControlState.has(control)) {
+        ocrBusyControlState.set(control, !!control.disabled);
+      }
+      control.disabled = true;
+    } else if (ocrBusyControlState.has(control)) {
+      control.disabled = ocrBusyControlState.get(control);
+      ocrBusyControlState.delete(control);
+    }
+  }
+
+  for (const id of OCR_RESULT_ACTION_IDS) {
+    const control = document.getElementById(id);
+    if (!control) continue;
+    control.disabled =
+      skillOCRBusy ||
+      control.classList.contains('loading') ||
+      control.classList.contains('success');
+  }
+
+  const resultsPanel = document.getElementById('ocr-results-panel');
+  if (resultsPanel) {
+    resultsPanel.setAttribute('aria-busy', String(skillOCRBusy));
+  }
+}
+
+function setOCRBatchStatus(message, state) {
+  const status = document.getElementById('ocr-batch-status');
+  if (!status) return;
+
+  status.textContent = message || '';
+  status.hidden = !message;
+  status.classList.toggle('is-progress', state === 'progress');
+  status.classList.toggle('is-success', state === 'success');
+  status.classList.toggle('is-warning', state === 'warning');
+  status.classList.toggle('is-error', state === 'error');
+}
+
+function renderOCRBatchProgress(current, total) {
+  const resultsPanel = document.getElementById('ocr-results-panel');
+  const resultsList = document.getElementById('ocr-results-list');
+  const message = t('events.processingImages', { current, total });
+
+  if (resultsPanel) resultsPanel.style.display = 'block';
+  if (resultsList) resultsList.innerHTML = '';
+  setOCRBatchStatus(message, 'progress');
+}
+
+async function ocrBatchCore(files, processFile, onProgress) {
+  const fileList = Array.from(files || []);
+  const detectedSkills = [];
+  const failures = [];
+  let succeededCount = 0;
+  let lastSuccessfulResult = null;
+
+  for (let index = 0; index < fileList.length; index++) {
+    const file = fileList[index];
+    if (typeof onProgress === 'function') {
+      onProgress({ current: index + 1, total: fileList.length, file, index });
+    }
+
+    try {
+      const result = await processFile(file, index);
+      const fileSkills = Array.isArray(result?.detectedSkills) ? result.detectedSkills : [];
+      detectedSkills.push(...fileSkills);
+      succeededCount++;
+      lastSuccessfulResult = result || null;
+    } catch (error) {
+      failures.push({
+        index,
+        name: file?.name || '',
+        error,
+      });
+    }
+  }
+
+  return {
+    detectedSkills,
+    failures,
+    processedCount: fileList.length,
+    succeededCount,
+    failedCount: failures.length,
+    lastSuccessfulResult,
+  };
+}
+
+// Test seam for the browser OCR harness.
+window.ocrBatchCore = ocrBatchCore;
+
+async function processScreenshotBatch(files) {
+  const fileList = Array.from(files || []);
+  if (skillOCRBusy || fileList.length === 0) return;
+
+  setSkillOCRBusy(true);
+  window.ocrDetectedSkills = [];
+
+  try {
+    const outcome = await ocrBatchCore(fileList, processSkillOCRImage, ({ current, total }) => {
+      renderOCRBatchProgress(current, total);
+    });
+
+    for (const failure of outcome.failures) {
+      const label = failure.name ? ` "${failure.name}"` : '';
+      console.error(`[ocr] Screenshot OCR failed for${label}:`, failure.error);
+    }
+
+    updateOCRDebugResult(outcome.lastSuccessfulResult);
+    window.ocrDetectedSkills = outcome.detectedSkills;
+    displayOCRResults(outcome.detectedSkills);
+
+    if (outcome.failedCount === outcome.processedCount) {
+      setOCRBatchStatus(t('events.ocrBatchAllFailed', { total: outcome.processedCount }), 'error');
+    } else if (outcome.failedCount > 0) {
+      setOCRBatchStatus(
+        t('events.ocrBatchPartialFailure', {
+          succeeded: outcome.succeededCount,
+          total: outcome.processedCount,
+          failed: outcome.failedCount,
+          detected: outcome.detectedSkills.length,
+        }),
+        'warning'
+      );
+    } else {
+      setOCRBatchStatus(
+        t('events.ocrBatchComplete', {
+          total: outcome.processedCount,
+          detected: outcome.detectedSkills.length,
+        }),
+        'success'
+      );
+    }
+  } catch (err) {
+    console.error('[ocr] Screenshot OCR batch failed:', err);
+    window.ocrDetectedSkills = [];
+    const resultsList = document.getElementById('ocr-results-list');
+    if (resultsList) {
+      resultsList.innerHTML = '<div class="error-message">' + t('events.ocrFailed') + '</div>';
+    }
+    setOCRBatchStatus(t('events.ocrFailed'), 'error');
+  } finally {
+    setSkillOCRBusy(false);
+  }
+}
 
 if (screenshotUploadInput) {
   screenshotUploadInput.addEventListener('change', async function (e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    screenshotUploadInput.value = '';
+    if (files.length === 0 || skillOCRBusy) return;
 
-    try {
-      await processSkillOCR(file);
-    } catch (err) {
-      console.error('[ocr] Skill OCR failed:', err);
-      alert(t('events.ocrFailed'));
-    } finally {
-      screenshotUploadInput.value = '';
-    }
+    await processScreenshotBatch(files);
   });
 }
 
@@ -876,26 +1029,31 @@ if (videoEl) {
   }
 
   captureFrameBtn.addEventListener('click', async () => {
-    if (!videoEl.videoWidth || !videoEl.videoHeight) return;
+    if (skillOCRBusy || !videoEl.videoWidth || !videoEl.videoHeight) return;
 
-    if (!skillCaptureCanvas) {
-      skillCaptureCanvas = document.createElement('canvas');
-    }
+    setSkillOCRBusy(true);
 
-    skillCaptureCanvas.width = videoEl.videoWidth;
-    skillCaptureCanvas.height = videoEl.videoHeight;
-    const sctx = skillCaptureCanvas.getContext('2d');
-    sctx.drawImage(videoEl, 0, 0);
-
-    skillCaptureCanvas.toBlob(async (blob) => {
-      if (!blob) return;
-      try {
-        await processSkillOCR(blob);
-      } catch (err) {
-        console.error('[ocr] Skill OCR from screen capture failed:', err);
-        alert(t('events.ocrCaptureFailed'));
+    try {
+      if (!skillCaptureCanvas) {
+        skillCaptureCanvas = document.createElement('canvas');
       }
-    }, 'image/png');
+
+      skillCaptureCanvas.width = videoEl.videoWidth;
+      skillCaptureCanvas.height = videoEl.videoHeight;
+      const sctx = skillCaptureCanvas.getContext('2d');
+      sctx.drawImage(videoEl, 0, 0);
+
+      const blob = await new Promise((resolve) => {
+        skillCaptureCanvas.toBlob(resolve, 'image/png');
+      });
+      if (!blob) return;
+      await processSkillOCR(blob);
+    } catch (err) {
+      console.error('[ocr] Skill OCR from screen capture failed:', err);
+      alert(t('events.ocrCaptureFailed'));
+    } finally {
+      setSkillOCRBusy(false);
+    }
   });
 }
 
@@ -1106,7 +1264,7 @@ async function ocrPipelineCore(imageBlob) {
     const ocrResults = await runOCRWithPreprocessing(worker, ocrBlob);
     const bestResult = selectBestOCRResult(ocrResults);
     const rawOCRText = bestResult.text;
-    console.log('[ocr] Best variant:', bestResult.variant, '| text:', rawOCRText.substring(0, 300));
+    console.log('[ocr] Best variant:', bestResult.variant, '| text:', rawOCRText.substring(0, 1000));
 
     // Step 3: Parse skill names from the OCR text using line-by-line matching
     let detectedSkills = parseSkillsEnhanced(rawOCRText, bestResult.ocrConfidence);
@@ -1162,52 +1320,67 @@ async function ocrPipelineCore(imageBlob) {
 // Expose for automated tests
 window.ocrPipelineCore = ocrPipelineCore;
 
+async function processSkillOCRImage(imageBlob) {
+  return ocrPipelineCore(imageBlob);
+}
+
+function updateOCRDebugResult(result) {
+  const debugContainer = document.getElementById('ocr-debug-overlay');
+  if (!result) {
+    window._ocrDebugInfo = null;
+    if (debugContainer) debugContainer.style.display = 'none';
+    return;
+  }
+
+  const { detectedSkills, cards, cardRegions, debugCardTexts, cropInfo, sourceCanvas } = result;
+  const Preprocess = window.OCRPreprocess;
+
+  if (window._ocrDebugMode) {
+    window._ocrDebugInfo = {
+      cards,
+      cardRegions,
+      debugCardTexts,
+      detectedSkills,
+      cropInfo,
+      sourceCanvas,
+      timestamp: Date.now(),
+    };
+  }
+
+  // Show debug overlay with card segmentation
+  if (window._ocrDebugMode && sourceCanvas && cropInfo && Preprocess) {
+    if (cards.length > 0) {
+      displaySegmentedDebugOverlay(sourceCanvas, cropInfo, cards, debugCardTexts);
+    } else {
+      displayDebugOverlay(sourceCanvas, cropInfo, {
+        variant: 'fallback',
+        ocrConfidence: 0,
+        text: '',
+      });
+    }
+  }
+}
+
 async function processSkillOCR(imageBlob) {
   const resultsPanel = document.getElementById('ocr-results-panel');
   const resultsList = document.getElementById('ocr-results-list');
 
   if (!resultsPanel || !resultsList) {
     console.error('[ocr] OCR results panel not found');
-    return;
+    return null;
   }
 
+  setOCRBatchStatus('', '');
   resultsList.innerHTML =
     '<div class="loading-indicator">' + t('events.processingImage') + '</div>';
   resultsPanel.style.display = 'block';
 
   try {
-    const result = await ocrPipelineCore(imageBlob);
-    const { detectedSkills, cards, cardRegions, debugCardTexts, cropInfo, sourceCanvas } = result;
-    const Preprocess = window.OCRPreprocess;
-
-    // Store debug info
-    if (window._ocrDebugMode) {
-      window._ocrDebugInfo = {
-        cards,
-        cardRegions,
-        debugCardTexts,
-        detectedSkills,
-        cropInfo,
-        sourceCanvas,
-        timestamp: Date.now(),
-      };
-    }
-
-    // Show debug overlay with card segmentation
-    if (window._ocrDebugMode && sourceCanvas && cropInfo && Preprocess) {
-      if (cards.length > 0) {
-        displaySegmentedDebugOverlay(sourceCanvas, cropInfo, cards, debugCardTexts);
-      } else {
-        displayDebugOverlay(sourceCanvas, cropInfo, {
-          variant: 'fallback',
-          ocrConfidence: 0,
-          text: '',
-        });
-      }
-    }
-
-    displayOCRResults(detectedSkills);
-    window.ocrDetectedSkills = detectedSkills;
+    const result = await processSkillOCRImage(imageBlob);
+    updateOCRDebugResult(result);
+    window.ocrDetectedSkills = result.detectedSkills;
+    displayOCRResults(result.detectedSkills);
+    return result;
   } catch (err) {
     console.error('[ocr] Skill OCR error:', err);
     resultsList.innerHTML = '<div class="error-message">' + t('events.ocrFailed') + '</div>';
@@ -1547,7 +1720,7 @@ const ocrResultsPanel = document.getElementById('ocr-results-panel');
 
 if (ocrAddAllBtn) {
   ocrAddAllBtn.addEventListener('click', function () {
-    if (!window.ocrDetectedSkills || window.ocrDetectedSkills.length === 0) {
+    if (skillOCRBusy || !window.ocrDetectedSkills || window.ocrDetectedSkills.length === 0) {
       return;
     }
 
@@ -1573,7 +1746,7 @@ if (ocrAddAllBtn) {
           }
           ocrAddAllBtn.classList.remove('success');
           ocrAddAllBtn.textContent = originalText;
-          ocrAddAllBtn.disabled = false;
+          ocrAddAllBtn.disabled = skillOCRBusy;
         }, 1500);
       }, 50);
     } else {
@@ -1585,7 +1758,7 @@ if (ocrAddAllBtn) {
 
 if (ocrAddSelectedBtn) {
   ocrAddSelectedBtn.addEventListener('click', function () {
-    if (!window.ocrDetectedSkills || window.ocrDetectedSkills.length === 0) {
+    if (skillOCRBusy || !window.ocrDetectedSkills || window.ocrDetectedSkills.length === 0) {
       return;
     }
 
@@ -1625,7 +1798,7 @@ if (ocrAddSelectedBtn) {
           }
           ocrAddSelectedBtn.classList.remove('success');
           ocrAddSelectedBtn.textContent = originalText;
-          ocrAddSelectedBtn.disabled = false;
+          ocrAddSelectedBtn.disabled = skillOCRBusy;
         }, 1500);
       }, 50);
     } else {
@@ -1637,7 +1810,7 @@ if (ocrAddSelectedBtn) {
 
 if (ocrResultsCloseBtn) {
   ocrResultsCloseBtn.addEventListener('click', function () {
-    if (ocrResultsPanel) {
+    if (!skillOCRBusy && ocrResultsPanel) {
       ocrResultsPanel.style.display = 'none';
     }
   });
@@ -2015,3 +2188,5 @@ window.setOCRRegion = function (layout, region) {
   Preprocess.SKILL_REGIONS[layout] = region;
   console.log(`[ocr] Updated ${layout} region:`, region);
 };
+
+// window.setOCRDebugMode(true);

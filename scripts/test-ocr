@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# set -euo pipefail
+
+CHROME_DEVTOOLS_STATUS=$(chrome-devtools status)
+if [[ "${CHROME_DEVTOOLS_STATUS}" == *"not running"* ]]; then
+  echo "Starting test-ocr..."
+  setsid --fork -- chrome-devtools start --executablePath /usr/bin/brave-origin-beta --userDataDir /insilications/gstuff/stuff/things/build/dev/brave-temp --performanceCrux false --usageStatistics false </dev/null >/dev/null 2>&1
+  sleep 2
+  CHROME_DEVTOOLS_STATUS=$(chrome-devtools status)
+  if [[ "${CHROME_DEVTOOLS_STATUS}" == *"not running"* ]]; then
+    echo "Failed to run test-ocr..."
+    exit 1
+  fi
+fi
+
+chrome-devtools new_page "http://localhost:3000/optimizer?test=1" &>/dev/null
+readarray -t page_ids < <(chrome-devtools list_pages --output-format=json | jq -r '.pages[] | select(.selected != true) | .id')
+
+# Iterate over the unselected IDs
+for id in "${page_ids[@]}"; do
+  setsid --fork -- chrome-devtools close_page "${id}" </dev/null >/dev/null 2>&1
+done
+
+chrome-devtools evaluate_script "() => OCRTest.runImageTests('m1.png')"

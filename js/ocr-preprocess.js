@@ -645,14 +645,14 @@
 
   // The Uma Musume skill selection screen has a specific layout:
   //   PC (landscape):  Skills appear in a left panel (~2-38% x, ~32-85% y)
-  //   Mobile (portrait): Skills appear in the middle (~0-85% x, ~22-80% y)
+  //   Mobile (portrait): Skills appear in the middle (~0-98% x, ~32-47% y)
   //
   // We detect aspect ratio to choose the right region, then crop before OCR
   // to avoid reading menu text, log entries, scheduled races, etc.
 
   const SKILL_REGIONS = {
     pc: { x: 0.01, y: 0.27, w: 0.4, h: 0.58 },
-    mobile: { x: 0.0, y: 0.17, w: 0.98, h: 0.7 },
+    mobile: { x: 0.0, y: 0.32, w: 0.98, h: 0.47 },
   };
 
   function detectLayout(canvas) {
@@ -700,13 +700,13 @@
     octx.drawImage(sourceCanvas, r.x, r.y, r.w, r.h, r.x, r.y, r.w, r.h);
 
     // Draw a green border around the crop region
-    octx.strokeStyle = '#00ff00';
-    octx.lineWidth = 3;
+    octx.strokeStyle = '#0b6825';
+    octx.lineWidth = 6;
     octx.strokeRect(r.x, r.y, r.w, r.h);
 
     // Label
-    octx.fillStyle = '#00ff00';
-    octx.font = 'bold 16px monospace';
+    octx.fillStyle = '#000000';
+    octx.font = 'bold 22px monospace';
     octx.fillText(`OCR Region: ${cropInfo.layout.toUpperCase()} layout`, r.x + 5, r.y - 8);
 
     return overlay;
@@ -724,8 +724,8 @@
     const { gray, width, height } = grayObj;
 
     // Analyze center strip (skip icon column on left, badge area on right)
-    const x1 = Math.round(width * 0.15);
-    const x2 = Math.round(width * 0.85);
+    const x1 = Math.round(width * 0.173);
+    const x2 = Math.round(width * 0.687);
     const sw = x2 - x1;
 
     // ── Signal 1: Row brightness ──
@@ -950,14 +950,14 @@
       const absY = r.y + card.y;
 
       // Yellow border for each detected card
-      octx.strokeStyle = '#ffff00';
-      octx.lineWidth = 2;
+      octx.strokeStyle = '#000000';
+      octx.lineWidth = 3;
       octx.strokeRect(r.x + 2, absY, r.w - 4, card.h);
 
       // Blue line showing name region cutoff (top 35%)
       const nameH = Math.round(card.h * 0.35);
-      octx.strokeStyle = '#00aaff';
-      octx.lineWidth = 1;
+      octx.strokeStyle = '#5b1e5b';
+      octx.lineWidth = 5;
       octx.setLineDash([4, 4]);
       octx.beginPath();
       octx.moveTo(r.x + 2, absY + nameH);
@@ -966,8 +966,8 @@
       octx.setLineDash([]);
 
       // Card label
-      octx.fillStyle = '#ffff00';
-      octx.font = 'bold 12px monospace';
+      octx.fillStyle = '#000000';
+      octx.font = 'bold 22px monospace';
       octx.fillText(`Card ${i + 1}`, r.x + 6, absY + 14);
     }
 

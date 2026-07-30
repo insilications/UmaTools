@@ -2783,11 +2783,31 @@ html.dark body .results-list .result-item.cat-gold[data-base-category='ius'],
   margin-bottom: 0.75rem;
 }
 
+.\!status {
+  min-height: 1.2em !important;
+  color: var(--muted) !important;
+  font-style: italic !important;
+  margin: 0.25rem 0 0.75rem !important;
+}
+
 .status {
   min-height: 1.2em;
   color: var(--muted);
   font-style: italic;
   margin: 0.25rem 0 0.75rem;
+}
+
+.\!status.status-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  padding: 0.35rem 0.7rem !important;
+  border-radius: 999px !important;
+  border: 1px solid var(--border) !important;
+  background: var(--surface-2) !important;
+  font-size: 0.85rem !important;
+  font-style: normal !important;
+  margin: 0 !important;
 }
 
 .status.status-chip {

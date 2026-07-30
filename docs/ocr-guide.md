@@ -35,6 +35,7 @@ Image Input
     |  - Top-3 suggestions for low confidence
     v
 [ocr.js]             Integration + UI
+    |  - Sequential multi-screenshot upload queue
     |  - Best-variant selection
     |  - Fallback strip OCR (3 horizontal strips)
     |  - Suggestions UI ("Did you mean?")
@@ -310,7 +311,7 @@ document.head.appendChild(s);
 Then run:
 
 ```js
-OCRTest.runAll();
+await OCRTest.runAll();
 ```
 
 Output includes unit test results (pass/fail counts), accuracy benchmarks (top-1 and top-3 accuracy), and individual test details.
@@ -323,3 +324,5 @@ Output includes unit test results (pass/fail counts), accuracy benchmarks (top-1
 - Total pipeline: ~2-5 seconds per screenshot
 - No UI stalls (Tesseract runs in a web worker)
 - OCR scripts are lazy-loaded (~1MB deferred from initial page load)
+- When multiple screenshots are selected, they run sequentially through the same worker; the
+  review opens after the batch with detections kept in file-selection order.
