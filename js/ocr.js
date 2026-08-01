@@ -11,6 +11,8 @@ const MAX_MS_PER_SCAN = 60;
 const OCR_OPTS = { lang: 'eng', psm: 6 }; // 6 = block of text (ribbon often has 2 lines)
 const TRIGGER_COOLDOWN_MS = 1500;
 const TESSERACT_SRC = 'https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js';
+const OPENCV_SRC =
+  'https://cdn.jsdelivr.net/npm/@techstark/opencv-js@5.0.0-release.1/dist/opencv.min.js';
 const MAX_OCR_WORKERS = 3; // Max workers for skill OCR pool
 
 const captureBtn = document.getElementById('captureBtn');
@@ -28,6 +30,7 @@ let mediaStream = null;
 let captureTimer = null;
 let lastTriggerTs = 0;
 let tesseractReady = null;
+let openCvReady = null;
 let ocrScheduler = null; // Tesseract worker pool scheduler
 let skillOCRWorker = null;
 let skillOCRWorkerInit = null;
@@ -193,6 +196,58 @@ async function ensureTesseract() {
   }
   return tesseractReady;
 }
+
+function waitForOpenCvRuntime(cvModule) {
+  if (cvModule instanceof Promise) return cvModule;
+  if (cvModule.Mat) return Promise.resolve(cvModule);
+
+  return new Promise((resolve, reject) => {
+    const previousOnRuntimeInitialized = cvModule.onRuntimeInitialized;
+    cvModule.onRuntimeInitialized = function () {
+      try {
+        if (typeof previousOnRuntimeInitialized === 'function') {
+          previousOnRuntimeInitialized.call(cvModule);
+        }
+        resolve(cvModule);
+      } catch (err) {
+        reject(err);
+      }
+    };
+
+    // Avoid missing initialization if it completed between the check above
+    // and installing the callback.
+    if (cvModule.Mat) resolve(cvModule);
+  });
+}
+
+function getOpenCv() {
+  if (!openCvReady) {
+    openCvReady = (async () => {
+      if (!window.cv) {
+        await loadScript(OPENCV_SRC);
+      }
+
+      const cvModule = window.cv;
+      if (!cvModule) {
+        throw new Error(`OpenCV.js loaded from ${OPENCV_SRC} but did not expose window.cv`);
+      }
+
+      const cv = await waitForOpenCvRuntime(cvModule);
+      if (!cv || typeof cv.Mat !== 'function') {
+        throw new Error('OpenCV.js runtime initialized without exposing cv.Mat');
+      }
+
+      return { cv };
+    })().catch((err) => {
+      openCvReady = null;
+      throw err;
+    });
+  }
+
+  return openCvReady;
+}
+
+window.getOpenCv = getOpenCv;
 
 async function getSkillOCRWorker() {
   if (skillOCRWorker) return skillOCRWorker;

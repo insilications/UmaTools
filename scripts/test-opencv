@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if ! curl -sf -o /dev/null --connect-timeout 2 http://localhost:3000; then
+  echo "Local HTTP server serving the test is down. Ask the user to start the server before trying to run this test."
+  exit 1
+fi
+
+CHROME_DEVTOOLS_STATUS=$(chrome-devtools status)
+if [[ "${CHROME_DEVTOOLS_STATUS}" == *"not running"* ]]; then
+    echo "chrome-devtools daemon is not running. Ask the user to start the chrome-devtools daemon before trying to run this test."
+    exit 1
+fi
+
+echo "Starting test-opencv..."
+chrome-devtools new_page "http://localhost:3000/optimizer?test=1" &>/dev/null
+
+readarray -t page_ids < <(chrome-devtools list_pages --output-format=json | jq -r '.pages[] | select(.selected != true) | .id')
+# Iterate over the unselected IDs
+for id in "${page_ids[@]}"; do
+  setsid --fork -- chrome-devtools close_page "${id}" </dev/null >/dev/null 2>&1
+done
+
+OPENCV_TEST_OUTPUT=$(chrome-devtools evaluate_script 'async () => {
+  const openCvSrc =
+    "https://cdn.jsdelivr.net/npm/@techstark/opencv-js@5.0.0-release.1/dist/opencv.min.js";
+  const getOpenCvScripts = () =>
+    Array.from(document.scripts).filter((script) => script.src === openCvSrc);
+  const assert = (condition, message) => {
+    if (!condition) throw new Error(message);
+  };
+
+  const cvAbsentBefore = typeof window.cv === "undefined";
+  const scriptCountBefore = getOpenCvScripts().length;
+  assert(cvAbsentBefore, "window.cv was defined before getOpenCv() was called");
+  assert(scriptCountBefore === 0, `Expected no OpenCV script before loading, found ${scriptCountBefore}`);
+  assert(typeof window.getOpenCv === "function", "window.getOpenCv is not available");
+
+  const [first, second] = await Promise.all([window.getOpenCv(), window.getOpenCv()]);
+  const sameCv = first.cv === second.cv;
+  const scriptCountAfter = getOpenCvScripts().length;
+  assert(sameCv, "Concurrent getOpenCv() calls resolved to different cv instances");
+  assert(scriptCountAfter === 1, `Expected one OpenCV script after loading, found ${scriptCountAfter}`);
+
+  const { cv } = first;
+  const mat = new cv.Mat(1, 1, cv.CV_8UC1);
+  try {
+    assert(mat.rows === 1 && mat.cols === 1, `Unexpected Mat dimensions: ${mat.rows}x${mat.cols}`);
+  } finally {
+    mat.delete();
+  }
+
+  const buildInformation = cv.getBuildInformation();
+  assert(buildInformation.includes("OpenCV 5.0.0"), "Loaded OpenCV build is not version 5.0.0");
+
+  return {
+    passMarker: "OPENCV_TEST_PASS",
+    status: "PASS",
+    cvAbsentBefore,
+    scriptCountBefore,
+    concurrentCallsSharedCv: sameCv,
+    scriptCountAfter,
+    matLifecycle: "constructed and deleted a 1x1 CV_8UC1 Mat",
+    buildInformation,
+  };
+}')
+
+echo "${OPENCV_TEST_OUTPUT}"
+if [[ "${OPENCV_TEST_OUTPUT}" != *"OPENCV_TEST_PASS"* ]]; then
+  echo "OpenCV test failed."
+  exit 1
+fi
