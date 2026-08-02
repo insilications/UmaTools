@@ -22,7 +22,7 @@ Image Input
     |  - Morphological close
     |  - Multi-variant output (4 configs tested in parallel)
     v
-[Tesseract.js v5]    OCR Engine (English)
+[Tesseract.js v7]    OCR Engine (English)
     |  - PSM AUTO, char whitelist
     |  - Per-word confidence scores
     |  - Worker pool (up to 3 parallel workers)

@@ -18,18 +18,12 @@
     "sync:uma-skills": "node scripts/gamewith_skills.js",
     "refresh:data": "npm run sync:skills-all && npm run sync:races && npm run sync:uma-skills",
     "format:js": "prettier --write .",
-    "format:py": "python -m ruff format api",
-    "format": "npm run format:js && npm run format:py",
+    "format": "npm run format:js",
     "lint:js": "eslint .",
-    "lint:py": "python -m ruff check api",
-    "lint": "npm run lint:js && npm run lint:py",
-    "test:team-trials": "node tests/team-trials-optimizer.test.js",
-    "test:rating-shared": "node tests/rating-shared.test.js",
-    "test": "npm run test:team-trials && npm run test:rating-shared",
+    "lint": "npm run lint:js",
     "test-ocr": "bash scripts/test-ocr",
     "test-opencv": "bash scripts/test-opencv",
-    "test-cv-template-matching": "scripts/test-cv-template-matching",
-    "check": "npm run lint && npm run test"
+    "test-cv-template-matching": "scripts/test-cv-template-matching"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

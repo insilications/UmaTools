@@ -3599,6 +3599,10 @@ html.dark input#query,
   visibility: collapse;
 }
 
+.static {
+  position: static;
+}
+
 .fixed {
   position: fixed;
 }

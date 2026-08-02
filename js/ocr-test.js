@@ -812,21 +812,57 @@ Focus 100`;
     {
       image: './tests/reference/m1.png',
       layout: 'mobile',
+      // Keep each human-transcribed name beside the padded range for its own
+      // button. pairTemplateMatchesWithRanges establishes the physical pairing,
+      // so a missing or unexpected detection cannot shift every later name and
+      // produce misleading index-based mismatch reports.
       expected_matches_ranges: [
-        { x: 741.3, y: 846.7, width: 80.2, height: 81.4 },
-        { x: 741.3, y: 1122.6, width: 80.2, height: 81.4 },
-        { x: 741.3, y: 1402.7, width: 80.2, height: 81.4 },
-        { x: 741.3, y: 1681.1, width: 80.2, height: 81.4 },
+        {
+          x: 741.3,
+          y: 846.7,
+          width: 80.2,
+          height: 81.4,
+          expectedRawSkillName: 'Ignited Spirit SPD',
+        },
+        {
+          x: 741.3,
+          y: 1122.6,
+          width: 80.2,
+          height: 81.4,
+          expectedRawSkillName: 'Ignited Spirit STA',
+        },
+        {
+          x: 741.3,
+          y: 1402.7,
+          width: 80.2,
+          height: 81.4,
+          expectedRawSkillName: 'Ignited Spirit PWR',
+        },
+        {
+          x: 741.3,
+          y: 1681.1,
+          width: 80.2,
+          height: 81.4,
+          expectedRawSkillName: 'Ignited Spirit WIT',
+        },
       ],
     },
   ];
 
-  // Keep the oracle independent from production constants. If the template,
-  // scale policy, or threshold changes intentionally, both the fixture
-  // expectations and these values must be reviewed instead of silently moving
-  // with the implementation under test.
+  // Keep the oracle independent from production constants. In particular,
+  // SKILL_NAME_EXPECTED_GEOMETRY deliberately duplicates OCR_SKILL_NAME instead
+  // of importing or exposing it: if production uses the wrong offset, the test
+  // must disagree rather than calculating the same wrong answer. If the native
+  // template scale or skill card layout changes intentionally, both sides require a
+  // conscious review against the fixture pixels.
   const TEMPLATE_MATCH_EXPECTED_SIZE = { width: 63, height: 68 };
   const TEMPLATE_MATCH_MIN_SCORE = 0.8;
+  const SKILL_NAME_EXPECTED_GEOMETRY = {
+    xOffset: 548,
+    yOffset: 87,
+    width: 579,
+    height: 55,
+  };
 
   // The shell wrapper cannot inspect browser objects directly. It treats this
   // marker as the success contract and exits nonzero when the marker is absent.
@@ -844,6 +880,26 @@ Focus 100`;
       match.height === TEMPLATE_MATCH_EXPECTED_SIZE.height &&
       Number.isFinite(match.score) &&
       match.score >= TEMPLATE_MATCH_MIN_SCORE
+    );
+  }
+
+  // OCR text alone cannot prove that production cropped the intended field: a
+  // larger or shifted crop might happen to read the same name on this fixture.
+  // Require the public diagnostic rectangle to preserve the exact anchor
+  // transform and dimensions, and reject NaN/Infinity explicitly because those
+  // values can otherwise make ordinary comparisons fail non-obviously.
+  function isSkillNameRegionValid(match) {
+    const region = match?.skillNameRegion;
+    return (
+      region &&
+      Number.isFinite(region.x) &&
+      Number.isFinite(region.y) &&
+      Number.isFinite(region.width) &&
+      Number.isFinite(region.height) &&
+      region.x === match.x - SKILL_NAME_EXPECTED_GEOMETRY.xOffset &&
+      region.y === match.y - SKILL_NAME_EXPECTED_GEOMETRY.yOffset &&
+      region.width === SKILL_NAME_EXPECTED_GEOMETRY.width &&
+      region.height === SKILL_NAME_EXPECTED_GEOMETRY.height
     );
   }
 
@@ -925,13 +981,46 @@ Focus 100`;
         const pairing = pairTemplateMatchesWithRanges(matches, test.expected_matches_ranges);
         const actualLayout = result?.cropInfo?.layout || null;
 
+        // Report geometry and recognition failures separately. That distinction
+        // answers whether Tesseract misread the correct pixels or production
+        // supplied the wrong pixels before recognition even began.
+        const invalidSkillNameRegions = matches
+          .map((match, index) => ({ match, index }))
+          .filter(({ match }) => !isSkillNameRegionValid(match));
+
+        // Compare names only after geometric one-to-one pairing. Comparing the
+        // sorted arrays directly would turn one missing button into several
+        // false OCR failures for all cards below it.
+        const skillNameMismatches = pairing.matchedPairs
+          .filter(({ match, range }) => match.rawSkillName !== range.expectedRawSkillName)
+          .map(({ match, range, matchIndex, rangeIndex }) => ({
+            matchIndex,
+            rangeIndex,
+            expected: range.expectedRawSkillName,
+            actual: match.rawSkillName,
+          }));
+
+        // The shell wrapper receives only this function's serialized return
+        // value, not the browser console. Keep a compact ordered list in the
+        // result so `npm run test-cv-template-matching` visibly displays every
+        // raw name while the full matches retain detailed per-card diagnostics.
+        const rawSkillNames = matches.map((match) => match.rawSkillName);
+
+        // This remains useful when the test is invoked directly in DevTools,
+        // where developers can correlate OCR output with other pipeline logs.
+        matches.forEach((match, index) => {
+          console.log(`   Card ${index + 1} raw skill name: "${match.rawSkillName}"`);
+        });
+
         // Passing is deliberately stricter than recall: layout and match shape
-        // must be valid, every expected range must be paired, and no additional
-        // match may remain. The count check makes that exact-set policy obvious
-        // in the summary even though pairing also exposes missing/extras.
+        // and skill-name ROI must be valid, every expected range and raw name
+        // must match, and no additional match may remain. The count check makes
+        // that exact-set policy obvious in the summary.
         const passed =
           actualLayout === test.layout &&
           invalidMatches.length === 0 &&
+          invalidSkillNameRegions.length === 0 &&
+          skillNameMismatches.length === 0 &&
           matches.length === test.expected_matches_ranges.length &&
           pairing.missingRanges.length === 0 &&
           pairing.unexpectedMatches.length === 0;
@@ -943,7 +1032,10 @@ Focus 100`;
           expectedCount: test.expected_matches_ranges.length,
           actualCount: matches.length,
           matches,
+          rawSkillNames,
           invalidMatches,
+          invalidSkillNameRegions,
+          skillNameMismatches,
           missingRanges: pairing.missingRanges,
           unexpectedMatches: pairing.unexpectedMatches,
           passed,

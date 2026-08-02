@@ -22,11 +22,18 @@ const OPENCV_SRC =
 // while the best remaining peak is about 0.42, leaving useful margin below 0.8.
 // Capping the number of peaks also bounds repeated full-map minMaxLoc scans and
 // matches the existing UI assumption that at most five skill rows are visible.
-const OPENCV_TEMPLATE_SRC = '/cv/button-decrease.png';
 const OPENCV_TEMPLATE_MATCH_METHOD = 'TM_CCOEFF_NORMED';
 const OPENCV_TEMPLATE_MATCH_THRESHOLD = 0.8;
 const OPENCV_MAX_TEMPLATE_MATCHES = 5;
 const MAX_OCR_WORKERS = 3; // Max workers for skill OCR pool
+
+// Templates to be matched
+// Small image of the decrease button on the skill card.
+// Used to locate a skill card
+const OPENCV_TEMPLATE_DECREASE_BTN_SRC = '/cv/btn-decrease.png';
+
+// OFFSETS
+const OCR_SKILL_NAME = { x_offset: 548, y_offset: 87, width: 579, height: 55 };
 
 const captureBtn = document.getElementById('captureBtn');
 const videoEl = document.getElementById('captureVideo');
@@ -281,23 +288,25 @@ window.getOpenCv = getOpenCv;
 function getOpenCvTemplateCanvas() {
   if (!openCvTemplateCanvasReady) {
     openCvTemplateCanvasReady = (async () => {
-      const res = await fetch(OPENCV_TEMPLATE_SRC);
+      const res = await fetch(OPENCV_TEMPLATE_DECREASE_BTN_SRC);
       if (!res.ok) {
         throw new Error(
-          `Failed to fetch OpenCV template ${OPENCV_TEMPLATE_SRC}: ${res.status} ${res.statusText}`
+          `Failed to fetch OpenCV template ${OPENCV_TEMPLATE_DECREASE_BTN_SRC}: ${res.status} ${res.statusText}`
         );
       }
 
       const contentType = (res.headers.get('content-type') || '').toLowerCase();
       if (!contentType.startsWith('image/')) {
         throw new Error(
-          `OpenCV template ${OPENCV_TEMPLATE_SRC} is not an image (content-type: "${contentType}")`
+          `OpenCV template ${OPENCV_TEMPLATE_DECREASE_BTN_SRC} is not an image (content-type: "${contentType}")`
         );
       }
 
       const templateCanvas = await _decodeToCanvasFromBlob(await res.blob());
       if (templateCanvas.width <= 0 || templateCanvas.height <= 0) {
-        throw new Error(`OpenCV template ${OPENCV_TEMPLATE_SRC} decoded with invalid dimensions`);
+        throw new Error(
+          `OpenCV template ${OPENCV_TEMPLATE_DECREASE_BTN_SRC} decoded with invalid dimensions`
+        );
       }
 
       return templateCanvas;
@@ -317,7 +326,10 @@ async function getSkillOCRWorker() {
   if (!skillOCRWorkerInit) {
     skillOCRWorkerInit = (async () => {
       const Tess = await ensureTesseract();
-      skillOCRWorker = await Tess.createWorker('eng');
+      // createWorker's second argument is the OCR engine mode. Pin OEM 1
+      // (LSTM-only) instead of inheriting a library default so this persistent
+      // worker uses the same recognition engine as the scheduler workers below.
+      skillOCRWorker = await Tess.createWorker('eng', 1);
       return skillOCRWorker;
     })().catch((err) => {
       skillOCRWorkerInit = null;
@@ -1291,6 +1303,120 @@ async function recognizeCanvas(worker, canvas, psmMode) {
   }
 }
 
+/**
+ * Create the exact single-line OCR crop associated with a decrease-button
+ * match. Matches have already been translated out of the skills-panel crop and
+ * into full source-image coordinates. OCR_SKILL_NAME is calibrated in that same
+ * coordinate space: the name lies above and to the left of the button, hence
+ * the subtraction rather than addition of its offsets.
+ *
+ * The crop deliberately preserves the source pixels at native size and in
+ * color. These skill names already have 26-32 px glyphs, and Tesseract's
+ * Leptonica pipeline performs its own grayscale conversion and binarization.
+ * Keeping the original pixels also leaves that internal thresholding stage the
+ * full tonal information instead of committing to one application-side mask.
+ */
+function createSkillNameCanvas(sourceCanvas, match, matchIndex) {
+  const skillNameRegion = {
+    x: match.x - OCR_SKILL_NAME.x_offset,
+    y: match.y - OCR_SKILL_NAME.y_offset,
+    width: OCR_SKILL_NAME.width,
+    height: OCR_SKILL_NAME.height,
+  };
+  const { x, y, width, height } = skillNameRegion;
+
+  // Do not clamp a bad rectangle to the image edge. A clipped rectangle would
+  // still be a valid canvas but would no longer describe the calibrated name
+  // field, turning a geometry regression into plausible-looking OCR garbage.
+  if (
+    !Number.isFinite(x) ||
+    !Number.isFinite(y) ||
+    !Number.isFinite(width) ||
+    !Number.isFinite(height) ||
+    width <= 0 ||
+    height <= 0 ||
+    x < 0 ||
+    y < 0 ||
+    x + width > sourceCanvas.width ||
+    y + height > sourceCanvas.height
+  ) {
+    throw new Error(
+      `Skill name ROI for match ${matchIndex} is outside source image: ` +
+        `x=${x} y=${y} w=${width} h=${height}, ` +
+        `source=${sourceCanvas.width}x${sourceCanvas.height}`
+    );
+  }
+
+  // Matching and OCR both operate at native screenshot scale. drawImage uses
+  // equal source/destination dimensions here, so this is a crop only: no
+  // resampling, implicit upscaling, or sharpening is introduced.
+  const skillNameCanvas = document.createElement('canvas');
+  skillNameCanvas.width = width;
+  skillNameCanvas.height = height;
+  const skillNameCtx = skillNameCanvas.getContext('2d', { willReadFrequently: true });
+  if (!skillNameCtx) {
+    throw new Error(`Failed to create skill name canvas for match ${matchIndex}`);
+  }
+
+  skillNameCtx.drawImage(sourceCanvas, x, y, width, height, 0, 0, width, height);
+  return { canvas: skillNameCanvas, region: skillNameRegion };
+}
+
+/**
+ * OCR each located card name and enrich its match in place. The caller sorts
+ * matches in screen order before invoking this function, so the returned array
+ * keeps a stable one-card/one-name relationship without a second join key.
+ * rawSkillName means the direct Tesseract text after recognizeCanvas removes
+ * surrounding whitespace; it is intentionally not normalized, parsed, or
+ * matched against the skill database in this initial pipeline.
+ */
+async function recognizeOpenCvSkillNames(matches, sourceCanvas) {
+  // Avoid loading the comparatively large Tesseract runtime on screenshots
+  // where OpenCV found no cards to read.
+  if (matches.length === 0) return;
+
+  // ensureTesseract supplies the PSM enum while getSkillOCRWorker supplies the
+  // cached worker. The latter also calls ensureTesseract, whose single-flight
+  // promise makes these two requests share one script initialization.
+  const Tess = await ensureTesseract();
+  const worker = await getSkillOCRWorker();
+
+  try {
+    // The crop contains exactly one horizontal name, so SINGLE_LINE avoids
+    // asking page-layout analysis to rediscover a structure we already know.
+    // Tesseract's enum values are strings; '7' is the documented SINGLE_LINE
+    // value for builds that do not expose the convenience PSM object. The
+    // whitelist constrains recognition, not post-processing: multi-word names
+    // still need preserve_interword_spaces and the returned text stays raw.
+    await worker.setParameters({
+      tessedit_pageseg_mode: Tess.PSM ? Tess.PSM.SINGLE_LINE : '7',
+      tessedit_char_whitelist:
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 '-+%.",
+      preserve_interword_spaces: '1',
+    });
+
+    // One persistent worker processes the cards in screen order. Avoid
+    // concurrent recognize() calls and preserve the one-result-per-match order.
+    for (let index = 0; index < matches.length; index++) {
+      const match = matches[index];
+      const { canvas: skillNameCanvas, region } = createSkillNameCanvas(sourceCanvas, match, index);
+      const { text } = await recognizeCanvas(worker, skillNameCanvas);
+
+      // Mutate the existing public match rather than creating a parallel array:
+      // its button geometry is the evidence that identifies both this ROI and
+      // this OCR result. Consumers can therefore inspect or display the crop
+      // without relying on array position alone.
+      match.skillNameRegion = region;
+      match.rawSkillName = text;
+    }
+  } catch (err) {
+    // A recognition failure may leave the persistent worker unusable. Discard
+    // it so the next pipeline call gets a clean worker instead of reusing it.
+    await resetSkillOCRWorker();
+    throw err;
+  }
+}
+
 async function collectFallbackSkillsFromStrips(worker, cropCanvas) {
   const Preprocess = window.OCRPreprocess;
   if (!worker || !cropCanvas || !Preprocess) return [];
@@ -1441,12 +1567,18 @@ async function ocrPipelineCore(imageBlob) {
 }
 
 /**
- * Locate native-scale decrease buttons inside the existing skill-panel ROI.
+ * Locate native-scale decrease buttons inside the skills ROI.
+ * Each successful match represents a skill card containing information
+ * such as skill name.
  *
- * Returned match rectangles use full source-image pixels. OpenCV's response
- * coordinates are ROI-relative top-left positions, so cropInfo.region is added
- * before results leave this function. sourceCanvas and cropInfo are retained
- * for later pipeline stages; no OpenCV Mat escapes this function.
+ * Returned match rectangles and skillNameRegion values use full source-image
+ * pixels. OpenCV's response coordinates are ROI-relative top-left positions,
+ * so cropInfo.region is added before results leave this function. Each match is
+ * enriched with a full-image skillNameRegion and its rawSkillName OCR text.
+ * rawSkillName is evidence from Tesseract rather than an accepted database skill
+ * identity; callers must not assume it has been corrected or parsed.
+ * sourceCanvas and cropInfo are retained for later pipeline stages; no OpenCV
+ * Mat escapes this function.
  */
 async function ocrOpenCvPipelineCore(imageBlob) {
   const Preprocess = window.OCRPreprocess;
@@ -1574,6 +1706,12 @@ async function ocrOpenCvPipelineCore(imageBlob) {
   // top-to-bottom/left-to-right screen order for downstream card processing.
   matches.sort((a, b) => a.y - b.y || a.x - b.x);
   console.log(`[ocrOpenCvPipelineCore] Matched ${matches.length} decrease button(s)`);
+
+  // OpenCV Mats have been released before entering the comparatively slow OCR
+  // phase, which avoids retaining duplicate WASM image buffers while Tesseract
+  // encodes and reads each canvas. The raw text remains attached to the button
+  // match that supplied the card anchor.
+  await recognizeOpenCvSkillNames(matches, sourceCanvas);
 
   return {
     matches,
