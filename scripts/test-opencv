@@ -13,8 +13,11 @@ if [[ "${CHROME_DEVTOOLS_STATUS}" == *"not running"* ]]; then
 fi
 
 echo "Starting test-opencv..."
-chrome-devtools new_page "http://localhost:3000/optimizer?test=1" &>/dev/null
+chrome-devtools new_page "http://localhost:3000/optimizer?test=1&debug=1" &>/dev/null
+# Reload to ignore the cache
+chrome-devtools navigate_page --type "reload" --ignoreCache true &>/dev/null
 
+# Close old pages opened by previous test runs in the live test browser
 readarray -t page_ids < <(chrome-devtools list_pages --output-format=json | jq -r '.pages[] | select(.selected != true) | .id')
 # Iterate over the unselected IDs
 for id in "${page_ids[@]}"; do

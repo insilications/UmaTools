@@ -13,6 +13,19 @@ const TRIGGER_COOLDOWN_MS = 1500;
 const TESSERACT_SRC = 'https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js';
 const OPENCV_SRC =
   'https://cdn.jsdelivr.net/npm/@techstark/opencv-js@5.0.0-release.1/dist/opencv.min.js';
+
+// The OpenCV matcher is deliberately independent of the legacy JavaScript NCC
+// probe matcher above. TM_CCOEFF_NORMED compares contrast after removing local
+// means, which makes the score less sensitive to a uniform brightness shift.
+// The initial pipeline is native-scale only: no template resizing or image
+// pyramid is performed. On m1.png, the four real matches score 0.999997-1.0
+// while the best remaining peak is about 0.42, leaving useful margin below 0.8.
+// Capping the number of peaks also bounds repeated full-map minMaxLoc scans and
+// matches the existing UI assumption that at most five skill rows are visible.
+const OPENCV_TEMPLATE_SRC = '/cv/button-decrease.png';
+const OPENCV_TEMPLATE_MATCH_METHOD = 'TM_CCOEFF_NORMED';
+const OPENCV_TEMPLATE_MATCH_THRESHOLD = 0.8;
+const OPENCV_MAX_TEMPLATE_MATCHES = 5;
 const MAX_OCR_WORKERS = 3; // Max workers for skill OCR pool
 
 const captureBtn = document.getElementById('captureBtn');
@@ -31,6 +44,11 @@ let captureTimer = null;
 let lastTriggerTs = 0;
 let tesseractReady = null;
 let openCvReady = null;
+
+// Cache the in-flight decode as well as the finished canvas. Concurrent scans
+// therefore share one fetch/decode, but no long-lived WebAssembly Mat. Each
+// scan creates fresh Mats from this browser-owned canvas and deletes them.
+let openCvTemplateCanvasReady = null;
 let ocrScheduler = null; // Tesseract worker pool scheduler
 let skillOCRWorker = null;
 let skillOCRWorkerInit = null;
@@ -63,7 +81,6 @@ function stats(gray) {
   const v2 = Math.max(1e-6, s2 / n - mean * mean);
   return { mean, std: Math.sqrt(v2) };
 }
-
 
 async function _decodeToCanvasFromBlob(blob) {
   try {
@@ -197,6 +214,9 @@ async function ensureTesseract() {
   return tesseractReady;
 }
 
+// OpenCV.js builds do not all expose the same startup shape: window.cv may be a
+// Promise, a ready module, or a module that will invoke onRuntimeInitialized.
+// Normalize those shapes so callers only ever receive a runtime with cv.Mat.
 function waitForOpenCvRuntime(cvModule) {
   if (cvModule instanceof Promise) return cvModule;
   if (cvModule.Mat) return Promise.resolve(cvModule);
@@ -222,6 +242,9 @@ function waitForOpenCvRuntime(cvModule) {
 
 function getOpenCv() {
   if (!openCvReady) {
+    // Store the initialization Promise immediately. This is a single-flight
+    // guard: simultaneous callers neither add duplicate script tags nor race
+    // separate OpenCV runtimes into window.cv.
     openCvReady = (async () => {
       if (!window.cv) {
         await loadScript(OPENCV_SRC);
@@ -239,6 +262,8 @@ function getOpenCv() {
 
       return { cv };
     })().catch((err) => {
+      // A failed CDN request or runtime initialization must not poison every
+      // future attempt for the lifetime of the page.
       openCvReady = null;
       throw err;
     });
@@ -247,7 +272,45 @@ function getOpenCv() {
   return openCvReady;
 }
 
+// Exposed for the browser smoke test and for diagnostics from the console.
 window.getOpenCv = getOpenCv;
+
+// Fetch and decode the fixed button template once. The content-type check is
+// important on static hosts where a missing asset can return an HTML fallback
+// with HTTP 200; passing that response to an image decoder obscures the cause.
+function getOpenCvTemplateCanvas() {
+  if (!openCvTemplateCanvasReady) {
+    openCvTemplateCanvasReady = (async () => {
+      const res = await fetch(OPENCV_TEMPLATE_SRC);
+      if (!res.ok) {
+        throw new Error(
+          `Failed to fetch OpenCV template ${OPENCV_TEMPLATE_SRC}: ${res.status} ${res.statusText}`
+        );
+      }
+
+      const contentType = (res.headers.get('content-type') || '').toLowerCase();
+      if (!contentType.startsWith('image/')) {
+        throw new Error(
+          `OpenCV template ${OPENCV_TEMPLATE_SRC} is not an image (content-type: "${contentType}")`
+        );
+      }
+
+      const templateCanvas = await _decodeToCanvasFromBlob(await res.blob());
+      if (templateCanvas.width <= 0 || templateCanvas.height <= 0) {
+        throw new Error(`OpenCV template ${OPENCV_TEMPLATE_SRC} decoded with invalid dimensions`);
+      }
+
+      return templateCanvas;
+    })().catch((err) => {
+      // Mirror getOpenCv's retry behavior: transient asset failures should be
+      // recoverable without reloading the application.
+      openCvTemplateCanvasReady = null;
+      throw err;
+    });
+  }
+
+  return openCvTemplateCanvasReady;
+}
 
 async function getSkillOCRWorker() {
   if (skillOCRWorker) return skillOCRWorker;
@@ -1319,7 +1382,12 @@ async function ocrPipelineCore(imageBlob) {
     const ocrResults = await runOCRWithPreprocessing(worker, ocrBlob);
     const bestResult = selectBestOCRResult(ocrResults);
     const rawOCRText = bestResult.text;
-    console.log('[ocr] Best variant:', bestResult.variant, '| text:', rawOCRText.substring(0, 1000));
+    console.log(
+      '[ocr] Best variant:',
+      bestResult.variant,
+      '| text:',
+      rawOCRText.substring(0, 1000)
+    );
 
     // Step 3: Parse skill names from the OCR text using line-by-line matching
     let detectedSkills = parseSkillsEnhanced(rawOCRText, bestResult.ocrConfidence);
@@ -1372,8 +1440,151 @@ async function ocrPipelineCore(imageBlob) {
   }
 }
 
-// Expose for automated tests
+/**
+ * Locate native-scale decrease buttons inside the existing skill-panel ROI.
+ *
+ * Returned match rectangles use full source-image pixels. OpenCV's response
+ * coordinates are ROI-relative top-left positions, so cropInfo.region is added
+ * before results leave this function. sourceCanvas and cropInfo are retained
+ * for later pipeline stages; no OpenCV Mat escapes this function.
+ */
+async function ocrOpenCvPipelineCore(imageBlob) {
+  const Preprocess = window.OCRPreprocess;
+
+  // Cropping is part of the matcher's accuracy and performance contract, not
+  // an optional optimization. Searching the full screenshot would introduce
+  // unrelated UI controls and a substantially larger response map.
+  if (
+    !Preprocess ||
+    typeof Preprocess.blobToCanvas !== 'function' ||
+    typeof Preprocess.cropSkillRegion !== 'function'
+  ) {
+    throw new Error('ocrOpenCvPipelineCore requires OCRPreprocess image cropping support');
+  }
+
+  // Runtime initialization, source decoding, and template decoding are
+  // independent, so begin all three together. Their cached Promises still
+  // ensure concurrent pipeline calls share the expensive one-time work.
+  const [{ cv }, sourceCanvas, templateCanvas] = await Promise.all([
+    getOpenCv(),
+    Preprocess.blobToCanvas(imageBlob),
+    getOpenCvTemplateCanvas(),
+  ]);
+
+  const cropInfo = Preprocess.cropSkillRegion(sourceCanvas);
+  console.log(
+    `[ocrOpenCvPipelineCore] Layout: ${cropInfo.layout} | Crop: x=${cropInfo.region.x} y=${cropInfo.region.y} w=${cropInfo.region.w} h=${cropInfo.region.h}`
+  );
+
+  if (
+    templateCanvas.width > cropInfo.canvas.width ||
+    templateCanvas.height > cropInfo.canvas.height
+  ) {
+    // matchTemplate requires the template to fit entirely inside the source;
+    // make that precondition actionable instead of exposing a WASM assertion.
+    throw new Error(
+      `OpenCV template ${templateCanvas.width}x${templateCanvas.height} is larger than ROI ${cropInfo.canvas.width}x${cropInfo.canvas.height}`
+    );
+  }
+
+  // Resolve the named enum from the loaded build instead of embedding its
+  // numeric value, and fail explicitly if this OpenCV distribution lacks it.
+  const matchMethod = cv[OPENCV_TEMPLATE_MATCH_METHOD];
+  if (typeof matchMethod !== 'number') {
+    throw new Error(`OpenCV runtime does not expose cv.${OPENCV_TEMPLATE_MATCH_METHOD}`);
+  }
+
+  let sourceRgba = null;
+  let templateRgba = null;
+  let sourceGray = null;
+  let templateGray = null;
+  let response = null;
+  const matches = [];
+
+  try {
+    // cv.imread(canvas) yields RGBA Mats in OpenCV.js. Matching one grayscale
+    // channel was roughly 3x faster than RGB on the reference fixture and the
+    // button's shape/contrast carries the useful signal, so discard color here.
+    sourceRgba = cv.imread(cropInfo.canvas);
+    templateRgba = cv.imread(templateCanvas);
+    sourceGray = new cv.Mat();
+    templateGray = new cv.Mat();
+    response = new cv.Mat();
+
+    cv.cvtColor(sourceRgba, sourceGray, cv.COLOR_RGBA2GRAY);
+    cv.cvtColor(templateRgba, templateGray, cv.COLOR_RGBA2GRAY);
+
+    // response has one float score for every template top-left position that
+    // fits in the ROI: (sourceWidth-templateWidth+1) by the analogous height.
+    // With TM_CCOEFF_NORMED, larger values mean better matches.
+    cv.matchTemplate(sourceGray, templateGray, response, matchMethod);
+
+    // minMaxLoc returns only one global maximum. Re-run it after suppressing
+    // each accepted neighborhood to recover several buttons without sorting a
+    // million-element response map in JavaScript.
+    while (matches.length < OPENCV_MAX_TEMPLATE_MATCHES) {
+      const { maxVal, maxLoc } = cv.minMaxLoc(response);
+      if (!Number.isFinite(maxVal)) {
+        throw new Error('OpenCV template matching produced a non-finite score');
+      }
+      if (maxVal < OPENCV_TEMPLATE_MATCH_THRESHOLD) break;
+
+      // maxLoc is relative to the cropped response map. Consumers and fixture
+      // ranges operate in original screenshot coordinates, so translate once
+      // at this boundary and keep width/height equal to the native template.
+      matches.push({
+        x: maxLoc.x + cropInfo.region.x,
+        y: maxLoc.y + cropInfo.region.y,
+        width: templateGray.cols,
+        height: templateGray.rows,
+        score: maxVal,
+      });
+
+      // Nearby response pixels describe overlapping placements of the same
+      // physical button. Mark a template-sized area around the winning peak as
+      // the minimum normalized score so it cannot be selected again. Clamping
+      // keeps the suppression ROI valid when a match is near a response edge.
+      const suppressX = Math.max(0, maxLoc.x - Math.floor(templateGray.cols / 2));
+      const suppressY = Math.max(0, maxLoc.y - Math.floor(templateGray.rows / 2));
+      const suppressWidth = Math.min(templateGray.cols, response.cols - suppressX);
+      const suppressHeight = Math.min(templateGray.rows, response.rows - suppressY);
+      const suppressionRoi = response.roi(
+        new cv.Rect(suppressX, suppressY, suppressWidth, suppressHeight)
+      );
+      try {
+        suppressionRoi.setTo(new cv.Scalar(-1));
+      } finally {
+        // roi() creates a Mat header sharing response storage. It still owns a
+        // WASM-side object and therefore needs its own delete().
+        suppressionRoi.delete();
+      }
+    }
+  } finally {
+    // OpenCV.js Mats are manual WebAssembly allocations. Clean up on both the
+    // successful path and every intermediate exception; browser GC is not a
+    // substitute for Mat.delete().
+    response?.delete();
+    templateGray?.delete();
+    sourceGray?.delete();
+    templateRgba?.delete();
+    sourceRgba?.delete();
+  }
+
+  // Peak extraction is confidence-ordered. Present results in deterministic
+  // top-to-bottom/left-to-right screen order for downstream card processing.
+  matches.sort((a, b) => a.y - b.y || a.x - b.x);
+  console.log(`[ocrOpenCvPipelineCore] Matched ${matches.length} decrease button(s)`);
+
+  return {
+    matches,
+    cropInfo,
+    sourceCanvas,
+  };
+}
+
+// Expose for tests
 window.ocrPipelineCore = ocrPipelineCore;
+window.ocrOpenCvPipelineCore = ocrOpenCvPipelineCore;
 
 async function processSkillOCRImage(imageBlob) {
   return ocrPipelineCore(imageBlob);

@@ -574,9 +574,12 @@ Focus 100`;
   // Usage: OCRTest.runImageTests()   — runs all 12 images
   //        OCRTest.runImageTests('m1') — runs just m1.png
 
+  // The test server exposes the repository root, so fixture URLs mirror their
+  // checked-in tests/reference location rather than relying on a legacy
+  // top-level reference alias.
   const REFERENCE_TESTS = [
     {
-      image: './reference/m1.png',
+      image: './tests/reference/m1.png',
       layout: 'mobile',
       expected: [
         {
@@ -598,7 +601,7 @@ Focus 100`;
       ],
     },
     {
-      image: './reference/m2.png',
+      image: './tests/reference/m2.png',
       layout: 'mobile',
       expected: [
         {
@@ -620,7 +623,7 @@ Focus 100`;
       ],
     },
     {
-      image: './reference/m3.png',
+      image: './tests/reference/m3.png',
       layout: 'mobile',
       expected: [
         {
@@ -665,7 +668,6 @@ Focus 100`;
     console.log(`${'='.repeat(60)}\n`);
 
     let totalExpected = 0;
-    let totalFound = 0;
     let totalNameCorrect = 0;
     let totalHintCorrect = 0;
     let totalFalsePositives = 0;
@@ -729,7 +731,6 @@ Focus 100`;
         }
 
         totalExpected += test.expected.length;
-        totalFound += nameCorrect;
         totalNameCorrect += nameCorrect;
         totalHintCorrect += hintCorrect;
         totalFalsePositives += falsePositives.length;
@@ -803,5 +804,192 @@ Focus 100`;
     };
   }
 
-  window.OCRTest = { runAll, runAccuracyBenchmark, runImageTests, REFERENCE_TESTS };
+  // ─── Automated OpenCV template-matching tests ────────────────
+  // Each expected range is a padded rectangle in full screenshot coordinates.
+  // It describes where an entire detected 63x68 template rectangle may land;
+  // width/height here are tolerances, not the expected match dimensions.
+  const REFERENCE_TEMPLATE_MATCHING_TESTS = [
+    {
+      image: './tests/reference/m1.png',
+      layout: 'mobile',
+      expected_matches_ranges: [
+        { x: 741.3, y: 846.7, width: 80.2, height: 81.4 },
+        { x: 741.3, y: 1122.6, width: 80.2, height: 81.4 },
+        { x: 741.3, y: 1402.7, width: 80.2, height: 81.4 },
+        { x: 741.3, y: 1681.1, width: 80.2, height: 81.4 },
+      ],
+    },
+  ];
+
+  // Keep the oracle independent from production constants. If the template,
+  // scale policy, or threshold changes intentionally, both the fixture
+  // expectations and these values must be reviewed instead of silently moving
+  // with the implementation under test.
+  const TEMPLATE_MATCH_EXPECTED_SIZE = { width: 63, height: 68 };
+  const TEMPLATE_MATCH_MIN_SCORE = 0.8;
+
+  // The shell wrapper cannot inspect browser objects directly. It treats this
+  // marker as the success contract and exits nonzero when the marker is absent.
+  const TEMPLATE_MATCHING_PASS_MARKER = 'CV_TEMPLATE_MATCHING_TEST_PASS';
+
+  // Validate the public match contract before using a detection geometrically.
+  // Finite coordinates/scores catch malformed NaN results that comparisons can
+  // otherwise allow to disappear into a misleading "missing match" failure.
+  function isTemplateMatchValid(match) {
+    return (
+      match &&
+      Number.isFinite(match.x) &&
+      Number.isFinite(match.y) &&
+      match.width === TEMPLATE_MATCH_EXPECTED_SIZE.width &&
+      match.height === TEMPLATE_MATCH_EXPECTED_SIZE.height &&
+      Number.isFinite(match.score) &&
+      match.score >= TEMPLATE_MATCH_MIN_SCORE
+    );
+  }
+
+  // Ranges are intentionally padded around the known button. Requiring full
+  // containment tests both the translated top-left coordinate and the native
+  // template dimensions; testing only the center would miss size regressions.
+  function isMatchContainedInRange(match, range) {
+    return (
+      match.x >= range.x &&
+      match.y >= range.y &&
+      match.x + match.width <= range.x + range.width &&
+      match.y + match.height <= range.y + range.height
+    );
+  }
+
+  // Pair detections one-to-one with expected ranges. Removing a consumed match
+  // prevents one detection from satisfying two nearby expectations, while the
+  // leftovers become explicit false positives rather than being ignored.
+  function pairTemplateMatchesWithRanges(matches, expectedRanges) {
+    const unmatchedMatches = matches.map((match, index) => ({ match, index }));
+    const matchedPairs = [];
+    const missingRanges = [];
+
+    expectedRanges.forEach((range, rangeIndex) => {
+      const matchIndex = unmatchedMatches.findIndex(({ match }) =>
+        isMatchContainedInRange(match, range)
+      );
+      if (matchIndex === -1) {
+        missingRanges.push({ rangeIndex, range });
+        return;
+      }
+
+      const [{ match, index }] = unmatchedMatches.splice(matchIndex, 1);
+      matchedPairs.push({ rangeIndex, matchIndex: index, range, match });
+    });
+
+    return {
+      matchedPairs,
+      missingRanges,
+      unexpectedMatches: unmatchedMatches,
+    };
+  }
+
+  // Run the browser-facing pipeline exactly as production does: fetch a Blob,
+  // initialize OpenCV lazily, crop through OCRPreprocess, and inspect only its
+  // serializable result fields. Usage from the console:
+  // `await OCRTest.runImageOpenCvTemplateMatchingTests()`.
+  async function runImageOpenCvTemplateMatchingTests() {
+    const ocrOpenCvPipelineCore = window.ocrOpenCvPipelineCore;
+    if (!ocrOpenCvPipelineCore) {
+      const error = 'ocrOpenCvPipelineCore not found. Is ocr.js loaded?';
+      console.error(`[OpenCVTemplateMatchingTests] ${error}`);
+      return {
+        status: 'FAIL',
+        passedCount: 0,
+        failedCount: 1,
+        imageResults: [{ passed: false, error }],
+      };
+    }
+
+    const tests = REFERENCE_TEMPLATE_MATCHING_TESTS;
+    const imageResults = [];
+
+    for (const test of tests) {
+      const label = test.image.split('/').pop();
+      console.log(`------ ${label} - layout: ${test.layout} ------`);
+
+      try {
+        const blob = await loadImageAsBlob(test.image);
+        const result = await ocrOpenCvPipelineCore(blob);
+
+        // Preserve indices in diagnostics so a failure identifies the exact
+        // production detection, including malformed matches that cannot pair
+        // with a range.
+        const matches = Array.isArray(result?.matches) ? result.matches : [];
+        const invalidMatches = matches
+          .map((match, index) => ({ match, index }))
+          .filter(({ match }) => !isTemplateMatchValid(match));
+        const pairing = pairTemplateMatchesWithRanges(matches, test.expected_matches_ranges);
+        const actualLayout = result?.cropInfo?.layout || null;
+
+        // Passing is deliberately stricter than recall: layout and match shape
+        // must be valid, every expected range must be paired, and no additional
+        // match may remain. The count check makes that exact-set policy obvious
+        // in the summary even though pairing also exposes missing/extras.
+        const passed =
+          actualLayout === test.layout &&
+          invalidMatches.length === 0 &&
+          matches.length === test.expected_matches_ranges.length &&
+          pairing.missingRanges.length === 0 &&
+          pairing.unexpectedMatches.length === 0;
+
+        const imageResult = {
+          image: test.image,
+          expectedLayout: test.layout,
+          actualLayout,
+          expectedCount: test.expected_matches_ranges.length,
+          actualCount: matches.length,
+          matches,
+          invalidMatches,
+          missingRanges: pairing.missingRanges,
+          unexpectedMatches: pairing.unexpectedMatches,
+          passed,
+        };
+        imageResults.push(imageResult);
+
+        console.log(
+          `   ${passed ? 'PASS' : 'FAIL'}: expected ${imageResult.expectedCount}, found ${imageResult.actualCount}`
+        );
+      } catch (err) {
+        console.error(`   ERROR processing ${label}:`, err);
+        imageResults.push({
+          image: test.image,
+          expectedLayout: test.layout,
+          expectedCount: test.expected_matches_ranges.length,
+          passed: false,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
+    const failedCount = imageResults.filter((result) => !result.passed).length;
+
+    // Always return per-image diagnostics, including caught exceptions. Add the
+    // shell pass marker only after all fixtures succeed; a partially successful
+    // run must never look green to npm.
+    const summary = {
+      status: failedCount === 0 ? 'PASS' : 'FAIL',
+      passedCount: imageResults.length - failedCount,
+      failedCount,
+      imageResults,
+    };
+
+    if (failedCount === 0) {
+      summary.passMarker = TEMPLATE_MATCHING_PASS_MARKER;
+    }
+
+    return summary;
+  }
+
+  window.OCRTest = {
+    runAll,
+    runAccuracyBenchmark,
+    runImageTests,
+    runImageOpenCvTemplateMatchingTests,
+    REFERENCE_TESTS,
+    REFERENCE_TEMPLATE_MATCHING_TESTS,
+  };
 })();

@@ -1447,17 +1447,25 @@
 
           const params = new URLSearchParams(window.location.search);
           const isTestMode = params.get('test') === '1';
+          const isDebugMode = params.get('debug') === '1';
           if (isTestMode) {
             console.log('Test mode is active.');
             OCR_SCRIPTS.push('/js/ocr-test.js');
             ensureOCR().then(function () {
               console.log('Loaded OCR scripts.');
+              if (isDebugMode) {
+                window.setOCRDebugMode(true);
+              }
             });
           }
 
           if (uploadBtn && uploadInput) {
             uploadBtn.addEventListener('click', function () {
               ensureOCR().then(function () {
+                console.log('Loaded OCR scripts.');
+                if (isDebugMode) {
+                  window.setOCRDebugMode(true);
+                }
                 uploadInput.click();
               });
             });

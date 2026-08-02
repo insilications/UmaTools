@@ -12,7 +12,7 @@ if [[ "${CHROME_DEVTOOLS_STATUS}" == *"not running"* ]]; then
     exit 1
 fi
 
-echo "Starting test-ocr..."
+echo "Starting test-cv-template-matching..."
 chrome-devtools new_page "http://localhost:3000/optimizer?test=1&debug=1" &>/dev/null
 # Reload to ignore the cache
 chrome-devtools navigate_page --type "reload" --ignoreCache true &>/dev/null
@@ -24,4 +24,10 @@ for id in "${page_ids[@]}"; do
   setsid --fork -- chrome-devtools close_page "${id}" </dev/null >/dev/null 2>&1
 done
 
-chrome-devtools evaluate_script "async () => await OCRTest.runImageTests('m1.png')"
+CV_TEMPLATE_MATCHING_TEST_OUTPUT=$(chrome-devtools evaluate_script "async () => await OCRTest.runImageOpenCvTemplateMatchingTests()")
+
+echo "${CV_TEMPLATE_MATCHING_TEST_OUTPUT}"
+if [[ "${CV_TEMPLATE_MATCHING_TEST_OUTPUT}" != *"CV_TEMPLATE_MATCHING_TEST_PASS"* ]]; then
+  echo "OpenCV template matching test failed."
+  exit 1
+fi
