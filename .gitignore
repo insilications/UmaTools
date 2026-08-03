@@ -1,6 +1,6 @@
 .vercel
 /__pycache__
-/.vscode
+/.vscode/*
 /.cache_gametora
 /.cache_gamewith
 /cards
@@ -30,3 +30,6 @@ assets/uma_data.json
 assets/support_hints.json
 /lighthouse-reports
 js/bundle/
+
+!/.vscode/bookmarks.json
+!/.vscode/codemark.json

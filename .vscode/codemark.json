@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "highlights": [
+    {
+      "id": "50778447-0a4c-4bd5-bd66-9f428a1c68b7",
+      "filePath": "js/ocr-matcher.js",
+      "codeSnippet": "      const result = matchSkill(variant, options);",
+      "codeHash": "48370ea1cda274cd4a71cd66e890b55120ed0ab19eea2586193f3e14426d551d",
+      "tag": "TODO",
+      "color": "#FFD700",
+      "createdAt": "2026-08-03T13:44:15.159Z",
+      "updatedAt": "2026-08-03T13:44:15.159Z"
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+	"files": [
+		{
+			"path": "js/ocr.js",
+			"bookmarks": [
+				{
+					"line": 1477,
+					"column": 22,
+					"label": ""
+				},
+				{
+					"line": 1518,
+					"column": 34,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "js/ocr-matcher.js",
+			"bookmarks": [
+				{
+					"line": 454,
+					"column": 16,
+					"label": ""
+				},
+				{
+					"line": 652,
+					"column": 20,
+					"label": ""
+				},
+				{
+					"line": 986,
+					"column": 19,
+					"label": ""
+				},
+				{
+					"line": 993,
+					"column": 12,
+					"label": ""
+				}
+			]
+		}
+	]
+}
